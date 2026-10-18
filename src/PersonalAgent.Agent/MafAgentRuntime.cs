@@ -4,6 +4,7 @@ using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Application;
 using PersonalAgent.Core.Computer;
 using System.Text.Json;
+using System.Security.Cryptography;
 
 namespace PersonalAgent.Agent;
 
@@ -12,17 +13,20 @@ namespace PersonalAgent.Agent;
 public sealed class MafAgentRuntime(
     Func<AgentRequest, CancellationToken, ValueTask<IChatClient>> createClient,
     Func<Guid, CancellationToken, Task> waitAtBoundary,
-    ToolRegistry? registry = null, Action? onModelObservationEvaluated = null) : IAgentRuntime
+    ToolRegistry? registry = null, Action? onModelObservationEvaluated = null,
+    ModelGenerationSettings? generationSettings = null) : IAgentRuntime
 {
     // The trusted composition root determines desktop requirements from the actual allowed tool descriptors.
     public MafAgentRuntime(IModelProvider provider, ModelProfile profile, bool requiresDesktop,
         Func<Guid, CancellationToken, Task> waitAtBoundary)
-        : this((request, ct) => OpenProfileAsync(provider, profile, requiresDesktop, request, ct), waitAtBoundary) { }
+        : this((request, ct) => OpenProfileAsync(provider, profile, requiresDesktop, request, ct), waitAtBoundary,
+            generationSettings: profile.GenerationSettings)
+    { }
 
     public MafAgentRuntime(IModelProvider provider, ModelProfile profile, ToolRegistry registry,
         Func<Guid, CancellationToken, Task> waitAtBoundary, Action? onModelObservationEvaluated = null)
         : this((request, ct) => OpenProfileAsync(provider, profile, registry.Bind(request).RequiresDesktop, request, ct),
-            waitAtBoundary, registry, onModelObservationEvaluated)
+            waitAtBoundary, registry, onModelObservationEvaluated, profile.GenerationSettings)
     { }
 
     private static async ValueTask<IChatClient> OpenProfileAsync(IModelProvider provider, ModelProfile profile,
@@ -51,19 +55,21 @@ public sealed class MafAgentRuntime(
             var binding = registry?.Bind(request);
             using var client = await createClient(request, ct).ConfigureAwait(false);
             await BoundaryAsync();
+            var chatOptions = new ChatOptions
+            {
+                Instructions = AgentPromptPolicy.Instructions,
+                Tools = binding?.Functions.Select(function => (AITool)function.AsDeclarationOnly()).ToList() ?? [],
+                ToolMode = binding?.Functions.Count > 0 ? ChatToolMode.Auto : ChatToolMode.None,
+                AllowMultipleToolCalls = false,
+                Temperature = generationSettings?.Temperature,
+                MaxOutputTokens = OutputLimit(request.Limits.MaxTokens)
+            };
             var agent = new ChatClientAgent(client, new ChatClientAgentOptions
             {
                 Name = "PersonalAgent",
-                UseProvidedChatClientAsIs = true, // No hidden tool execution/retries before the application registry exists.
+                UseProvidedChatClientAsIs = true,
                 ChatHistoryProvider = new InMemoryChatHistoryProvider(),
-                ChatOptions = new()
-                {
-                    Instructions = AgentPromptPolicy.Instructions,
-                    Tools = binding?.Functions.Select(function => (AITool)function.AsDeclarationOnly()).ToList() ?? [],
-                    ToolMode = binding?.Functions.Count > 0 ? ChatToolMode.Auto : ChatToolMode.None,
-                    AllowMultipleToolCalls = false,
-                    MaxOutputTokens = (int)Math.Min(request.Limits.MaxTokens, int.MaxValue)
-                }
+                ChatOptions = chatOptions
             });
             var session = await agent.CreateSessionAsync(cancellationToken: ct).ConfigureAwait(false);
             var messages = new List<ChatMessage>();
@@ -75,12 +81,19 @@ public sealed class MafAgentRuntime(
             var toolCalls = 0;
             long totalInput = 0, totalOutput = 0;
             var usageKnown = true;
+            string? lastAction = null;
+            var repeats = 0;
             for (long modelCalls = 0; modelCalls <= request.Limits.MaxSteps; modelCalls++)
             {
                 await BoundaryAsync();
+                var remaining = request.Limits.MaxTokens - totalInput - totalOutput;
+                if (remaining <= 0) return Failure("TokenLimitExceeded", "The reported token budget is exhausted; no further model or tool call executed.");
                 var updates = new List<AgentResponseUpdate>();
                 var role = ChatRole.Assistant;
-                await foreach (var update in agent.RunStreamingAsync(messages, session, cancellationToken: ct).WithCancellation(ct).ConfigureAwait(false))
+                // Override only the changing cap; the SDK combines default policy/tools with per-run options.
+                var turnOptions = new ChatOptions { MaxOutputTokens = OutputLimit(remaining) };
+                await foreach (var update in agent.RunStreamingAsync(messages, session,
+                    new ChatClientAgentRunOptions { ChatOptions = turnOptions }, ct).WithCancellation(ct).ConfigureAwait(false))
                 {
                     await BoundaryAsync();
                     if (update.Contents.Any(content => content is ToolApprovalRequestContent))
@@ -107,13 +120,20 @@ public sealed class MafAgentRuntime(
                 if (continuationPending)
                     return Failure("ModelContinuationPending", "Model execution is incomplete; explicit continuation is required.", AgentResultStatus.Blocked);
                 if (response.Usage is { InputTokenCount: { } input, OutputTokenCount: { } output })
-                { totalInput = checked(totalInput + input); totalOutput = checked(totalOutput + output); }
+                {
+                    if (input < 0 || output < 0 || input > request.Limits.MaxTokens - totalInput - totalOutput
+                        || output > request.Limits.MaxTokens - totalInput - totalOutput - input)
+                        return Failure("TokenLimitExceeded", "The provider reported invalid usage or exceeded the token budget; no further action executed.");
+                    totalInput += input; totalOutput += output;
+                }
                 else usageKnown = false;
                 onModelObservationEvaluated?.Invoke();
                 var calls = response.Messages.Where(message => message.Role == ChatRole.Assistant)
                     .SelectMany(message => message.Contents).OfType<FunctionCallContent>().ToArray();
                 if (calls.Length > 0)
                 {
+                    if (!usageKnown) return Failure("TokenUsageUnavailable", "Tool execution stopped because complete token usage was not reported.", AgentResultStatus.Blocked);
+                    if (totalInput + totalOutput >= request.Limits.MaxTokens) return Failure("TokenLimitExceeded", "No token budget remains to continue after a tool result; no action executed.");
                     if (binding is null || response.FinishReason != ChatFinishReason.ToolCalls)
                         return Failure("ModelResponseIncomplete", "Tool execution requires a confirmed complete tool-call response.", AgentResultStatus.Blocked);
                     if (calls.Any(call => !binding.Functions.Any(function => function.Name == call.Name)))
@@ -129,6 +149,11 @@ public sealed class MafAgentRuntime(
                     foreach (var call in calls)
                     {
                         await BoundaryAsync();
+                        var signature = ActionSignature(call);
+                        repeats = signature == lastAction ? repeats + 1 : 1;
+                        lastAction = signature;
+                        if (repeats > request.Limits.MaxRepeatedActions)
+                            return Failure("RepeatedActionLimitExceeded", "Repeated action limit reached; no further action executed.");
                         var eventId = Guid.NewGuid();
                         ReportTool(AgentEventKind.ToolRequested, "Tool requested; authorization pending.", call.Name, eventId);
                         var outcome = await binding.InvokeAsync(call.Name, call.CallId, JsonSerializer.SerializeToElement(call.Arguments), ct).ConfigureAwait(false);
@@ -153,7 +178,13 @@ public sealed class MafAgentRuntime(
                     return Failure("ModelResponseEmpty", "The model returned no public assistant response.", AgentResultStatus.Blocked);
                 var usage = usageKnown ? new AgentUsage(totalInput, totalOutput) : null;
                 Report(AgentEventKind.Completed, "Model execution completed.");
-                return new() { Status = AgentResultStatus.Completed, Summary = summary, Usage = usage };
+                return new()
+                {
+                    Status = AgentResultStatus.Completed,
+                    Summary = summary,
+                    Usage = usage,
+                    Warnings = usageKnown ? [] : ["The provider did not report complete token usage; usage and cost are unknown."]
+                };
             }
             return Failure("StepLimitExceeded", "The model step limit was reached; no further action executed.");
         }
@@ -181,6 +212,28 @@ public sealed class MafAgentRuntime(
         { RunId = request.RunId, TimestampUtc = DateTimeOffset.UtcNow, Kind = kind, Message = message });
         void ReportTool(AgentEventKind kind, string message, string toolId, Guid eventId) => progress.Report(new()
         { RunId = request.RunId, TimestampUtc = DateTimeOffset.UtcNow, Kind = kind, Message = message, ToolId = toolId, ToolCallId = eventId });
+        int OutputLimit(long remaining) => (int)Math.Min(Math.Min(remaining, int.MaxValue), generationSettings?.MaxOutputTokens ?? int.MaxValue);
+    }
+
+    private static string ActionSignature(FunctionCallContent call)
+    {
+        using var buffer = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer)) Write(JsonSerializer.SerializeToElement(call.Arguments), true, writer);
+        return call.Name + ":" + Convert.ToHexString(SHA256.HashData(buffer.ToArray()));
+
+        static void Write(JsonElement value, bool root, Utf8JsonWriter writer)
+        {
+            if (value.ValueKind == JsonValueKind.Object)
+            {
+                writer.WriteStartObject();
+                foreach (var property in value.EnumerateObject().Where(property => !root || property.Name != "observationId").OrderBy(property => property.Name, StringComparer.Ordinal))
+                { writer.WritePropertyName(property.Name); Write(property.Value, false, writer); }
+                writer.WriteEndObject();
+            }
+            else if (value.ValueKind == JsonValueKind.Array)
+            { writer.WriteStartArray(); foreach (var item in value.EnumerateArray()) Write(item, false, writer); writer.WriteEndArray(); }
+            else value.WriteTo(writer);
+        }
     }
     private static AgentRunResult Failure(string code, string summary, AgentResultStatus status = AgentResultStatus.Failed,
         IReadOnlyList<string>? warnings = null) => new() { Status = status, ErrorCode = code, Summary = summary, Warnings = warnings ?? [] };

@@ -39,6 +39,14 @@ and MVP release gate remain unverified until their own backlog tasks are complet
 
 ## MAF runtime adapter (PA-049)
 
+PA-056: `--filter AgentLimits` checks cumulative reported-token and output caps,
+step/repetition refusal before another GUI effect, profile generation settings,
+missing/invalid usage, duration/cancellation at the classified boundary and legacy
+limit deserialization. Repetition signatures ignore changing call/observation IDs.
+ScriptedChatClient explicitly supplies synthetic 1+1 token usage by default; a
+test supplies an empty UsageDetails for unknown accounting. This is not measured
+live usage or a prepaid billing cap. Provider retries remain disabled.
+
 PA-055: `--filter AgentPromptPolicy` checks bundled versioned policy resources,
 untrusted task/summary/tool-role boundaries and actual SDK HTTP privileged roles.
 A synthetic Teams payload/description asks to change policy and forge write

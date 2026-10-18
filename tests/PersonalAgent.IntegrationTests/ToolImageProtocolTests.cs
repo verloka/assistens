@@ -94,7 +94,7 @@ public sealed class ToolImageProtocolTests
         private static HttpResponseMessage Tool(string id, string name, string arguments) => Stream(new
         { role = "assistant", tool_calls = new[] { new { index = 0, id, type = "function", function = new { name, arguments } } } }, "tool_calls");
         private static HttpResponseMessage Stream(object delta, string finish) => new(HttpStatusCode.OK)
-        { Content = new StringContent("data: " + JsonSerializer.Serialize(new { id = "test", @object = "chat.completion.chunk", created = 1, model = "test-model", choices = new[] { new { index = 0, delta, finish_reason = finish } } }) + "\n\ndata: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
+        { Content = new StringContent("data: " + JsonSerializer.Serialize(new { id = "test", @object = "chat.completion.chunk", created = 1, model = "test-model", usage = new { prompt_tokens = 1, completion_tokens = 1, total_tokens = 2 }, choices = new[] { new { index = 0, delta, finish_reason = finish } } }) + "\n\ndata: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
         private static HttpResponseMessage Json(string body) => new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
     }
     internal sealed class ImageHttp : HttpMessageHandler

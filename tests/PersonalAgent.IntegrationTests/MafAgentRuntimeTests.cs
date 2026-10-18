@@ -33,7 +33,7 @@ public sealed class MafAgentRuntimeTests
         Assert.Equal(AgentEventKind.Started, events.Items[0].Kind); Assert.Equal(AgentEventKind.Completed, events.Items[^1].Kind);
         Assert.All(client.Messages, message => Assert.Equal(ChatRole.User, message.Role));
         Assert.Contains(client.Messages, message => message.Text.Contains("prior untrusted summary"));
-        Assert.Empty(client.Options!.Tools!); Assert.Equal(ChatToolMode.None, client.Options.ToolMode);
+        Assert.Empty(client.Options!.Tools ?? []); Assert.Equal(ChatToolMode.None, client.Options.ToolMode);
     }
 
     [Theory]

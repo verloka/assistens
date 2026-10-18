@@ -14,12 +14,14 @@ public sealed record RunLimits
     public int MaxSteps { get; init; } = 50;
     public TimeSpan MaxDuration { get; init; } = TimeSpan.FromMinutes(5);
     public long MaxTokens { get; init; } = 20_000;
+    public int MaxRepeatedActions { get; init; } = 3;
 
     public void Validate()
     {
         if (MaxSteps <= 0) throw new ArgumentOutOfRangeException(nameof(MaxSteps));
         if (MaxDuration <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(MaxDuration));
         if (MaxTokens <= 0) throw new ArgumentOutOfRangeException(nameof(MaxTokens));
+        if (MaxRepeatedActions <= 0) throw new ArgumentOutOfRangeException(nameof(MaxRepeatedActions));
     }
 }
 

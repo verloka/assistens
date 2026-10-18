@@ -17,7 +17,10 @@ internal sealed class ScriptedChatClient(
         CallCount++;
         if (_steps.Count == 0)
             throw new InvalidOperationException("Unexpected model call: the deterministic script is exhausted.");
-        return Task.FromResult(_steps.Dequeue()(messages.ToArray(), options));
+        var response = _steps.Dequeue()(messages.ToArray(), options);
+        // Explicit synthetic provider accounting for bounded multi-turn tests, not a measurement of live usage.
+        response.Usage ??= new() { InputTokenCount = 1, OutputTokenCount = 1 };
+        return Task.FromResult(response);
     }
 
     public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages,
