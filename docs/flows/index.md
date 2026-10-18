@@ -24,6 +24,7 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 - After implementing each milestone, inspect new WPF actions, Telegram commands, scheduled triggers, MCP tools and background workers. Record any entry point not covered by an indexed flow here before closing the task.
 
 ## Coverage Notes
+- PA-044 adds durable safe-handoff confirmation to the existing FDD-002 path and preserves failed input-release evidence under FDD-007 restoration. Fake-native/actual-SQLite tests cover cleanup, store delay/failure, Cancel and restart; the full physical click/type/hotkey/resume E2E remains untested. All flows stay Draft.
 - PA-043 adds opt-in main-window hide-to-tray, tray commands and a non-activating mini-window, mapped to FDD-002/FDD-001. Headless hosts do not create the tray. DesktopShellTests covers actual XAML/common commands with a fake tray boundary; the user confirmed attended close-to-tray/Take Control/Paused/Open/Exit acceptance on 2026-10-18. No close/open action grants GUI access or resumes a task.
 - PA-042 adds real-App startup registration of a local Take Control shortcut (App.xaml.cs -> TakeControlHotkeyService -> desktop resource gate, then asynchronous task pause). It maps to FDD-002/FDD-001. Fake registration and delayed-SQLite callback tests cover failure/store ordering; the attended user report confirmed an actual outside-focus minimized global keypress with gateClosed=True and fakeActions=146->146. Full physical-input takeover/resume remains untested. No production computer tool/model path is enabled.
 

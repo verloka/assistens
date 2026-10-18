@@ -61,7 +61,7 @@ public sealed record TaskRun
 public enum RunEventType
 {
     RunCreated, RunStarted, StatusChanged, Progress, ToolRequested, ToolExecuted,
-    ApprovalRequested, DesktopTakenOver, RunPaused, RunResumed, RunFinished
+    ApprovalRequested, DesktopTakenOver, RunPaused, RunResumed, RunFinished, DesktopPauseConfirmed
 }
 
 public sealed record RunEvent

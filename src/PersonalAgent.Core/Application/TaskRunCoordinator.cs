@@ -109,7 +109,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         Apply(command.CommandId, command.RunId, command.ExpectedVersion, command, change =>
         {
             if (TaskRunStateMachine.IsTerminal(change.Run.Status)) return;
-            _ = desktopAccess?.CancelRunAsync(change.Run.Id);
+            change.DesktopDrain = desktopAccess?.PauseRunAsync(change.Run.Id);
             change.Run = change.Run with { Summary = null, ErrorCode = null, Sources = [] };
             change.Result = null;
             Move(change, RunStatus.Cancelled, "Cancelled by user");
@@ -136,6 +136,41 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             }
             Move(change, change.Run.Status == RunStatus.Queued ? RunStatus.Paused : RunStatus.Pausing, "Pause requested", command.Scope);
             change.NewResume = Signal();
+        }, cancellationToken);
+
+    public async Task<TaskRun> ConfirmDesktopPauseAsync(Guid runId, CancellationToken cancellationToken = default)
+    {
+        if (desktopAccess is null) throw new InvalidOperationException("No desktop resource is configured.");
+        if (GetRun(runId).PauseScope is null) throw new InvalidOperationException("Run is not paused.");
+        var released = await desktopAccess.ReleasePausedRunAsync(runId, cancellationToken).ConfigureAwait(false);
+        return await ChangeAsync(runId, change =>
+        {
+            if (TaskRunStateMachine.IsTerminal(change.Run.Status) || change.Run.PauseScope is null)
+                throw new InvalidOperationException("Run is not paused.");
+            var current = desktopAccess.Snapshot;
+            if (current.InputCleanupUncertain || current.Generation != released.Generation || current.OwnerRunId is not null)
+                throw new DesktopAccessException("DesktopPauseChanged");
+            var last = change.Entry.Events.LastOrDefault(e => e.EventType is RunEventType.DesktopPauseConfirmed or RunEventType.RunResumed);
+            if (last?.EventType == RunEventType.DesktopPauseConfirmed && last.Payload is { } payload &&
+                payload.TryGetProperty("Generation", out var generation) && generation.GetInt64() == released.Generation) return;
+            change.Run = change.Run with { RunVersion = checked(change.Run.RunVersion + 1) };
+            AddEvent(change, RunEventType.DesktopPauseConfirmed, "Desktop input drained and lease released; explicit resume required");
+            change.Events[^1] = change.Events[^1] with { Payload = JsonSerializer.SerializeToElement(new
+            {
+                released.Generation, InputReleased = true, Reason = "UserTakeControl"
+            }) };
+        }, cancellationToken).ConfigureAwait(false);
+    }
+
+    public Task<TaskRun> BlockUncertainInputAsync(Guid runId, CancellationToken cancellationToken = default) =>
+        ChangeAsync(runId, change =>
+        {
+            if (TaskRunStateMachine.IsTerminal(change.Run.Status)) return;
+            if (desktopAccess?.Snapshot.InputCleanupUncertain != true)
+                throw new InvalidOperationException("No uncertain desktop input was reported.");
+            if (change.Run.Status == RunStatus.Blocked && change.Run.ErrorCode == "InputCleanupUncertain") return;
+            change.Run = change.Run with { ErrorCode = "InputCleanupUncertain" };
+            Move(change, RunStatus.Blocked, "Input release could not be confirmed; manual review required");
         }, cancellationToken);
 
     public Task<TaskRun> ResumeAsync(ResumeRunCommand command, CancellationToken cancellationToken = default) =>
@@ -166,7 +201,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             ArgumentException.ThrowIfNullOrWhiteSpace(command.Reason);
             if (change.Run.Status != RunStatus.Queued || change.Run.StartedAtUtc is not null)
                 throw new InvalidOperationException("Only an unstarted queued occurrence can be skipped.");
-            _ = desktopAccess?.CancelRunAsync(change.Run.Id);
+            change.DesktopDrain = desktopAccess?.PauseRunAsync(change.Run.Id);
             Move(change, RunStatus.Skipped, command.Reason);
             change.Cancel = true; change.Wake = true;
         }, cancellationToken);
@@ -199,6 +234,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
                     entry.Events.AddRange(stored.Events);
                     if (TaskRunStateMachine.IsTerminal(entry.Run.Status)) entry.Terminal.TrySetResult(entry.Run);
                     runs.Add(entry.Run.Id, entry);
+                    if (entry.Run.ErrorCode == "InputCleanupUncertain")
+                        desktopAccess?.RestoreInputCleanupFailure(entry.Run.Id);
                     if (entry.Run.PauseScope is not null && !TaskRunStateMachine.IsTerminal(entry.Run.Status))
                         _ = desktopAccess?.PauseRunAsync(entry.Run.Id);
                     if (safeQueuedRuns.Contains(entry.Run.Id))
@@ -337,6 +374,9 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
                 if (expectedVersion is { } version && entry.Run.RunVersion != version) throw new RunVersionConflictException(runId, version, entry.Run.RunVersion);
                 change = new Change(entry); mutate(change);
             }
+            if (change.DesktopDrain is not null) await change.DesktopDrain.WaitAsync(ct).ConfigureAwait(false);
+            if (change.Cancel && desktopAccess?.Snapshot is { InputCleanupUncertain: true } fault && fault.HumanControlOwnerRunId == runId)
+                change.Run = change.Run with { ErrorCode = "InputCleanupUncertain", Reason = "Cancelled; input release unconfirmed; manual review required" };
             if (change.Events.Count > 0 && repository is not null)
                 await PersistAsync(() => repository.UpdateAsync(change.Run, change.Entry.Run.RunVersion, change.Events, change.Result, ct), ct).ConfigureAwait(false);
             lock (sync)
@@ -348,7 +388,11 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             }
         }
         finally { writes.Release(); }
-        if (change.Cancel) await change.Entry.Cancellation.CancelAsync().ConfigureAwait(false);
+        if (change.Cancel)
+        {
+            await change.Entry.Cancellation.CancelAsync().ConfigureAwait(false);
+            if (desktopAccess is not null) await desktopAccess.CancelRunAsync(runId).ConfigureAwait(false);
+        }
         return result;
     }
 
@@ -426,6 +470,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
     }
     private sealed class Change(Entry entry)
     {
+        public Task? DesktopDrain;
         public Entry Entry { get; } = entry;
         public TaskRun Run = entry.Run;
         public AgentRunResult? Result = entry.Result;

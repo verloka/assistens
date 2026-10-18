@@ -105,10 +105,10 @@ public sealed class DesktopShellTests
         var model = host.Services.GetRequiredService<ControlPanelViewModel>();
         model.TakeControlCommand.Execute(null);
         Assert.False(desktop.IsCurrent(lease)); // Gate closes synchronously, before awaiting UI command.
-        await model.TakeControlCommand.ExecutionTask!;
+        Assert.False(model.TakeControlCommand.ExecutionTask!.IsCompleted);
         Assert.Equal("Pausing", model.Status); Assert.False(model.ResumeCommand.CanExecute(null));
         Assert.DoesNotContain("control is yours", model.Message, StringComparison.OrdinalIgnoreCase);
-        atomic.Dispose(); model.Refresh();
+        atomic.Dispose(); await model.TakeControlCommand.ExecutionTask!; model.Refresh();
         Assert.Equal("Paused", model.Status); Assert.True(model.ResumeCommand.CanExecute(null));
     });
 

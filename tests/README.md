@@ -433,8 +433,8 @@ a non-activating mini-window with Pause & Take Control, Resume and Cancel. Closi
 that window hides it. Tray **Exit** stops the host and disposes the tray/hotkey.
 Take Control uses the existing immediate local gate and common task pause command;
 Resume/Cancel use the same versioned task commands. No native input/capture occurs.
-The Paused label means new GUI actions are blocked; PA-044 still owns the complete
-physical-release/persistence confirmation. No automatic resume follows hide/open,
+The Paused label means new GUI actions are blocked; the separate human-handoff
+message requires completed input drain/release and checkpoint (PA-044). No automatic resume follows hide/open,
 cancel or a scheduled tick. New Task/schedule management remain their later UI scope.
 
 `dotnet test tests/PersonalAgent.IntegrationTests --filter DesktopShell` exercises
@@ -680,3 +680,23 @@ was reported as missing and replaced with the generated abstract arrow asset,
 embedded in the executable, both windows and tray; see Assets/README.md for source
 and prompt. Icon decoding and seven unchanged DesktopShell/HealthScreen tests
 passed. This does not complete physical-input safe pause/resume acceptance.
+
+## Safe pause confirmation (PA-044)
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter SafePause` covers nine
+cases with fake native input and real temporary SQLite: Ctrl release held open,
+queued input refusal, coalesced takeover, delayed/failing confirmation writes,
+failed/locked cleanup, cancel during failed cleanup, restored global uncertainty,
+generation-specific checkpoint idempotency and another UI's Resume clearing the
+human-handoff message. No real desktop input, capture or hotkey registration.
+
+Take Control closes the local gate immediately, then the task pause and native
+atomic cleanup drain. The resource lease is released while logical human pause
+ownership remains reserved; a DesktopPauseConfirmed event records generation,
+InputReleased and reason only afterwards. The UI displays the human-handoff
+message only after the event commits and while the current resource still agrees.
+Failed cleanup latches InputCleanupUncertain; Resume/replacement leases cannot
+clear it, and history restoration preserves that block. Cancel/Skip wait for
+active input and retain uncertain release evidence instead of erasing it.
+Checkpoint failure leaves the gate closed without a success message or automatic
+retry. Actual physical-input takeover/resume remains the PA-048 attended gate.

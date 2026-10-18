@@ -12,6 +12,8 @@ public enum DesktopAccessState { Free, Granted, Pausing, PausedForUser }
 public sealed record DesktopAccessSnapshot(Guid? OwnerRunId, long Generation)
 {
     public DesktopAccessState State { get; init; }
+    public bool InputCleanupUncertain { get; init; }
+    public Guid? HumanControlOwnerRunId { get; init; }
 }
 public interface IDesktopAccessCoordinator
 {
@@ -24,6 +26,9 @@ public interface IDesktopAccessCoordinator
     void ResumeRun(Guid runId);
     Task CancelRunAsync(Guid runId);
     Guid? TakeControl();
+    void ReportInputCleanupFailure(DesktopLease lease);
+    void RestoreInputCleanupFailure(Guid runId);
+    Task<DesktopAccessSnapshot> ReleasePausedRunAsync(Guid runId, CancellationToken ct = default);
     Task<bool> ReleaseAsync(DesktopLease lease, CancellationToken ct = default);
 }
 
@@ -40,12 +45,15 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
     private TaskCompletionSource? drained;
     private readonly HashSet<Guid> pausedRuns = [];
     private bool userControl;
+    private Guid? humanControlOwner;
+    private bool inputCleanupUncertain;
 
     public DesktopAccessSnapshot Snapshot
     {
         get { lock (sync) return new(current?.RunId, generation) { State = current is null ?
             (userControl ? DesktopAccessState.PausedForUser : DesktopAccessState.Free) :
-            !revoked ? DesktopAccessState.Granted : active > 0 ? DesktopAccessState.Pausing : DesktopAccessState.PausedForUser }; }
+            !revoked ? DesktopAccessState.Granted : active > 0 ? DesktopAccessState.Pausing : DesktopAccessState.PausedForUser,
+            InputCleanupUncertain = inputCleanupUncertain, HumanControlOwnerRunId = humanControlOwner }; }
     }
 
     public Task<DesktopLease> AcquireAsync(Guid runId, CancellationToken ct = default)
@@ -57,6 +65,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
         lock (sync)
         {
             ct.ThrowIfCancellationRequested();
+            if (inputCleanupUncertain) throw new DesktopAccessException("InputCleanupUncertain");
             if (userControl || pausedRuns.Contains(runId)) throw new DesktopAccessException("DesktopPaused");
             if (!allowed) throw new DesktopAccessException("DesktopAccessDenied");
             if (current is not null)
@@ -109,6 +118,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
         lock (sync)
         {
             pausedRuns.Add(runId);
+            if (userControl && humanControlOwner is null) humanControlOwner = runId;
             if (current?.RunId != runId) return Task.CompletedTask;
             return RevokeAsync(current);
         }
@@ -118,6 +128,8 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
     {
         lock (sync)
         {
+            if (inputCleanupUncertain) throw new DesktopAccessException("InputCleanupUncertain");
+            if (userControl && humanControlOwner is { } owner && owner != runId) throw new DesktopAccessException("DesktopPaused");
             if (userControl && current is not null && current.RunId != runId) throw new DesktopAccessException("DesktopPaused");
             if (current?.RunId == runId && revoked)
             {
@@ -126,6 +138,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
             }
             pausedRuns.Remove(runId);
             userControl = false;
+            humanControlOwner = null;
         }
     }
 
@@ -137,8 +150,58 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
             userControl = true;
             if (current is null) return null;
             var runId = current.RunId;
+            humanControlOwner = runId;
             _ = PauseRunAsync(runId);
             return runId;
+        }
+    }
+
+    // The native adapter reports failed release before disposing its atomic section.
+    // Never clear this uncertainty through Resume or a replacement lease.
+    public void ReportInputCleanupFailure(DesktopLease lease)
+    {
+        lock (sync)
+        {
+            if (!ReferenceEquals(current, lease)) return;
+            inputCleanupUncertain = true; revoked = true; userControl = true;
+            humanControlOwner = lease.RunId; pausedRuns.Add(lease.RunId);
+        }
+    }
+
+    public void RestoreInputCleanupFailure(Guid runId)
+    {
+        lock (sync)
+        {
+            inputCleanupUncertain = true; userControl = true;
+            humanControlOwner ??= runId; pausedRuns.Add(runId);
+            if (current is not null) revoked = true;
+        }
+    }
+
+    public async Task<DesktopAccessSnapshot> ReleasePausedRunAsync(Guid runId, CancellationToken ct = default)
+    {
+        Task wait;
+        lock (sync)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (!pausedRuns.Contains(runId)) throw new DesktopAccessException("DesktopNotPaused");
+            if (current is not null && current.RunId != runId) throw new DesktopAccessException("DesktopBusy");
+            wait = active == 0 ? Task.CompletedTask : drained!.Task;
+        }
+        await wait.WaitAsync(ct).ConfigureAwait(false);
+        lock (sync)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (inputCleanupUncertain) throw new DesktopAccessException("InputCleanupUncertain");
+            if (!pausedRuns.Contains(runId)) throw new DesktopAccessException("DesktopNotPaused");
+            if (current is not null)
+            {
+                if (current.RunId != runId) throw new DesktopAccessException("DesktopBusy");
+                if (!revoked || active > 0) throw new DesktopAccessException("DesktopPausing");
+                current = null;
+            }
+            // Resource ownership is released; the human's logical pause owner remains reserved.
+            return Snapshot;
         }
     }
 

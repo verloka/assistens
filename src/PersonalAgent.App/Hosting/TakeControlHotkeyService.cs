@@ -6,6 +6,8 @@ using PersonalAgent.Core.Domain;
 
 namespace PersonalAgent.App;
 
+public sealed record DesktopHandoff(Guid? RunId, long Generation, bool Confirmed, string? Error);
+
 // Explicitly started by real WPF App startup; headless integration hosts do not register global keys.
 public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, TaskRunCoordinator runs,
     ILogger<TakeControlHotkeyService> logger) : IDisposable
@@ -13,6 +15,11 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
     private WindowsTakeControlHotkey? hotkey;
     private readonly CancellationTokenSource stopping = new();
     private bool disposed;
+    private readonly object sync = new();
+    private Task pending = Task.CompletedTask;
+    private DesktopHandoff handoff = new(null, 0, false, null);
+    public Task Completion { get { lock (sync) return pending; } }
+    public DesktopHandoff Handoff => Volatile.Read(ref handoff);
     public bool IsRegistered => hotkey is not null;
     public bool Start(TakeControlHotkeyGesture? gesture = null)
     {
@@ -26,22 +33,48 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
             return false;
         }
     }
-    public void TakeControl()
+    public void TakeControl() => _ = TakeControlAsync();
+    public Task TakeControlAsync(Guid? targetRunId = null)
     {
-        if (disposed) return;
+        if (disposed) return Task.CompletedTask;
         var owner = desktop.TakeControl(); // Synchronous local gate first, no model/store/UI wait.
-        if (owner is { } runId) _ = PauseOwnerAsync(runId);
+        lock (sync)
+        {
+            if (!pending.IsCompleted) return pending;
+            var runId = owner ?? desktop.Snapshot.HumanControlOwnerRunId ?? targetRunId ??
+                runs.GetRuns().FirstOrDefault(run => !TaskRunStateMachine.IsTerminal(run.Status) && run.Status != RunStatus.Blocked)?.Id;
+            Volatile.Write(ref handoff, new(runId, desktop.Snapshot.Generation, false, null));
+            return pending = PauseOwnerAsync(runId);
+        }
     }
-    private async Task PauseOwnerAsync(Guid runId)
+    private async Task PauseOwnerAsync(Guid? runId)
     {
         try
         {
-            var run = runs.GetRun(runId);
-            if (!TaskRunStateMachine.IsTerminal(run.Status))
-                await runs.PauseAsync(new(Guid.NewGuid(), runId, run.RunVersion, PauseScope.EntireRun), stopping.Token).ConfigureAwait(false);
+            if (runId is { } id)
+            {
+                var run = runs.GetRun(id);
+                if (TaskRunStateMachine.IsTerminal(run.Status)) throw new InvalidOperationException("Run is terminal.");
+                if (run.PauseScope is null)
+                    await runs.PauseAsync(new(Guid.NewGuid(), id, run.RunVersion, PauseScope.EntireRun), stopping.Token).ConfigureAwait(false);
+                await runs.ConfirmDesktopPauseAsync(id, stopping.Token).ConfigureAwait(false);
+            }
+            var snapshot = desktop.Snapshot;
+            if (snapshot.InputCleanupUncertain || snapshot.OwnerRunId is not null || snapshot.State != DesktopAccessState.PausedForUser)
+                throw new DesktopAccessException("DesktopPauseUnconfirmed");
+            Volatile.Write(ref handoff, new(runId, snapshot.Generation, true, null));
         }
         catch (OperationCanceledException) when (stopping.IsCancellationRequested) { }
-        catch (Exception) { logger.LogWarning("Desktop access was revoked; run pause could not be persisted. Manual review required."); }
+        catch (Exception)
+        {
+            Volatile.Write(ref handoff, new(runId, desktop.Snapshot.Generation, false, "PauseUnconfirmed"));
+            if (runId is { } id && desktop.Snapshot.InputCleanupUncertain)
+            {
+                try { await runs.BlockUncertainInputAsync(id, stopping.Token).ConfigureAwait(false); }
+                catch (Exception) { logger.LogWarning("Uncertain input checkpoint could not be saved; desktop remains blocked."); }
+            }
+            logger.LogWarning("Desktop access was revoked; safe pause could not be confirmed. Manual review required.");
+        }
     }
     public void Dispose()
     {

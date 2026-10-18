@@ -21,6 +21,7 @@ public sealed class ControlPanelViewModel
     public string RunTitle => current?.Instructions ?? "No active task";
     public string Progress { get; private set; } = "";
     public string Message { get; private set; } = "";
+    public bool IsControlConfirmed { get; private set; }
     public event PropertyChangedEventHandler? PropertyChanged;
     public AsyncCommand TakeControlCommand { get; }
     public AsyncCommand ResumeCommand { get; }
@@ -34,7 +35,8 @@ public sealed class ControlPanelViewModel
         TakeControlCommand = new(TakeControlAsync, () => !stopping.IsCancellationRequested);
         ResumeCommand = new(() => ControlAsync(false), () => !busy && !stopping.IsCancellationRequested && current is not null &&
             (current.Status is RunStatus.Paused or RunStatus.PausedForUser || current.PauseScope == PauseScope.GuiOnly) &&
-            desktop.Snapshot.State != DesktopAccessState.Pausing);
+            desktop.Snapshot.State != DesktopAccessState.Pausing && !desktop.Snapshot.InputCleanupUncertain &&
+            takeControl.Completion.IsCompleted && takeControl.Handoff.Error is null);
         CancelCommand = new(() => ControlAsync(true), () => !busy && !stopping.IsCancellationRequested && current is not null &&
             !TaskRunStateMachine.IsTerminal(current.Status));
         Refresh();
@@ -44,8 +46,9 @@ public sealed class ControlPanelViewModel
     {
         var snapshot = desktop.Snapshot;
         var active = runs.GetRuns().Where(run => !TaskRunStateMachine.IsTerminal(run.Status)).ToArray();
-        current = snapshot.OwnerRunId is { } owner ? runs.GetRun(owner) :
+        current = (snapshot.OwnerRunId ?? snapshot.HumanControlOwnerRunId) is { } owner ? runs.GetRun(owner) :
             active.FirstOrDefault(run => run.Status != RunStatus.Queued) ?? active.FirstOrDefault();
+        if (current is not null && TaskRunStateMachine.IsTerminal(current.Status)) current = null;
         Status = snapshot.State switch
         {
             DesktopAccessState.Pausing => "Pausing",
@@ -60,8 +63,18 @@ public sealed class ControlPanelViewModel
                 _ => "Running"
             }
         };
-        if (Status == "Paused" && string.IsNullOrEmpty(Message))
-            Message = "New desktop actions blocked. Explicit Resume required.";
+        var handoff = takeControl.Handoff;
+        var wasConfirmed = IsControlConfirmed;
+        IsControlConfirmed = handoff.Confirmed && handoff.Generation == snapshot.Generation &&
+            snapshot.State == DesktopAccessState.PausedForUser && snapshot.OwnerRunId is null &&
+            !snapshot.InputCleanupUncertain && handoff.Error is null;
+        if (snapshot.InputCleanupUncertain || handoff.Error is not null)
+        { Status = "Error"; Message = "Desktop actions blocked; input release or checkpoint could not be confirmed. Manual review required."; }
+        else if (Status == "Paused")
+            Message = IsControlConfirmed
+                ? "Компьютер твой — агент не управляет им."
+                : "New desktop actions blocked. Waiting for safe pause confirmation.";
+        else if (wasConfirmed || Status == "Pausing") Message = "Human handoff is not confirmed; waiting for a safe pause.";
         if (current is not null)
         {
             var events = runs.GetEvents(current.Id);
@@ -69,22 +82,17 @@ public sealed class ControlPanelViewModel
             Progress = $"Steps: {events.Count(e => e.EventType == RunEventType.Progress)}; {last?.ToolId ?? last?.Message ?? "Waiting"}";
         }
         else Progress = "";
-        foreach (var name in new[] { nameof(Status), nameof(RunTitle), nameof(Progress), nameof(Message) })
+        foreach (var name in new[] { nameof(Status), nameof(RunTitle), nameof(Progress), nameof(Message), nameof(IsControlConfirmed) })
             PropertyChanged?.Invoke(this, new(name));
         TakeControlCommand.Refresh(); ResumeCommand.Refresh(); CancelCommand.Refresh();
     }
 
     private async Task TakeControlAsync()
     {
-        takeControl.TakeControl(); // Synchronous local gate even while another UI command is pending.
-        Message = "New desktop actions blocked. Waiting for the task pause boundary.";
+        var completion = takeControl.TakeControlAsync(current?.Id); // Gate closes synchronously before awaiting.
         Refresh();
-        if (busy || current is null || current.PauseScope is not null) return;
-        busy = true;
-        var run = current;
-        try { await commands.PauseAsync(new(Guid.NewGuid(), run.Id, run.RunVersion), stopping); }
-        catch (Exception error) when (IsCommandFailure(error)) { Message = "Desktop blocked; task pause needs review."; }
-        finally { busy = false; Refresh(); }
+        try { await completion; }
+        finally { Refresh(); }
     }
 
     private async Task ControlAsync(bool cancel)

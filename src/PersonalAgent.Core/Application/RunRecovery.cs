@@ -15,6 +15,7 @@ public sealed class RunRecovery(IRunRepository repository)
             var stored = (await repository.GetAsync(summary.Id, cancellationToken))!;
             var previous = stored.Run;
             if (previous.Status == RunStatus.Blocked && previous.ErrorCode == "RecoveryNeedsReview") continue;
+            if (previous.ErrorCode == "InputCleanupUncertain") continue; // Retain failed-release evidence and manual block.
             var unstarted = previous.Status is RunStatus.Created or RunStatus.Queued;
             // Current known-safe runtime is local fake with no tools. Unknown models/tools never auto-start.
             var safe = unstarted && stored.Request.ModelProfileId == "fake" && stored.Request.AllowedToolIds.Count == 0;

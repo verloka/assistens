@@ -1,1131 +1,1300 @@
 {
-  "schema_version": 1,
-  "plan_version": "1.1",
-  "task_states": {
-    "PA-001": {
-      "status": "done",
-      "started_at": "2026-10-18T10:44:56.510767+03:00",
-      "completed_at": "2026-10-18T10:47:44.8935962+03:00",
-      "evidence": [
-        "PersonalAgent.sln; global.json SDK 10.0.401; seven src modules and three xUnit projects; ArchitectureTests validates Core isolation, module boundaries and acyclic references; taskctl report string fixed for PowerShell 5.1 parsing. No business-flow change; FDD not applicable.",
-        "Verification: dotnet build --no-restore: passed on Windows, 0 warnings/errors; dotnet test tests/PersonalAgent.UnitTests --filter ArchitectureTests --no-build: 1 passed; taskctl doctor: 125 tasks valid"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-002": {
-      "status": "done",
-      "started_at": "2026-10-18T10:54:57.4029347+03:00",
-      "completed_at": "2026-10-18T10:54:59.2491646+03:00",
-      "evidence": [
-        "e9c1777; App/Hosting Generic Host DI and lifecycle. User observed the blank WPF window and confirmed closing it. dotnet run --project src/PersonalAgent.App --no-build session 29485 logged HostStarting 1000, Application started, Application is shutting down, HostStopping 1001; process exit code 0.",
-        "Verification: Manual WPF smoke passed with user observation plus actual process logs/exit. Previous validated unchanged code: dotnet build --no-restore 0 warnings/errors; dotnet test --no-build 1 architecture + 4 lifecycle tests passed."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 2
-    },
-    "PA-003": {
-      "status": "done",
-      "started_at": "2026-10-18T10:55:03.3998315+03:00",
-      "completed_at": "2026-10-18T10:58:36.4470583+03:00",
-      "evidence": [
-        "MainWindow.xaml and HealthViewModel show actual host state and hosted components; async diagnostic command supports repeat prevention/shutdown cancellation; HealthScreenTests loads real XAML on STA Dispatcher without showing windows. FDD index records diagnostic scope; all business Draft scenarios remain untested.",
-        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter HealthScreenTests: 2 passed; dotnet build --no-restore: 0 warnings/errors; dotnet test --no-build: 1 architecture + 6 integration tests passed; E2ETests still empty; git diff --cached --check passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-004": {
-      "status": "done",
-      "started_at": "2026-10-18T10:58:39.6958528+03:00",
-      "completed_at": "2026-10-18T11:01:58.4028395+03:00",
-      "evidence": [
-        "Directory.Packages.props central stable pins; Directory.Build.props and all ten packages.lock.json files; SDK references isolated to Agent/Mcp/App; docs/decisions/0001..0003 document verified dependency baseline and planned Windows/secret boundaries. SdkCompatibilityTests loads agent/session and stdio/HTTP types together. Runtime provider/transport behavior deferred explicitly.",
-        "Verification: dotnet restore: passed; dotnet restore --locked-mode: passed; dotnet build --no-restore: 0 warnings/errors; dotnet test --no-build: 1 architecture + 7 integration passed; git diff --cached --check passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-005": {
-      "status": "done",
-      "started_at": "2026-10-18T11:02:02.0489679+03:00",
-      "completed_at": "2026-10-18T11:03:03.1763885+03:00",
-      "evidence": [
-        "Reused existing Unit/Integration/E2E projects, passing architecture smoke and ProbeService/CancellableWorker/recording logger fakes. Added scripts/verify.ps1 (PowerShell 5.1, locked restore/build/test, fail-fast) and tests/README.md with commands and honest empty E2E scope.",
-        "Verification: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: restore passed, build 0 warnings/errors, 1 unit + 7 integration passed; E2E suite empty. git diff --cached --check passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-006": {
-      "status": "done",
-      "started_at": "2026-10-18T11:03:06.4873079+03:00",
-      "completed_at": "2026-10-18T11:06:20.5731308+03:00",
-      "evidence": [
-        "MafToolApprovalSpikeTests plus ScriptedChatClient exercise real MAF 1.25.0 locally: function dispatch/result, approval and denial in one AgentSession, original-argument binding, pre-cancelled run. tests/README.md documents actual API and limitations. FDD-005 and reverse consumers reviewed; business Draft scenarios remain untested; no production policy or paid provider integration is claimed.",
-        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter MafToolApprovalSpikeTests --no-restore: 5 passed. powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 1 unit + 12 integration passed; E2ETests empty. git diff --cached --check passed."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-007": {
-      "status": "done",
-      "started_at": "2026-10-18T13:27:51.8832994+03:00",
-      "completed_at": "2026-10-18T13:30:25.5895943+03:00",
-      "evidence": [
-        "McpTransportSpikeTests and McpTestServer: real SDK 2.2.0 initialize, list/schema, echo call over child-process stdio and loopback Kestrel Streamable HTTP; child shutdown verified. FDD-004 and consumers FDD-001/003/007 inspected: diagnostic scope PASS; business S1-S3 NOT TESTED; all Drafts preserved.",
-        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter McpTransportSpikeTests --no-restore: 2 passed; scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 1 unit + 14 integration passed; E2E suite empty"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-008": {
-      "status": "done",
-      "started_at": "2026-10-18T13:36:48.8122303+03:00",
-      "completed_at": "2026-10-18T13:36:49.3286455+03:00",
-      "evidence": [
-        "4cebc11 attended WindowsSmoke launched at user request; user observed Capture OK 850x700 DPI=120 monitors=1 origin=(0,0), SendInput observed OK one x, WM_HOTKEY observed OK. dotnet run session 41222 exited 0, no fixture process remains. tests/README.md records UIPI/DPI/monitor limits. No production lease or hardware matrix claim.",
-        "Verification: Actual user-operated screenshot/input/hotkey smoke passed on one monitor at 125 percent scale; process closed exit 0. Previously built exact fixture 0 warnings/errors and full suite 24 unit + 14 integration passed. Mixed DPI/multi-monitor/lock/UAC not tested."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 2
-    },
-    "PA-009": {
-      "status": "done",
-      "started_at": "2026-10-18T13:32:43.8734128+03:00",
-      "completed_at": "2026-10-18T13:34:01.4269343+03:00",
-      "evidence": [
-        "Core/Domain/TaskModels.cs SDK-neutral TaskDefinition/TaskRun/Conversation/RunEvent, origin/source links, full plan 9.2 statuses, version and timestamps; DomainSerializationTests JSON graph round-trip and Core assembly isolation. No task execution or durability yet; FDD-001/003/006/007 reviewed; business scenarios remain untested Drafts.",
-        "Verification: DomainSerializationTests 2 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 3 unit + 14 integration passed; E2E empty"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-010": {
-      "status": "done",
-      "started_at": "2026-10-18T13:34:32.3187616+03:00",
-      "completed_at": "2026-10-18T13:36:47.4101773+03:00",
-      "evidence": [
-        "TaskRunStateMachine: explicit transitions, terminal immutability including Interrupted, version conflict detection, UTC timestamps and pause scope; TaskRunStateMachineTests 21 cases. FDD-001/002/003/005/006/007 reviewed; partial domain reference only, business scenarios remain untested Drafts.",
-        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter TaskRun --no-restore: 21 passed; scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 24 unit + 14 integration passed; E2E empty"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-011": {
-      "status": "done",
-      "started_at": "2026-10-18T13:37:14.6074427+03:00",
-      "completed_at": "2026-10-18T13:38:26.6894261+03:00",
-      "evidence": [
-        "Core/Agents/AgentContracts.cs: IAgentRuntime, AgentRequest/context/limits, typed user-visible AgentEvent, structured AgentRunResult/usage/sources/artifacts; no SDK dependencies. AgentContractTests exercises neutral JSON payloads, progress and cancellation signature with local probe. FDD lifecycle/provider boundaries preserved; no production provider acceptance claimed.",
-        "Verification: AgentContractTests 3 passed; scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 27 unit + 14 integration passed; E2E empty"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-012": {
-      "status": "done",
-      "started_at": "2026-10-18T13:38:28.0074825+03:00",
-      "completed_at": "2026-10-18T13:40:10.0074646+03:00",
-      "evidence": [
-        "Agent/FakeAgentRuntime implements IAgentRuntime with deterministic copied script, typed progress, cancellation and async step boundaries, step/duration limits, scripted result/failure. Refuses profiles other than fake and has no tools/network/desktop effects. FDD-001 partial implementation reference; full S1-S3 remain untested Drafts.",
-        "Verification: FakeAgentRuntimeTests 6 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 27 unit + 20 integration passed; E2E empty"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-013": {
-      "status": "done",
-      "started_at": "2026-10-18T13:40:11.3574615+03:00",
-      "completed_at": "2026-10-18T13:44:18.2474176+03:00",
-      "evidence": [
-        "Core/Application TaskCommands and TaskRunCoordinator: shared commands, payload/type-bound idempotency receipts, atomic session-local state/version/events, cancellable pause boundaries. Cancel cannot resume; queued pause resumes to queue only before first start; GuiOnly metadata does not block non-GUI work or grant a desktop lease. Six command tests and two domain regressions. FDD-001/002/003/006/007 reviewed; durable/GUI/E2E not claimed.",
-        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter Commands --no-restore: 6 passed; final scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 35 unit + 20 integration passed; E2E empty"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-014": {
-      "status": "done",
-      "started_at": "2026-10-18T13:44:19.5208117+03:00",
-      "completed_at": "2026-10-18T13:47:59.8564052+03:00",
-      "evidence": [
-        "TaskRunner consumes coordinator queue once with bounded execution, cancellation, sanitized failure and Interrupted shutdown. Coordinator owns snapshots, ordered events/result and pause acknowledgement; terminal status wins late output. TaskRunnerTests 8 cases include 50 duplicate submits once, cancelled queued item, active cancel/late progress, pause/resume or cancel, timeout/next run, shutdown and duplicate consumer. In-memory only; FDD-001 consumers reviewed; no GUI/durable/business E2E claim.",
-        "Verification: TaskRunnerTests 8 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 35 unit + 28 integration passed; E2E empty; staged diff check passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-015": {
-      "status": "done",
-      "started_at": "2026-10-18T13:48:01.6500272+03:00",
-      "completed_at": "2026-10-18T13:52:00.8273403+03:00",
-      "evidence": [
-        "DashboardViewModel uses ITaskCommands and ordered coordinator RunEvent stream; actual MainWindow XAML displays local task status/progress/result and binds submit/pause/resume/cancel. Generic Host composes local FakeAgentRuntime and TaskRunnerService. DashboardTests real XAML/STA checks responsive dispatcher, commands/progress, cancel and shutdown. FDD-001/index updated without Draft promotion or complete business scenario claims.",
-        "Verification: DashboardTests 2 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 35 unit + 30 integration passed including health/host regression; E2E empty; git diff --check passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-016": {
-      "status": "done",
-      "started_at": "2026-10-18T13:52:02.085181+03:00",
-      "completed_at": "2026-10-18T13:54:03.6875847+03:00",
-      "evidence": [
-        "LocalFakeFlowTests real command/coordinator/runner/fake pipeline: duplicate submits, progress, pause, explicit resume/cancel, completed/cancelled/failed result, one attempt and matching ordered streamed/stored history. Concurrent Cancel/Resume unit race 100 iterations and live tool metadata regression added. Existing lifecycle/UI/cancel tests reused. FDD-001 scoped reference; complete business S1-S3 still untested Drafts.",
-        "Verification: LocalFakeFlowTests 3 passed; final scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 36 unit + 31 integration + 3 local fake-flow tests passed; no live MVP E2E acceptance"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-017": {
-      "status": "done",
-      "started_at": "2026-10-18T13:54:04.9681153+03:00",
-      "completed_at": "2026-10-18T13:59:06.4345939+03:00",
-      "evidence": [
-        "Persistence-only EF Core SQLite/Design 10.0.12 context, entities and generated migration/snapshot: TaskDefinitions/Conversations/TaskRuns/RunEvents, restricted FKs, status/date and run-sequence indexes, UTC tick converters, RunVersion concurrency token, payload schema version and append-only DB triggers. Real file schema tests verify migration repeat/reopen/constraints. FDD-007 scoped schema reference; no runtime persistence/recovery claim.",
-        "Verification: PersistenceSchemaTests 3 passed; dotnet-ef migrations has-pending-model-changes reports none; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 34 integration + 3 local fake-flow passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-018": {
-      "status": "done",
-      "started_at": "2026-10-18T13:59:07.8756499+03:00",
-      "completed_at": "2026-10-18T14:02:53.2414387+03:00",
-      "evidence": [
-        "Core IRunRepository plus Persistence SqliteRunRepository: new run/conversation/request/history, coherent read, immutable identity, state-machine validation, RunVersion CAS, atomic event append, structured result/schema guards. PersistenceRepositoryTests real SQLite checks 8 competing writers one winner, stale repeat, real event PK failure rollback, terminal/input mutation and unknown schema refusal. FDD-007 and lifecycle consumers reviewed; runtime integration remains PA-019.",
-        "Verification: PersistenceRepositoryTests 4 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 38 integration + 3 local fake-flow passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-019": {
-      "status": "done",
-      "started_at": "2026-10-18T14:02:54.8486694+03:00",
-      "completed_at": "2026-10-18T14:14:05.9303983+03:00",
-      "evidence": [
-        "Coordinator stages async serialized revisions and commits repository before queue/agent/events/terminal publication; query locks exclude DB I/O. Production WPF entry uses LocalAppData history DB; RunHistoryService migrates/loads finished attempts without replay; Dashboard finished-task selector displays reopened events/result. PersistenceRuntimeTests 7 and restart XAML test cover metadata and save-failure safety. FDD-001/007 scoped PASS; notifications/incomplete recovery remain future Draft scenarios.",
-        "Verification: PersistenceRuntimeTests 7 passed; DashboardTests 3 passed including fresh host/XAML same SQLite file; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 46 integration + 3 local fake-flow passed; diff check passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-020": {
-      "status": "done",
-      "started_at": "2026-10-18T14:14:07.2642026+03:00",
-      "completed_at": "2026-10-18T14:18:04.4027144+03:00",
-      "evidence": [
-        "SDK-free ConversationMessage/AgentSessionSnapshot and IConversationRepository; SQLite message/session entities, generated second migration, strict provider/model/schema checkpoint read and append-only checkpoint API. PersistenceConversationTests reopens ordered history/session metadata, rejects duplicate messages/sequence and cross-conversation run; production DI registration only, no provider restore or inbound flow claimed. FDD-006 storage scaffold reference; all Drafts retained.",
-        "Verification: PersistenceConversationTests + PersistenceSchemaTests 6 passed; dotnet-ef has-pending-model-changes: none; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 49 integration + 3 local fake-flow passed; diff check passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-021": {
-      "status": "done",
-      "started_at": "2026-10-18T14:18:05.6636602+03:00",
-      "completed_at": "2026-10-18T14:28:32.226178+03:00",
-      "evidence": [
-        "Core RunRecovery plus startup integration: started nonterminal attempts become Interrupted with review warning; terminal history unchanged; only unstarted fake/no-tool requests restore once, unknown model/tool sets Blocked. Exclusive DB owner prevents live-run recovery by another host. Actual child-process kill fixture commits synthetic write, one sandbox effect before ack, then no recovered dispatch/repeated effect. XAML shows Interrupted and disabled Resume. No live MCP/SendInput or per-tool OutcomeUnknown claim; FDD Draft scopes retained.",
-        "Verification: PersistenceRecoveryTests 10 passed incl real process kill and 8 interrupted states; DashboardTests 5 passed incl Interrupted XAML and owner protection; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 61 integration + 3 local fake-flow passed; diff check passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-022": {
-      "status": "done",
-      "started_at": "2026-10-18T14:28:33.6414079+03:00",
-      "completed_at": "2026-10-18T14:35:35.0946549+03:00",
-      "evidence": [
-        "Optional namespaced ExternalKey on SubmitTaskCommand, durable source/key/intent hash unique index and GetOrCreate transaction. Default CommandId is durable when no external key; duplicate external payload with new transient IDs returns original run, changed intent conflicts. Memory and SQLite paths agree; concurrent losers roll back run/conversation/events. Redelivery never requeues started/terminal work; lost creation ack permits only original unstarted local/no-tool first execution. FDD-003/007 references scoped; real scheduler/Telegram not claimed.",
-        "Verification: PersistenceIdempotencyTests 7 passed incl 8 competing creators, reopen, one execution, completed non-replay, namespace and lost ack; unit external-key regression passed; EF model has no pending changes; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 37 unit + 68 integration + 3 local fake-flow passed; doctor validates 125 tasks"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-023": {
-      "status": "done",
-      "started_at": "2026-10-18T14:35:36.3586504+03:00",
-      "completed_at": "2026-10-18T14:37:59.1778294+03:00",
-      "evidence": [
-        "Audited/reused real SQLite schema/repository/runtime/conversation/crash/idempotency suites; added PersistenceUpgradeTests only for gaps: real original-schema data upgrades/reapply without history or trigger loss and no invented legacy keys; Created-state recovery known-local/unknown-provider is conservative and repeat-safe. No production behavior change; FDD recovery/lifecycle test coverage reviewed, full business scopes remain untested Drafts.",
-        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter Persistence --no-restore: 37 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 37 unit + 71 integration + 3 local fake-flow passed; diff check passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-024": {
-      "status": "done",
-      "started_at": "2026-10-18T14:38:00.4386866+03:00",
-      "completed_at": "2026-10-18T14:41:06.0132725+03:00",
-      "evidence": [
-        "Core Computer/ScreenContracts.cs SDK/UI-free ScreenPoint/ScreenBounds/ScreenCapture/ScreenshotOptions plus per-monitor DPI metadata: physical negative origins, source vs image geometry, time/generation, bounded coordinate validation and unambiguous capture selection. ScreenContractTests verify DTOs/serialization, not image decode or hardware. FDD-002 and consumers inspected; complete scenarios untested Drafts.",
-        "Verification: ScreenContractTests 3 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 40 unit + 71 integration + 3 local fake-flow passed; architecture/Core isolation regression passed"
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-025": {
-      "status": "done",
-      "started_at": "2026-10-18T14:55:17.8911405+03:00",
-      "completed_at": "2026-10-18T14:55:18.388294+03:00",
-      "evidence": [
-        "abbc530: authorized primary capture, PNG preview and native failure checks; user PRIMARY OK 1920x1080 source=(0,0,1920,1080) DPI120 monitors1 generation1 bytes365729; attended process session37925 exited 0; no files/uploads.",
-        "Verification: Previous unchanged-code scripts/verify.ps1: locked restore/build 0 warnings/errors; 40 unit + 79 integration + 3 local fake-flow passed. WindowsScreenCaptureTests 8 passed. User attended PRIMARY result received; full FDD-002 S1-S4 remain untested."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 2
-    },
-    "PA-026": {
-      "status": "blocked",
-      "started_at": "2026-10-18T14:55:49.7280305+03:00",
-      "completed_at": null,
-      "evidence": [],
-      "note": "User confirmed no second monitor is available. Implementation and 28 fake-native/PNG capture cases complete; scripts/verify.ps1 passed 40 unit + 99 integration + 3 local fake-flow, build 0 warnings/errors. Actual two-display/GDI pixel acceptance remains NOT TESTED and blocked. Following user instruction to continue, PA-027 develops against available capture contracts; PA-026 is an explicit PA-125 release dependency. No hardware success claimed; hardware checklist is in tests/README.md.",
-      "attempts": 1
-    },
-    "PA-027": {
-      "status": "done",
-      "started_at": "2026-10-18T15:04:41.1813889+03:00",
-      "completed_at": "2026-10-18T15:06:02.0572063+03:00",
-      "evidence": [
-        "src/PersonalAgent.Core/Computer/ScreenshotCoordinates.cs: pixel-center mapping, signed physical bounds, no double DPI scaling, inverse mapping, gap and generation rejection. CoordinatesTests.cs 16 cases. FDD-002 S2 foundation and FDD-001/003/007 consumers reviewed; full flows remain untested Drafts.",
-        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter Coordinates --no-restore: 16 passed; scripts/verify.ps1: locked restore/build 0 warnings/errors, 56 unit + 99 integration + 3 local fake-flow passed; git diff --check passed."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-028": {
-      "status": "done",
-      "started_at": "2026-10-18T15:06:16.9874549+03:00",
-      "completed_at": "2026-10-18T15:09:35.0726184+03:00",
-      "evidence": [
-        "Neutral IScreenshotSerializer/options; WindowsScreenshotSerializer in-memory PNG/JPEG, explicit resize, dimension/byte limits, metadata stripping with unchanged physical geometry/time/generation. Agent ScreenshotMessageContent uses actual SDK DataContent. FDD-002 partial S2 reviewed with reverse consumers, full flow/live vision not claimed.",
-        "Verification: ScreenshotSerializationTests 12 passed including final dimension guard, actual PNG pixel fidelity, JPEG decode and SDK message; scripts/verify.ps1 locked restore/build 0 warnings/errors, 56 unit + 111 integration + 3 local fake-flow passed before final guard; final targeted rebuild/test passed. git diff --check passed."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-029": {
-      "status": "done",
-      "started_at": "2026-10-18T16:04:19.6206428+03:00",
-      "completed_at": "2026-10-18T16:06:29.9925714+03:00",
-      "evidence": [
-        "Core IComputerController matches five planned operations; shared test-only FakeComputerController exact scripts/errors/cancellation; synthetic 4x3 PNG and real SDK/codec integration without desktop. FDD-002 foundation verified, reverse FDD-001/003/007 preserved; full S1-S4 NOT TESTED.",
-        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter FakeComputer --no-restore: 4 passed; scripts/verify.ps1 locked restore/build 0 warnings/errors, 60 unit + 112 integration + 3 local fake-flow passed; diff check passed."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-030": {
-      "status": "blocked",
-      "started_at": "2026-10-18T16:06:59.018002+03:00",
-      "completed_at": null,
-      "evidence": [],
-      "note": "Attended visual matrix in tests/README.md: only prior 1920x1080 DPI120 PRIMARY result observed. Two-display/mixed-DPI/window-move and 100/150 percent observations unavailable; user has no second monitor per checkpoint. No capture or settings change performed. Resume with actual attended matrix evidence.",
-      "attempts": 1
-    },
-    "PA-031": {
-      "status": "done",
-      "started_at": "2026-10-18T16:07:00.7642602+03:00",
-      "completed_at": "2026-10-18T16:11:39.6539263+03:00",
-      "evidence": [
-        "Internal WindowsInputSender/WindowsInputNative, bounded balanced atomic batches, default-denied trusted authorization + generation and active Default desktop; process-wide serialization; structured insertion/native/cleanup diagnostics; release-only cleanup and fault latch, no replay/elevation. Existing attended fixture reuses primitive; FDD-002 partial S1/S3/S4 reviewed; full business flow/live path not claimed.",
-        "Verification: ComputerInputSenderTests: initial targeted 17 passed; final scripts/verify.ps1 locked restore/build 0 warnings/errors, 60 unit + 130 integration (18 input cases) + 3 local fake-flow passed; git diff --check and doctor passed. No real input performed."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-032": {
-      "status": "done",
-      "started_at": "2026-10-18T16:20:09.5832844+03:00",
-      "completed_at": "2026-10-18T16:20:10.0878581+03:00",
-      "evidence": [
-        "Actual user-operated WindowsSmoke: CLICK Left OK generation1, Right OK generation2, Middle OK generation3; physical (479,474), observed=2 each; extra Left/Middle generations4/5 also OK. Native target PreviewMouseDown/Up ChangedButton exact comparison inspected. Session53688 exit0. FDD-002 scoped click acceptance PASS; full S1-S4 remain NOT TESTED/Draft.",
-        "Verification: Attended test result supplied by user for all3 buttons, diagnostic exit0. Unchanged implementation at d9cd372: 23 ComputerClick +18 ComputerInputSender tests passed; full verify build0 warnings/errors,60 unit+153 integration+3 local fake-flow. No new code or duplicate native test run."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 2
-    },
-    "PA-033": {
-      "status": "done",
-      "started_at": "2026-10-18T16:31:11.2785578+03:00",
-      "completed_at": "2026-10-18T16:31:11.8983526+03:00",
-      "evidence": [
-        "Actual WindowsSmoke user SCROLL Down/Up/Left/Right OK, observed1 each, actual deltas-240/+240, offsets(400,400)->(400,464)/(400,336)/(336,400)/(464,400), physical(718,629), exec74122 exit0. Scoped FDD-002 scroll acceptance PASS; full S1-S4 remain NOT TESTED/Draft.",
-        "Verification: Actual user-operated native wheel and offset result for all4 directions; code unchanged at a296e6a. Prior 19 scroll+23 click+18 primitive tests passed; scripts/verify.ps1 build0warnings/errors,60unit+172integration+3localfake passed. No duplicate real input."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 2
-    },
-    "PA-034": {
-      "status": "done",
-      "started_at": "2026-10-18T16:43:00.3279456+03:00",
-      "completed_at": "2026-10-18T16:43:00.8126361+03:00",
-      "evidence": [
-        "Actual corrected WindowsSmoke TYPE TEXT OK,canceledFalse,calls6,42/42; TYPE CANCEL OK,canceledTrue,calls1,15/15. User evidence,exec3014 exit0. Isolated Tab/Enter fix verified in real field; scoped FDD-002 Type PASS; fullS1-S4 Draft/NOT TESTED.",
-        "Verification: Actual user-operated full Unicode/multiline/tab and deterministic between-chunk cancellation reports. Unchanged3e19c71 verify0warnings/errors,60unit+198integration+3fake-flow passed;4 tab/control regressions red-before/green-after; unshown real WPF filter regression passed. No duplicate live typing."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 3
-    },
-    "PA-035": {
-      "status": "done",
-      "started_at": "2026-10-18T16:43:02.1412503+03:00",
-      "completed_at": "2026-10-18T16:47:34.2010664+03:00",
-      "evidence": [
-        "WindowsKeyboardInput.PressKeyAsync canonical known chords, explicit trusted default-denied chord policy, preexisting user-key protection, native extended flags and shared balanced batch/release-only cleanup. ComputerPressKeyTests tracks key state across every partial prefix/native exception/cancel; FDD-002 scoped invariants reviewed, full live takeover not claimed.",
-        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter ComputerPressKey|ComputerType|ComputerInputSender --no-restore:72passed; scripts/verify.ps1 locked restore/build0warnings/errors,60unit+227integration+3localfake-flow passed (29PressKey cases). No real chord injected; diff check passed."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-036": {
-      "status": "done",
-      "started_at": "2026-10-18T16:47:35.0214467+03:00",
-      "completed_at": "2026-10-18T16:50:06.6846656+03:00",
-      "evidence": [
-        "Audited existing shared sender balanced atomic sections,cancel boundaries,release-only cleanup and fault latch; no duplicate implementation. New InputSafetyTests statefully cover partial/unknown mouse/text/chord failure,cross-method refusal and queued failure. Cleanup denial/lock explicitly unknown,never false release. FDD-002 scoped driver audit PASS; full production takeover untested.",
-        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter InputSafety --no-restore:10passed; scripts/verify.ps1 locked restore/build0warnings/errors,60unit+237integration+3localfake-flow passed. No native desktop input. git diff --check passed."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-037": {
-      "status": "done",
-      "started_at": "2026-10-18T17:56:32.0213531+03:00",
-      "completed_at": "2026-10-18T17:57:08.8162058+03:00",
-      "evidence": [
-        "WindowsSmoke repeatable own-target Click/Scroll/Type/PressKey harness; prior actual click/scroll/type reports in LOG; user KEY Ctrl+A OK selectedChars=26 totalChars=26 modifiersReleased=True. Exec89941 exited0. FDD-002 scoped harness PASS; full scenarios Draft/untested.",
-        "Verification: Actual attended KEY result passed; previous unchanged-code verify333tests passed/build0warnings/errors at3ccbf95. No automatic native input performed."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 2
-    },
-    "PA-038": {
-      "status": "done",
-      "started_at": "2026-10-18T17:57:22.2594787+03:00",
-      "completed_at": "2026-10-18T17:58:26.1459988+03:00",
-      "evidence": [
-        "Audited existing ComputerClick/Scroll/Type/PressKey/InputSender/TextBoxInput, InputSafety and DesktopAccessDriver tests. Bounds/special keys/cleanup/partial failure/cancel/native error5 already covered; no duplicate code/tests. Actual own-target harness accepted PA-037. Full FDD scenarios remain Draft/untested; real UIPI not claimed.",
-        "Verification: dotnet test --filter Computer --no-restore:4unit+116integration passed; InputSafety|DesktopAccessDriver:19passed. scripts/verify.ps1 locked restore/build0warnings/errors,76unit+254integration+3localfake-flow passed on Windows."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-039": {
-      "status": "done",
-      "started_at": "2026-10-18T16:50:55.4282553+03:00",
-      "completed_at": "2026-10-18T16:55:20.8229379+03:00",
-      "evidence": [
-        "Core IDesktopAccessCoordinator,opaque DesktopLease,default-denied trusted admission,one owner,idempotent same-run acquire,monotonic in-process generation and grant-bound release. Concurrent24runs->one grant,stale/foreign release rejected. FDD-002 scoped foundation PASS; atomic/pause/idle/resume integration still later.",
-        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter DesktopAccess --no-restore:7passed(6newownership+existingGUI-pause regression); scripts/verify.ps1 locked restore/build0warnings/errors,66unit+237integration+3localfake-flow passed; diff check passed. No screen/native dependencies."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-040": {
-      "status": "done",
-      "started_at": "2026-10-18T16:55:21.6762251+03:00",
-      "completed_at": "2026-10-18T16:59:16.8832108+03:00",
-      "evidence": [
-        "Opaque lease EnterAtomic/RevokeAsync gate; release waits for active native work+cleanup and revoked owner remains reserved. Bound capture/mouse/keyboard constructors check lease at native entry; each text chunk separate. Forced preflight-entry races reject both input/capture. FDD-002 scoped gate PASS; production hotkey/task pause still later.",
-        "Verification: Unit DesktopAccess9passed; integration DesktopAccess9passed plus InputSafety10passed. scripts/verify.ps1 locked restore/build0warnings/errors,68unit+246integration+3localfake-flow passed; diff check passed. Fake native/codec only,no physical GUI input."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-041": {
-      "status": "done",
-      "started_at": "2026-10-18T16:59:17.7708561+03:00",
-      "completed_at": "2026-10-18T17:05:59.4871064+03:00",
-      "evidence": [
-        "Task commands bind GUI-only/EntireRun/cancel/resume to separate desktop resource state; trusted RunStepAccess gates GUI/write/dependent vs independent permitted read boundaries. Resume invalidates old grant; Skip distinct unstartedqueued terminal outcome. Actual SQLite reopen retains GUI-pause lease/blocking. FDD-001/002/003/007 scoped semantics PASS,real MCP/hotkey/safe resume still untested.",
-        "Verification: PauseScope/DesktopAccess/TaskCommands unit21passed; PauseScope/PersistenceRuntime/Dashboard/DesktopAccess integration22passed. Final scripts/verify.ps1 locked restore/build0warnings/errors,73unit+247integration+3localfake-flow passed; diff check passed. No real MCP/GUI actions."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 1
-    },
-    "PA-042": {
-      "status": "done",
-      "started_at": "2026-10-18T18:01:45.0834959+03:00",
-      "completed_at": "2026-10-18T18:01:45.6512175+03:00",
-      "evidence": [
-        "User actual WindowsSmoke report TAKE CONTROL OK outsideFocus=True minimized=True gateClosed=True fakeActions=146->146. Exec80557 exited0. Real message-only HWND/RegisterHotKey callback synchronously closes Core gate; App pause persistence tested separately; full native input takeover/resume remains PA-048.",
-        "Verification: Actual attended minimized/outside-focus hotkey PASS. Unchanged hotkey code3ccbf95 and final verify333tests/build0warnings/errors at2e5d9f7. No repeated native input/capture triggered."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 2
-    },
-    "PA-043": {
-      "status": "done",
-      "started_at": "2026-10-18T18:16:06.1234259+03:00",
-      "completed_at": "2026-10-18T18:16:06.6007486+03:00",
-      "evidence": [
-        "User confirmed all requested close-to-tray/TakeControl/Controls Paused/Open/Exit checks succeeded, reported missing distinct icon. Exec34756 exited0. Replaced SystemIcons.Application with generated abstract arrow multi-size embedded icon across EXE/WPF/tray; owned native icon disposed. Existing XAML/command and tray fake tests retained.",
-        "Verification: Actual attended tray checks confirmed by user. DesktopShell|HealthScreen7passed after icon integration; original full verify338passed. ICO16px and compiled EXE embedded icon decode succeeded; source PNG inspected. Full FDD/E2E remains Draft/untested."
-      ],
-      "note": "Acceptance verified",
-      "attempts": 2
-    },
-    "PA-044": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-045": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-046": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-047": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-048": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-049": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-050": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-051": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-052": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-053": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-054": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-055": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-056": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-057": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-058": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-059": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-060": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-061": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-062": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-063": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-064": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-065": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-066": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-067": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-068": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-069": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-070": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-071": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-072": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-073": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-074": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-075": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-076": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-077": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-078": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-079": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-080": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-081": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-082": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-083": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-084": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-085": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-086": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-087": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-088": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-089": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-090": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-091": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-092": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-093": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-094": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-095": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-096": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-097": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-098": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-099": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-100": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-101": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-102": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-103": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-104": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-105": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-106": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-107": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-108": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-109": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-110": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-111": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-112": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-113": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-114": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-115": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-116": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-117": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-118": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-119": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-120": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-121": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-122": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-123": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-124": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    },
-    "PA-125": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "evidence": [],
-      "note": null,
-      "attempts": 0
-    }
-  },
-  "last_task_id": "PA-043",
-  "updated_at": "2026-10-18T18:16:06.6107624+03:00"
+    "schema_version":  1,
+    "plan_version":  "1.1",
+    "task_states":  {
+                        "PA-001":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:44:56.510767+03:00",
+                                       "completed_at":  "2026-10-18T10:47:44.8935962+03:00",
+                                       "evidence":  [
+                                                        "PersonalAgent.sln; global.json SDK 10.0.401; seven src modules and three xUnit projects; ArchitectureTests validates Core isolation, module boundaries and acyclic references; taskctl report string fixed for PowerShell 5.1 parsing. No business-flow change; FDD not applicable.",
+                                                        "Verification: dotnet build --no-restore: passed on Windows, 0 warnings/errors; dotnet test tests/PersonalAgent.UnitTests --filter ArchitectureTests --no-build: 1 passed; taskctl doctor: 125 tasks valid"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-002":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:54:57.4029347+03:00",
+                                       "completed_at":  "2026-10-18T10:54:59.2491646+03:00",
+                                       "evidence":  [
+                                                        "e9c1777; App/Hosting Generic Host DI and lifecycle. User observed the blank WPF window and confirmed closing it. dotnet run --project src/PersonalAgent.App --no-build session 29485 logged HostStarting 1000, Application started, Application is shutting down, HostStopping 1001; process exit code 0.",
+                                                        "Verification: Manual WPF smoke passed with user observation plus actual process logs/exit. Previous validated unchanged code: dotnet build --no-restore 0 warnings/errors; dotnet test --no-build 1 architecture + 4 lifecycle tests passed."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
+                                   },
+                        "PA-003":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:55:03.3998315+03:00",
+                                       "completed_at":  "2026-10-18T10:58:36.4470583+03:00",
+                                       "evidence":  [
+                                                        "MainWindow.xaml and HealthViewModel show actual host state and hosted components; async diagnostic command supports repeat prevention/shutdown cancellation; HealthScreenTests loads real XAML on STA Dispatcher without showing windows. FDD index records diagnostic scope; all business Draft scenarios remain untested.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter HealthScreenTests: 2 passed; dotnet build --no-restore: 0 warnings/errors; dotnet test --no-build: 1 architecture + 6 integration tests passed; E2ETests still empty; git diff --cached --check passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-004":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:58:39.6958528+03:00",
+                                       "completed_at":  "2026-10-18T11:01:58.4028395+03:00",
+                                       "evidence":  [
+                                                        "Directory.Packages.props central stable pins; Directory.Build.props and all ten packages.lock.json files; SDK references isolated to Agent/Mcp/App; docs/decisions/0001..0003 document verified dependency baseline and planned Windows/secret boundaries. SdkCompatibilityTests loads agent/session and stdio/HTTP types together. Runtime provider/transport behavior deferred explicitly.",
+                                                        "Verification: dotnet restore: passed; dotnet restore --locked-mode: passed; dotnet build --no-restore: 0 warnings/errors; dotnet test --no-build: 1 architecture + 7 integration passed; git diff --cached --check passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-005":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T11:02:02.0489679+03:00",
+                                       "completed_at":  "2026-10-18T11:03:03.1763885+03:00",
+                                       "evidence":  [
+                                                        "Reused existing Unit/Integration/E2E projects, passing architecture smoke and ProbeService/CancellableWorker/recording logger fakes. Added scripts/verify.ps1 (PowerShell 5.1, locked restore/build/test, fail-fast) and tests/README.md with commands and honest empty E2E scope.",
+                                                        "Verification: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: restore passed, build 0 warnings/errors, 1 unit + 7 integration passed; E2E suite empty. git diff --cached --check passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-006":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T11:03:06.4873079+03:00",
+                                       "completed_at":  "2026-10-18T11:06:20.5731308+03:00",
+                                       "evidence":  [
+                                                        "MafToolApprovalSpikeTests plus ScriptedChatClient exercise real MAF 1.25.0 locally: function dispatch/result, approval and denial in one AgentSession, original-argument binding, pre-cancelled run. tests/README.md documents actual API and limitations. FDD-005 and reverse consumers reviewed; business Draft scenarios remain untested; no production policy or paid provider integration is claimed.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter MafToolApprovalSpikeTests --no-restore: 5 passed. powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 1 unit + 12 integration passed; E2ETests empty. git diff --cached --check passed."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-007":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:27:51.8832994+03:00",
+                                       "completed_at":  "2026-10-18T13:30:25.5895943+03:00",
+                                       "evidence":  [
+                                                        "McpTransportSpikeTests and McpTestServer: real SDK 2.2.0 initialize, list/schema, echo call over child-process stdio and loopback Kestrel Streamable HTTP; child shutdown verified. FDD-004 and consumers FDD-001/003/007 inspected: diagnostic scope PASS; business S1-S3 NOT TESTED; all Drafts preserved.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter McpTransportSpikeTests --no-restore: 2 passed; scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 1 unit + 14 integration passed; E2E suite empty"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-008":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:36:48.8122303+03:00",
+                                       "completed_at":  "2026-10-18T13:36:49.3286455+03:00",
+                                       "evidence":  [
+                                                        "4cebc11 attended WindowsSmoke launched at user request; user observed Capture OK 850x700 DPI=120 monitors=1 origin=(0,0), SendInput observed OK one x, WM_HOTKEY observed OK. dotnet run session 41222 exited 0, no fixture process remains. tests/README.md records UIPI/DPI/monitor limits. No production lease or hardware matrix claim.",
+                                                        "Verification: Actual user-operated screenshot/input/hotkey smoke passed on one monitor at 125 percent scale; process closed exit 0. Previously built exact fixture 0 warnings/errors and full suite 24 unit + 14 integration passed. Mixed DPI/multi-monitor/lock/UAC not tested."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
+                                   },
+                        "PA-009":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:32:43.8734128+03:00",
+                                       "completed_at":  "2026-10-18T13:34:01.4269343+03:00",
+                                       "evidence":  [
+                                                        "Core/Domain/TaskModels.cs SDK-neutral TaskDefinition/TaskRun/Conversation/RunEvent, origin/source links, full plan 9.2 statuses, version and timestamps; DomainSerializationTests JSON graph round-trip and Core assembly isolation. No task execution or durability yet; FDD-001/003/006/007 reviewed; business scenarios remain untested Drafts.",
+                                                        "Verification: DomainSerializationTests 2 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 3 unit + 14 integration passed; E2E empty"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-010":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:34:32.3187616+03:00",
+                                       "completed_at":  "2026-10-18T13:36:47.4101773+03:00",
+                                       "evidence":  [
+                                                        "TaskRunStateMachine: explicit transitions, terminal immutability including Interrupted, version conflict detection, UTC timestamps and pause scope; TaskRunStateMachineTests 21 cases. FDD-001/002/003/005/006/007 reviewed; partial domain reference only, business scenarios remain untested Drafts.",
+                                                        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter TaskRun --no-restore: 21 passed; scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 24 unit + 14 integration passed; E2E empty"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-011":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:37:14.6074427+03:00",
+                                       "completed_at":  "2026-10-18T13:38:26.6894261+03:00",
+                                       "evidence":  [
+                                                        "Core/Agents/AgentContracts.cs: IAgentRuntime, AgentRequest/context/limits, typed user-visible AgentEvent, structured AgentRunResult/usage/sources/artifacts; no SDK dependencies. AgentContractTests exercises neutral JSON payloads, progress and cancellation signature with local probe. FDD lifecycle/provider boundaries preserved; no production provider acceptance claimed.",
+                                                        "Verification: AgentContractTests 3 passed; scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 27 unit + 14 integration passed; E2E empty"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-012":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:38:28.0074825+03:00",
+                                       "completed_at":  "2026-10-18T13:40:10.0074646+03:00",
+                                       "evidence":  [
+                                                        "Agent/FakeAgentRuntime implements IAgentRuntime with deterministic copied script, typed progress, cancellation and async step boundaries, step/duration limits, scripted result/failure. Refuses profiles other than fake and has no tools/network/desktop effects. FDD-001 partial implementation reference; full S1-S3 remain untested Drafts.",
+                                                        "Verification: FakeAgentRuntimeTests 6 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 27 unit + 20 integration passed; E2E empty"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-013":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:40:11.3574615+03:00",
+                                       "completed_at":  "2026-10-18T13:44:18.2474176+03:00",
+                                       "evidence":  [
+                                                        "Core/Application TaskCommands and TaskRunCoordinator: shared commands, payload/type-bound idempotency receipts, atomic session-local state/version/events, cancellable pause boundaries. Cancel cannot resume; queued pause resumes to queue only before first start; GuiOnly metadata does not block non-GUI work or grant a desktop lease. Six command tests and two domain regressions. FDD-001/002/003/006/007 reviewed; durable/GUI/E2E not claimed.",
+                                                        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter Commands --no-restore: 6 passed; final scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 35 unit + 20 integration passed; E2E empty"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-014":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:44:19.5208117+03:00",
+                                       "completed_at":  "2026-10-18T13:47:59.8564052+03:00",
+                                       "evidence":  [
+                                                        "TaskRunner consumes coordinator queue once with bounded execution, cancellation, sanitized failure and Interrupted shutdown. Coordinator owns snapshots, ordered events/result and pause acknowledgement; terminal status wins late output. TaskRunnerTests 8 cases include 50 duplicate submits once, cancelled queued item, active cancel/late progress, pause/resume or cancel, timeout/next run, shutdown and duplicate consumer. In-memory only; FDD-001 consumers reviewed; no GUI/durable/business E2E claim.",
+                                                        "Verification: TaskRunnerTests 8 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 35 unit + 28 integration passed; E2E empty; staged diff check passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-015":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:48:01.6500272+03:00",
+                                       "completed_at":  "2026-10-18T13:52:00.8273403+03:00",
+                                       "evidence":  [
+                                                        "DashboardViewModel uses ITaskCommands and ordered coordinator RunEvent stream; actual MainWindow XAML displays local task status/progress/result and binds submit/pause/resume/cancel. Generic Host composes local FakeAgentRuntime and TaskRunnerService. DashboardTests real XAML/STA checks responsive dispatcher, commands/progress, cancel and shutdown. FDD-001/index updated without Draft promotion or complete business scenario claims.",
+                                                        "Verification: DashboardTests 2 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 35 unit + 30 integration passed including health/host regression; E2E empty; git diff --check passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-016":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:52:02.085181+03:00",
+                                       "completed_at":  "2026-10-18T13:54:03.6875847+03:00",
+                                       "evidence":  [
+                                                        "LocalFakeFlowTests real command/coordinator/runner/fake pipeline: duplicate submits, progress, pause, explicit resume/cancel, completed/cancelled/failed result, one attempt and matching ordered streamed/stored history. Concurrent Cancel/Resume unit race 100 iterations and live tool metadata regression added. Existing lifecycle/UI/cancel tests reused. FDD-001 scoped reference; complete business S1-S3 still untested Drafts.",
+                                                        "Verification: LocalFakeFlowTests 3 passed; final scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 36 unit + 31 integration + 3 local fake-flow tests passed; no live MVP E2E acceptance"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-017":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:54:04.9681153+03:00",
+                                       "completed_at":  "2026-10-18T13:59:06.4345939+03:00",
+                                       "evidence":  [
+                                                        "Persistence-only EF Core SQLite/Design 10.0.12 context, entities and generated migration/snapshot: TaskDefinitions/Conversations/TaskRuns/RunEvents, restricted FKs, status/date and run-sequence indexes, UTC tick converters, RunVersion concurrency token, payload schema version and append-only DB triggers. Real file schema tests verify migration repeat/reopen/constraints. FDD-007 scoped schema reference; no runtime persistence/recovery claim.",
+                                                        "Verification: PersistenceSchemaTests 3 passed; dotnet-ef migrations has-pending-model-changes reports none; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 34 integration + 3 local fake-flow passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-018":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:59:07.8756499+03:00",
+                                       "completed_at":  "2026-10-18T14:02:53.2414387+03:00",
+                                       "evidence":  [
+                                                        "Core IRunRepository plus Persistence SqliteRunRepository: new run/conversation/request/history, coherent read, immutable identity, state-machine validation, RunVersion CAS, atomic event append, structured result/schema guards. PersistenceRepositoryTests real SQLite checks 8 competing writers one winner, stale repeat, real event PK failure rollback, terminal/input mutation and unknown schema refusal. FDD-007 and lifecycle consumers reviewed; runtime integration remains PA-019.",
+                                                        "Verification: PersistenceRepositoryTests 4 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 38 integration + 3 local fake-flow passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-019":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T14:02:54.8486694+03:00",
+                                       "completed_at":  "2026-10-18T14:14:05.9303983+03:00",
+                                       "evidence":  [
+                                                        "Coordinator stages async serialized revisions and commits repository before queue/agent/events/terminal publication; query locks exclude DB I/O. Production WPF entry uses LocalAppData history DB; RunHistoryService migrates/loads finished attempts without replay; Dashboard finished-task selector displays reopened events/result. PersistenceRuntimeTests 7 and restart XAML test cover metadata and save-failure safety. FDD-001/007 scoped PASS; notifications/incomplete recovery remain future Draft scenarios.",
+                                                        "Verification: PersistenceRuntimeTests 7 passed; DashboardTests 3 passed including fresh host/XAML same SQLite file; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 46 integration + 3 local fake-flow passed; diff check passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-020":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T14:14:07.2642026+03:00",
+                                       "completed_at":  "2026-10-18T14:18:04.4027144+03:00",
+                                       "evidence":  [
+                                                        "SDK-free ConversationMessage/AgentSessionSnapshot and IConversationRepository; SQLite message/session entities, generated second migration, strict provider/model/schema checkpoint read and append-only checkpoint API. PersistenceConversationTests reopens ordered history/session metadata, rejects duplicate messages/sequence and cross-conversation run; production DI registration only, no provider restore or inbound flow claimed. FDD-006 storage scaffold reference; all Drafts retained.",
+                                                        "Verification: PersistenceConversationTests + PersistenceSchemaTests 6 passed; dotnet-ef has-pending-model-changes: none; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 49 integration + 3 local fake-flow passed; diff check passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-021":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T14:18:05.6636602+03:00",
+                                       "completed_at":  "2026-10-18T14:28:32.226178+03:00",
+                                       "evidence":  [
+                                                        "Core RunRecovery plus startup integration: started nonterminal attempts become Interrupted with review warning; terminal history unchanged; only unstarted fake/no-tool requests restore once, unknown model/tool sets Blocked. Exclusive DB owner prevents live-run recovery by another host. Actual child-process kill fixture commits synthetic write, one sandbox effect before ack, then no recovered dispatch/repeated effect. XAML shows Interrupted and disabled Resume. No live MCP/SendInput or per-tool OutcomeUnknown claim; FDD Draft scopes retained.",
+                                                        "Verification: PersistenceRecoveryTests 10 passed incl real process kill and 8 interrupted states; DashboardTests 5 passed incl Interrupted XAML and owner protection; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 61 integration + 3 local fake-flow passed; diff check passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-022":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T14:28:33.6414079+03:00",
+                                       "completed_at":  "2026-10-18T14:35:35.0946549+03:00",
+                                       "evidence":  [
+                                                        "Optional namespaced ExternalKey on SubmitTaskCommand, durable source/key/intent hash unique index and GetOrCreate transaction. Default CommandId is durable when no external key; duplicate external payload with new transient IDs returns original run, changed intent conflicts. Memory and SQLite paths agree; concurrent losers roll back run/conversation/events. Redelivery never requeues started/terminal work; lost creation ack permits only original unstarted local/no-tool first execution. FDD-003/007 references scoped; real scheduler/Telegram not claimed.",
+                                                        "Verification: PersistenceIdempotencyTests 7 passed incl 8 competing creators, reopen, one execution, completed non-replay, namespace and lost ack; unit external-key regression passed; EF model has no pending changes; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 37 unit + 68 integration + 3 local fake-flow passed; doctor validates 125 tasks"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-023":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T14:35:36.3586504+03:00",
+                                       "completed_at":  "2026-10-18T14:37:59.1778294+03:00",
+                                       "evidence":  [
+                                                        "Audited/reused real SQLite schema/repository/runtime/conversation/crash/idempotency suites; added PersistenceUpgradeTests only for gaps: real original-schema data upgrades/reapply without history or trigger loss and no invented legacy keys; Created-state recovery known-local/unknown-provider is conservative and repeat-safe. No production behavior change; FDD recovery/lifecycle test coverage reviewed, full business scopes remain untested Drafts.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter Persistence --no-restore: 37 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 37 unit + 71 integration + 3 local fake-flow passed; diff check passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-024":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T14:38:00.4386866+03:00",
+                                       "completed_at":  "2026-10-18T14:41:06.0132725+03:00",
+                                       "evidence":  [
+                                                        "Core Computer/ScreenContracts.cs SDK/UI-free ScreenPoint/ScreenBounds/ScreenCapture/ScreenshotOptions plus per-monitor DPI metadata: physical negative origins, source vs image geometry, time/generation, bounded coordinate validation and unambiguous capture selection. ScreenContractTests verify DTOs/serialization, not image decode or hardware. FDD-002 and consumers inspected; complete scenarios untested Drafts.",
+                                                        "Verification: ScreenContractTests 3 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 40 unit + 71 integration + 3 local fake-flow passed; architecture/Core isolation regression passed"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-025":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T14:55:17.8911405+03:00",
+                                       "completed_at":  "2026-10-18T14:55:18.388294+03:00",
+                                       "evidence":  [
+                                                        "abbc530: authorized primary capture, PNG preview and native failure checks; user PRIMARY OK 1920x1080 source=(0,0,1920,1080) DPI120 monitors1 generation1 bytes365729; attended process session37925 exited 0; no files/uploads.",
+                                                        "Verification: Previous unchanged-code scripts/verify.ps1: locked restore/build 0 warnings/errors; 40 unit + 79 integration + 3 local fake-flow passed. WindowsScreenCaptureTests 8 passed. User attended PRIMARY result received; full FDD-002 S1-S4 remain untested."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
+                                   },
+                        "PA-026":  {
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T14:55:49.7280305+03:00",
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  "User confirmed no second monitor is available. Implementation and 28 fake-native/PNG capture cases complete; scripts/verify.ps1 passed 40 unit + 99 integration + 3 local fake-flow, build 0 warnings/errors. Actual two-display/GDI pixel acceptance remains NOT TESTED and blocked. Following user instruction to continue, PA-027 develops against available capture contracts; PA-026 is an explicit PA-125 release dependency. No hardware success claimed; hardware checklist is in tests/README.md.",
+                                       "attempts":  1
+                                   },
+                        "PA-027":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T15:04:41.1813889+03:00",
+                                       "completed_at":  "2026-10-18T15:06:02.0572063+03:00",
+                                       "evidence":  [
+                                                        "src/PersonalAgent.Core/Computer/ScreenshotCoordinates.cs: pixel-center mapping, signed physical bounds, no double DPI scaling, inverse mapping, gap and generation rejection. CoordinatesTests.cs 16 cases. FDD-002 S2 foundation and FDD-001/003/007 consumers reviewed; full flows remain untested Drafts.",
+                                                        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter Coordinates --no-restore: 16 passed; scripts/verify.ps1: locked restore/build 0 warnings/errors, 56 unit + 99 integration + 3 local fake-flow passed; git diff --check passed."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-028":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T15:06:16.9874549+03:00",
+                                       "completed_at":  "2026-10-18T15:09:35.0726184+03:00",
+                                       "evidence":  [
+                                                        "Neutral IScreenshotSerializer/options; WindowsScreenshotSerializer in-memory PNG/JPEG, explicit resize, dimension/byte limits, metadata stripping with unchanged physical geometry/time/generation. Agent ScreenshotMessageContent uses actual SDK DataContent. FDD-002 partial S2 reviewed with reverse consumers, full flow/live vision not claimed.",
+                                                        "Verification: ScreenshotSerializationTests 12 passed including final dimension guard, actual PNG pixel fidelity, JPEG decode and SDK message; scripts/verify.ps1 locked restore/build 0 warnings/errors, 56 unit + 111 integration + 3 local fake-flow passed before final guard; final targeted rebuild/test passed. git diff --check passed."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-029":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T16:04:19.6206428+03:00",
+                                       "completed_at":  "2026-10-18T16:06:29.9925714+03:00",
+                                       "evidence":  [
+                                                        "Core IComputerController matches five planned operations; shared test-only FakeComputerController exact scripts/errors/cancellation; synthetic 4x3 PNG and real SDK/codec integration without desktop. FDD-002 foundation verified, reverse FDD-001/003/007 preserved; full S1-S4 NOT TESTED.",
+                                                        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter FakeComputer --no-restore: 4 passed; scripts/verify.ps1 locked restore/build 0 warnings/errors, 60 unit + 112 integration + 3 local fake-flow passed; diff check passed."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-030":  {
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T16:06:59.018002+03:00",
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  "Attended visual matrix in tests/README.md: only prior 1920x1080 DPI120 PRIMARY result observed. Two-display/mixed-DPI/window-move and 100/150 percent observations unavailable; user has no second monitor per checkpoint. No capture or settings change performed. Resume with actual attended matrix evidence.",
+                                       "attempts":  1
+                                   },
+                        "PA-031":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T16:07:00.7642602+03:00",
+                                       "completed_at":  "2026-10-18T16:11:39.6539263+03:00",
+                                       "evidence":  [
+                                                        "Internal WindowsInputSender/WindowsInputNative, bounded balanced atomic batches, default-denied trusted authorization + generation and active Default desktop; process-wide serialization; structured insertion/native/cleanup diagnostics; release-only cleanup and fault latch, no replay/elevation. Existing attended fixture reuses primitive; FDD-002 partial S1/S3/S4 reviewed; full business flow/live path not claimed.",
+                                                        "Verification: ComputerInputSenderTests: initial targeted 17 passed; final scripts/verify.ps1 locked restore/build 0 warnings/errors, 60 unit + 130 integration (18 input cases) + 3 local fake-flow passed; git diff --check and doctor passed. No real input performed."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-032":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T16:20:09.5832844+03:00",
+                                       "completed_at":  "2026-10-18T16:20:10.0878581+03:00",
+                                       "evidence":  [
+                                                        "Actual user-operated WindowsSmoke: CLICK Left OK generation1, Right OK generation2, Middle OK generation3; physical (479,474), observed=2 each; extra Left/Middle generations4/5 also OK. Native target PreviewMouseDown/Up ChangedButton exact comparison inspected. Session53688 exit0. FDD-002 scoped click acceptance PASS; full S1-S4 remain NOT TESTED/Draft.",
+                                                        "Verification: Attended test result supplied by user for all3 buttons, diagnostic exit0. Unchanged implementation at d9cd372: 23 ComputerClick +18 ComputerInputSender tests passed; full verify build0 warnings/errors,60 unit+153 integration+3 local fake-flow. No new code or duplicate native test run."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
+                                   },
+                        "PA-033":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T16:31:11.2785578+03:00",
+                                       "completed_at":  "2026-10-18T16:31:11.8983526+03:00",
+                                       "evidence":  [
+                                                        "Actual WindowsSmoke user SCROLL Down/Up/Left/Right OK, observed1 each, actual deltas-240/+240, offsets(400,400)-\u003e(400,464)/(400,336)/(336,400)/(464,400), physical(718,629), exec74122 exit0. Scoped FDD-002 scroll acceptance PASS; full S1-S4 remain NOT TESTED/Draft.",
+                                                        "Verification: Actual user-operated native wheel and offset result for all4 directions; code unchanged at a296e6a. Prior 19 scroll+23 click+18 primitive tests passed; scripts/verify.ps1 build0warnings/errors,60unit+172integration+3localfake passed. No duplicate real input."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
+                                   },
+                        "PA-034":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T16:43:00.3279456+03:00",
+                                       "completed_at":  "2026-10-18T16:43:00.8126361+03:00",
+                                       "evidence":  [
+                                                        "Actual corrected WindowsSmoke TYPE TEXT OK,canceledFalse,calls6,42/42; TYPE CANCEL OK,canceledTrue,calls1,15/15. User evidence,exec3014 exit0. Isolated Tab/Enter fix verified in real field; scoped FDD-002 Type PASS; fullS1-S4 Draft/NOT TESTED.",
+                                                        "Verification: Actual user-operated full Unicode/multiline/tab and deterministic between-chunk cancellation reports. Unchanged3e19c71 verify0warnings/errors,60unit+198integration+3fake-flow passed;4 tab/control regressions red-before/green-after; unshown real WPF filter regression passed. No duplicate live typing."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  3
+                                   },
+                        "PA-035":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T16:43:02.1412503+03:00",
+                                       "completed_at":  "2026-10-18T16:47:34.2010664+03:00",
+                                       "evidence":  [
+                                                        "WindowsKeyboardInput.PressKeyAsync canonical known chords, explicit trusted default-denied chord policy, preexisting user-key protection, native extended flags and shared balanced batch/release-only cleanup. ComputerPressKeyTests tracks key state across every partial prefix/native exception/cancel; FDD-002 scoped invariants reviewed, full live takeover not claimed.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter ComputerPressKey|ComputerType|ComputerInputSender --no-restore:72passed; scripts/verify.ps1 locked restore/build0warnings/errors,60unit+227integration+3localfake-flow passed (29PressKey cases). No real chord injected; diff check passed."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-036":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T16:47:35.0214467+03:00",
+                                       "completed_at":  "2026-10-18T16:50:06.6846656+03:00",
+                                       "evidence":  [
+                                                        "Audited existing shared sender balanced atomic sections,cancel boundaries,release-only cleanup and fault latch; no duplicate implementation. New InputSafetyTests statefully cover partial/unknown mouse/text/chord failure,cross-method refusal and queued failure. Cleanup denial/lock explicitly unknown,never false release. FDD-002 scoped driver audit PASS; full production takeover untested.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter InputSafety --no-restore:10passed; scripts/verify.ps1 locked restore/build0warnings/errors,60unit+237integration+3localfake-flow passed. No native desktop input. git diff --check passed."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-037":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T17:56:32.0213531+03:00",
+                                       "completed_at":  "2026-10-18T17:57:08.8162058+03:00",
+                                       "evidence":  [
+                                                        "WindowsSmoke repeatable own-target Click/Scroll/Type/PressKey harness; prior actual click/scroll/type reports in LOG; user KEY Ctrl+A OK selectedChars=26 totalChars=26 modifiersReleased=True. Exec89941 exited0. FDD-002 scoped harness PASS; full scenarios Draft/untested.",
+                                                        "Verification: Actual attended KEY result passed; previous unchanged-code verify333tests passed/build0warnings/errors at3ccbf95. No automatic native input performed."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
+                                   },
+                        "PA-038":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T17:57:22.2594787+03:00",
+                                       "completed_at":  "2026-10-18T17:58:26.1459988+03:00",
+                                       "evidence":  [
+                                                        "Audited existing ComputerClick/Scroll/Type/PressKey/InputSender/TextBoxInput, InputSafety and DesktopAccessDriver tests. Bounds/special keys/cleanup/partial failure/cancel/native error5 already covered; no duplicate code/tests. Actual own-target harness accepted PA-037. Full FDD scenarios remain Draft/untested; real UIPI not claimed.",
+                                                        "Verification: dotnet test --filter Computer --no-restore:4unit+116integration passed; InputSafety|DesktopAccessDriver:19passed. scripts/verify.ps1 locked restore/build0warnings/errors,76unit+254integration+3localfake-flow passed on Windows."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-039":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T16:50:55.4282553+03:00",
+                                       "completed_at":  "2026-10-18T16:55:20.8229379+03:00",
+                                       "evidence":  [
+                                                        "Core IDesktopAccessCoordinator,opaque DesktopLease,default-denied trusted admission,one owner,idempotent same-run acquire,monotonic in-process generation and grant-bound release. Concurrent24runs-\u003eone grant,stale/foreign release rejected. FDD-002 scoped foundation PASS; atomic/pause/idle/resume integration still later.",
+                                                        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter DesktopAccess --no-restore:7passed(6newownership+existingGUI-pause regression); scripts/verify.ps1 locked restore/build0warnings/errors,66unit+237integration+3localfake-flow passed; diff check passed. No screen/native dependencies."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-040":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T16:55:21.6762251+03:00",
+                                       "completed_at":  "2026-10-18T16:59:16.8832108+03:00",
+                                       "evidence":  [
+                                                        "Opaque lease EnterAtomic/RevokeAsync gate; release waits for active native work+cleanup and revoked owner remains reserved. Bound capture/mouse/keyboard constructors check lease at native entry; each text chunk separate. Forced preflight-entry races reject both input/capture. FDD-002 scoped gate PASS; production hotkey/task pause still later.",
+                                                        "Verification: Unit DesktopAccess9passed; integration DesktopAccess9passed plus InputSafety10passed. scripts/verify.ps1 locked restore/build0warnings/errors,68unit+246integration+3localfake-flow passed; diff check passed. Fake native/codec only,no physical GUI input."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-041":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T16:59:17.7708561+03:00",
+                                       "completed_at":  "2026-10-18T17:05:59.4871064+03:00",
+                                       "evidence":  [
+                                                        "Task commands bind GUI-only/EntireRun/cancel/resume to separate desktop resource state; trusted RunStepAccess gates GUI/write/dependent vs independent permitted read boundaries. Resume invalidates old grant; Skip distinct unstartedqueued terminal outcome. Actual SQLite reopen retains GUI-pause lease/blocking. FDD-001/002/003/007 scoped semantics PASS,real MCP/hotkey/safe resume still untested.",
+                                                        "Verification: PauseScope/DesktopAccess/TaskCommands unit21passed; PauseScope/PersistenceRuntime/Dashboard/DesktopAccess integration22passed. Final scripts/verify.ps1 locked restore/build0warnings/errors,73unit+247integration+3localfake-flow passed; diff check passed. No real MCP/GUI actions."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-042":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T18:01:45.0834959+03:00",
+                                       "completed_at":  "2026-10-18T18:01:45.6512175+03:00",
+                                       "evidence":  [
+                                                        "User actual WindowsSmoke report TAKE CONTROL OK outsideFocus=True minimized=True gateClosed=True fakeActions=146-\u003e146. Exec80557 exited0. Real message-only HWND/RegisterHotKey callback synchronously closes Core gate; App pause persistence tested separately; full native input takeover/resume remains PA-048.",
+                                                        "Verification: Actual attended minimized/outside-focus hotkey PASS. Unchanged hotkey code3ccbf95 and final verify333tests/build0warnings/errors at2e5d9f7. No repeated native input/capture triggered."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
+                                   },
+                        "PA-043":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T18:16:06.1234259+03:00",
+                                       "completed_at":  "2026-10-18T18:16:06.6007486+03:00",
+                                       "evidence":  [
+                                                        "User confirmed all requested close-to-tray/TakeControl/Controls Paused/Open/Exit checks succeeded, reported missing distinct icon. Exec34756 exited0. Replaced SystemIcons.Application with generated abstract arrow multi-size embedded icon across EXE/WPF/tray; owned native icon disposed. Existing XAML/command and tray fake tests retained.",
+                                                        "Verification: Actual attended tray checks confirmed by user. DesktopShell|HealthScreen7passed after icon integration; original full verify338passed. ICO16px and compiled EXE embedded icon decode succeeded; source PNG inspected. Full FDD/E2E remains Draft/untested."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
+                                   },
+                        "PA-044":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T15:18:36.6410321+00:00",
+                                       "completed_at":  "2026-10-18T15:30:17.3628070+00:00",
+                                       "evidence":  [
+                                                        "Existing atomic sender reports failed cleanup before exit; resource waits drain/releases lease while reserving human pause, latches uncertainty. ConfirmDesktopPause persists generation-specific event before App handoff message; DB/native failure no success. Cancel/Skip preserve failed-release evidence; SQLite restore reblocks. Nine SafePause regressions plus actual XAML/core compatibility; FDD002/007 scope verified, real-input E2E remains PA048.",
+                                                        "Verification: SafePause|DesktopShell14passed; related safety/persistence52passed before final UI stale-message regression; core26passed. Final scripts/verify.ps1 locked restore/build0warnings/errors,76unit+268integration+3localfake-flow passed (347). No real native input/capture/paid calls."
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-045":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-046":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-047":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-048":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-049":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-050":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-051":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-052":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-053":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-054":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-055":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-056":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-057":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-058":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-059":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-060":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-061":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-062":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-063":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-064":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-065":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-066":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-067":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-068":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-069":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-070":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-071":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-072":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-073":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-074":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-075":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-076":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-077":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-078":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-079":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-080":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-081":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-082":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-083":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-084":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-085":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-086":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-087":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-088":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-089":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-090":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-091":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-092":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-093":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-094":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-095":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-096":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-097":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-098":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-099":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-100":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-101":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-102":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-103":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-104":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-105":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-106":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-107":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-108":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-109":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-110":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-111":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-112":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-113":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-114":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-115":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-116":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-117":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-118":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-119":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-120":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-121":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-122":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-123":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-124":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-125":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   }
+                    },
+    "last_task_id":  "PA-044",
+    "updated_at":  "2026-10-18T15:30:17.3727887+00:00"
 }

@@ -36,6 +36,7 @@ public sealed class TakeControlPersistenceTests
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         await foreach (var item in runs.WatchRunAsync(run.Id, timeout.Token))
             if (runs.GetRun(run.Id).PauseScope == PauseScope.EntireRun) break;
+        await service.Completion.WaitAsync(timeout.Token); // Final safe-pause checkpoint also uses the database.
         Assert.Equal(PauseScope.EntireRun, (await repository.GetAsync(run.Id))!.Run.PauseScope);
         Assert.False(desktop.IsCurrent(lease));
         Assert.False(service.IsRegistered);

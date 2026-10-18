@@ -10,6 +10,7 @@ internal sealed class WindowsInputSender
     private readonly IWindowsInputNative native;
     private bool faulted;
     private readonly Func<IDisposable>? enterAtomic;
+    private readonly Action? reportCleanupFailure;
 
     internal WindowsInputSender(Func<(bool Allowed, long Generation)>? authorize = null)
         : this(authorize, new WindowsInputNative()) { }
@@ -18,7 +19,10 @@ internal sealed class WindowsInputSender
 
     internal WindowsInputSender(IDesktopAccessCoordinator access, DesktopLease lease, IWindowsInputNative native)
         : this(() => (access.IsCurrent(lease), lease.Generation), native)
-    { enterAtomic = () => access.EnterAtomic(lease); }
+    {
+        enterAtomic = () => access.EnterAtomic(lease);
+        reportCleanupFailure = () => access.ReportInputCleanupFailure(lease);
+    }
 
     internal Task SendAsync(NativeInput[] inputs, long generation, CancellationToken ct = default)
     {
@@ -117,12 +121,15 @@ internal sealed class WindowsInputSender
     private bool Cleanup(NativeInput[] releases)
     {
         if (releases.Length == 0) return true;
+        var cleaned = false;
         try
         {
             // Cleanup may outlive cancellation/revocation; never send to a locked/secure desktop.
-            return native.IsDesktopAvailable() && native.Send(releases).Count == releases.Length;
+            cleaned = native.IsDesktopAvailable() && native.Send(releases).Count == releases.Length;
+            return cleaned;
         }
         catch { return false; }
+        finally { if (!cleaned) reportCleanupFailure?.Invoke(); }
     }
 
     private static void Validate(NativeInput[] batch)
