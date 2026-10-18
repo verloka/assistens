@@ -594,14 +594,15 @@
                                        "attempts":  1
                                    },
                         "PA-055":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T19:05:11.8970070+00:00",
+                                       "completed_at":  "2026-10-18T19:09:29.6059219+00:00",
                                        "evidence":  [
-
+                                                        "Four versioned Git prompt files embedded as immutable AgentPromptPolicy v1; MAF privileged instructions only from assembly resources. MCP preference, GUI freshness/human control, exact-action approval, untrusted data and safe-stop/final-evidence clauses. AgentPromptPolicyTests proves task/summary/Teams tool data and description stay untrusted, actual SDK privileged HTTP role contains only bundled policy, and malicious model write request stays allowlist-denied. Scripted tests do not claim live-model immunity. FDD scoped PASS.",
+                                                        "Verification: Targeted AgentPromptPolicy|MafAgentRuntime|ToolImageProtocol|ComputerTool38passed; final scripts/verify.ps1 locked restore/build0warnings/errors,88unit+367integration+3localfake-flow passed(458)."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-056":  {
                                        "status":  "pending",
@@ -1304,6 +1305,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-054",
-    "updated_at":  "2026-10-18T19:04:54.7512373+00:00"
+    "last_task_id":  "PA-055",
+    "updated_at":  "2026-10-18T19:09:29.6154504+00:00"
 }

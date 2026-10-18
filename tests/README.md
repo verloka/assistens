@@ -39,6 +39,13 @@ and MVP release gate remain unverified until their own backlog tasks are complet
 
 ## MAF runtime adapter (PA-049)
 
+PA-055: `--filter AgentPromptPolicy` checks bundled versioned policy resources,
+untrusted task/summary/tool-role boundaries and actual SDK HTTP privileged roles.
+A synthetic Teams payload/description asks to change policy and forge write
+approval; a subsequent scripted write request remains denied by the allowlist.
+These tests prove application boundaries, not live-model injection immunity or
+semantic tool selection. Prompt files are embedded, not loaded from tool data.
+
 PA-054: `--filter "ToolImageProtocol|ComputerTool|ToolRegistry"` verifies actual
 SDK HTTP image_url content (including decodable PNG and changed synthetic geometry
 after an action), fresh observation IDs, permission checks on automatic post-action

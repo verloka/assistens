@@ -13,4 +13,7 @@
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
     <PackageReference Include="JsonSchema.Net" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Prompts/*.md" />
+  </ItemGroup>
 </Project>

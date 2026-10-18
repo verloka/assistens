@@ -58,6 +58,7 @@ public sealed class MafAgentRuntime(
                 ChatHistoryProvider = new InMemoryChatHistoryProvider(),
                 ChatOptions = new()
                 {
+                    Instructions = AgentPromptPolicy.Instructions,
                     Tools = binding?.Functions.Select(function => (AITool)function.AsDeclarationOnly()).ToList() ?? [],
                     ToolMode = binding?.Functions.Count > 0 ? ChatToolMode.Auto : ChatToolMode.None,
                     AllowMultipleToolCalls = false,

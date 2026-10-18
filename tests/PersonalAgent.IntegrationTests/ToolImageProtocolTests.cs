@@ -97,7 +97,7 @@ public sealed class ToolImageProtocolTests
         { Content = new StringContent("data: " + JsonSerializer.Serialize(new { id = "test", @object = "chat.completion.chunk", created = 1, model = "test-model", choices = new[] { new { index = 0, delta, finish_reason = finish } } }) + "\n\ndata: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
         private static HttpResponseMessage Json(string body) => new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
     }
-    private sealed class ImageHttp : HttpMessageHandler
+    internal sealed class ImageHttp : HttpMessageHandler
     {
         public string? Body;
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
