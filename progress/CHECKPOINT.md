@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-046 FIFO cancellable desktop waiting; PA-0458bcc59f/PA-04422e04c7; generated abstract icon34681be.
-- Current task: none; nextPA-047 deterministic pause/resume races
-- Modified files: existing Core resource queue/contract, test decorator, seven DesktopAccessQueueTests, FDD/README/state/LOG/checkpoint.
-- Verified build/test: final verify locked restore/build0warnings/errors,83unit+279integration+3localfake-flow passed(365); DesktopAccess18passed. Diff/doctor passed. No physical desktop actions.
-- Runtime blockers / waiting on user: PA-026/030 multiple-display hardware. No current App/diagnostic. Physical takeover/resume048 still requires attended evidence.
-- Decisions: waiters cannot bypass global human pause or changed admission; cancel does not auto handoff. Existing Core state separate from task lifecycle; production admission denied and tool wiring future. Full flows remain Draft/untested.
-- Next instruction: doctor/next; start047, inspect existing unit/integration race coverage first; add only missing deterministic interleavings without real screen or duplicate implementation. Then048 actual harness gate; continue independent049 if048 manual blocked.
+- Last completed task: PA-047 deterministic races; PA-0469ec33f5/PA-0458bcc59f/PA-04422e04c7; generated arrow34681be.
+- Current task: none; next048 attended native takeover/resume
+- Modified files: five DesktopAccessRaceTests plus README/state/LOG/checkpoint; production source unchanged.
+- Verified build/test: dotnet test --filter DesktopAccess --no-restore23unit+9integration, no E2E matches. Full verify locked restore/build0warnings/errors,88unit+279integration+3localfake-flow passed(370). Diff/doctor passed.
+- Runtime blockers / waiting on user: hardware026/030; actual full click/type/hotkey/resume048 not yet observed. No current App/diagnostic.
+- Decisions: no physical/native E2E pass from fake boundaries. All full flows Draft/untested. No task catalog/dependency changes; no waiting agent/work promised.
+- Next instruction: doctor/next; start048, inspect and extend own-window fixture for actual20click/Unicode interruption/fresh-frame resume using real controller/resource/local hotkey; no automatic native action on launch. Block with manual evidence requirements if not observed, then continue independent049 before diagnostic launch to avoid build locks.

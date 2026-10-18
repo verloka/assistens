@@ -507,14 +507,15 @@
                                        "attempts":  1
                                    },
                         "PA-047":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T15:42:25.4425409+00:00",
+                                       "completed_at":  "2026-10-18T15:45:49.3361729+00:00",
                                        "evidence":  [
-
+                                                        "Audited existing unit/queue/fake-native and real-SQLite coverage, added only five missing deterministic screen-free race cases with controlled thread/admission boundaries, repeated takeover saved-version rejection, competing stale releases and concurrent same-run request identity. Production implementation unchanged; FDD002 scoped verify PASS, full physical scenarios untested.",
+                                                        "Verification: dotnet test --filter DesktopAccess --no-restore:23unit+9integration passed, E2E no matching tests. Full scripts/verify.ps1 locked restore/build0warnings/errors,88unit+279integration+3localfake-flow passed(370)."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-048":  {
                                        "status":  "pending",
@@ -1297,6 +1298,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-046",
-    "updated_at":  "2026-10-18T15:42:23.6962176+00:00"
+    "last_task_id":  "PA-047",
+    "updated_at":  "2026-10-18T15:45:49.3466028+00:00"
 }

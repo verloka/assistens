@@ -738,3 +738,15 @@ input fails queued requests closed. Production admission remains default denied.
 screen-free cases for FIFO, token/run cancellation, changed admission, released
 human pause, cancelled owner and input uncertainty. No focus, capture or native
 input is performed; runtime/tool wiring and full attended takeover remain later.
+
+## Deterministic desktop races (PA-047)
+
+DesktopAccessRaceTests adds five screen-free cases beyond existing ownership,
+queue and native-boundary suites. Explicit synchronization holds admission on
+another thread while takeover/cancellation occurs; an outer Task proves that the
+async request reached the await/grant boundary before assertions. Other cases
+force repeated takeover versus a saved resume version, two old release waiters
+versus a replacement owner, and 32 same-run requests sharing one opaque grant.
+No timing sleeps, randomized stress or desktop side effects are used.
+`dotnet test --filter DesktopAccess --no-restore` includes these unit cases and the
+existing fake-native driver gate suite; no matching physical E2E is implied.
