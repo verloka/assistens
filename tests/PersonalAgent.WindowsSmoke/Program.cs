@@ -15,7 +15,12 @@ namespace PersonalAgent.WindowsSmoke;
 internal static class Program
 {
     [STAThread]
-    public static void Main() => new Application().Run(new SmokeWindow());
+    public static void Main(string[] args)
+    {
+        var takeover = args.Contains("--takeover", StringComparer.Ordinal);
+        var app = new Application { ShutdownMode = takeover ? ShutdownMode.OnExplicitShutdown : ShutdownMode.OnMainWindowClose };
+        app.Run(takeover ? new TakeoverWindow() : new SmokeWindow());
+    }
 }
 
 internal sealed class SmokeWindow : Window

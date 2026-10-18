@@ -750,3 +750,34 @@ versus a replacement owner, and 32 same-run requests sharing one opaque grant.
 No timing sleeps, randomized stress or desktop side effects are used.
 `dotnet test --filter DesktopAccess --no-restore` includes these unit cases and the
 existing fake-native driver gate suite; no matching physical E2E is implied.
+
+## Attended native takeover/resume (PA-048; NOT TESTED)
+
+Run `dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --takeover`.
+Launch alone performs no capture/input or hotkey registration. START explicitly
+registers Ctrl+Shift+F10 and starts an own-target test after a 3-second countdown.
+The fixture links the actual production TakeControlHotkeyService source, uses the
+real Core runner/resource and WindowsComputerController, and an isolated synthetic
+SQLite history under the dedicated PersonalAgent.Takeover temp directory, removed
+on close. Screenshots stay in memory; no upload, clipboard or LLM. Input guards
+require own foreground/focused field or exact own visible target; focus/target
+changes reject instead of clicking another application. Unicode native batches
+have fixture-only 80ms pacing so a human can interrupt; no production delay added.
+Held user modifiers reject Unicode before sending. A rejection may wait up to500ms
+for the local hotkey message, with no retry or further input.
+
+For each mode, **20 clicks** and **Unicode text**:
+1. Click START, keep this window active, wait for actual clicks/text to begin.
+2. Press and release Ctrl+Shift+F10 while the sequence is incomplete.
+3. Expect `PA048 PAUSE OK`: native count stable, partial actual effects,
+   valid Unicode, released modifiers and a persisted safe-pause checkpoint.
+4. Click MOVE TARGET (or move the test window), then RESUME.
+5. Expect `PA048 RESUME OK`: old controller/foreign frame denied, fresh generation
+   and capture, a deliberate click at the current target and Ctrl+A selection with
+   released modifiers. The unfinished sequence is discarded, never continued.
+6. Return PAUSE and RESUME lines for both modes, then close the window.
+
+NO PAUSE means the sequence completed before interruption; START can repeat by
+explicit gesture. BLOCKED/FAILED is not success and no input is retried. Actual
+results remain pending and do not substitute multi-display/locked-session/live
+model acceptance. Original WindowsSmoke without --takeover remains available.

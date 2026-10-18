@@ -10,5 +10,8 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/PersonalAgent.Computer/PersonalAgent.Computer.csproj" />
+    <ProjectReference Include="../../src/PersonalAgent.Persistence/PersonalAgent.Persistence.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Compile Include="../../src/PersonalAgent.App/Hosting/TakeControlHotkeyService.cs" Link="Production/TakeControlHotkeyService.cs" />
   </ItemGroup>
 </Project>
