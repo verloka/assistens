@@ -165,6 +165,22 @@ public sealed class ToolRegistryTests
         Assert.Empty(outcome.Result.Images);
     }
 
+    [Fact]
+    public async Task ObservationExceptionRetainsCompletedActionEvidenceWithoutReplayOrRawError()
+    {
+        var source = new PersonalAgent.Core.Domain.SourceLink("Synthetic observed effect", new Uri("https://example.invalid/effect"));
+        var action = new Tool((_, _, _) => Task.FromResult(new ToolResult { Status = ToolResultStatus.Success, Sources = [source], Warnings = ["Synthetic evidence warning"] }));
+        action.Descriptor = action.Descriptor with { ObservationToolId = "observe" };
+        var observation = new Tool((_, _, _) => throw new InvalidOperationException("private-observation-error"), id: "observe");
+        observation.Descriptor = observation.Descriptor with { JsonSchema = Json("{\"type\":\"object\",\"additionalProperties\":false}") };
+        var registry = new ToolRegistry([action, observation], (_, _, _) => Task.CompletedTask);
+        var outcome = await registry.Bind(Request("local_echo", "observe")).InvokeAsync("local_echo", "action", Json("{\"text\":\"ok\"}"), CancellationToken.None);
+        Assert.Equal(ToolResultStatus.OutcomeUnknown, outcome.Result.Status); Assert.Equal("PostActionObservationFailed", outcome.Result.ErrorCode);
+        Assert.Equal(source, Assert.Single(outcome.Result.Sources)); Assert.Equal("Synthetic evidence warning", Assert.Single(outcome.Result.Warnings));
+        Assert.Equal(1, action.Calls); Assert.Equal(1, observation.Calls);
+        Assert.DoesNotContain("private-observation-error", Assert.IsType<TextContent>(outcome.Contents[0]).Text);
+    }
+
     private sealed class Tool(Func<ToolArguments, ToolExecutionContext, CancellationToken, Task<ToolResult>>? execute = null, string id = "local_echo") : IAgentTool
     {
         public ToolDescriptor Descriptor { get; set; } = new(id, "In-memory echo fixture", Json(Schema), new(ToolSourceKind.Local, "local-fixture"), ToolRiskLevel.ReadOnly, IsReadOnly: true, IndependentOfDesktop: true);

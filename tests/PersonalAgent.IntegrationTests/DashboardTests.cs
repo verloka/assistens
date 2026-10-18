@@ -19,6 +19,64 @@ namespace PersonalAgent.IntegrationTests;
 
 public sealed class DashboardTests
 {
+    [Theory]
+    [InlineData(AgentResultStatus.Completed, RunStatus.Completed, true)]
+    [InlineData(AgentResultStatus.Failed, RunStatus.Failed, true)]
+    [InlineData(AgentResultStatus.Completed, RunStatus.Completed, false)]
+    public Task StructuredResultMetadataPersistsAndReopensInActualDashboard(AgentResultStatus status, RunStatus runStatus, bool knownUsage) => OnWpfThread(async () =>
+    {
+        using var database = new TemporaryAgentDatabase();
+        var expected = new AgentRunResult
+        {
+            Status = status,
+            Summary = "Synthetic result with evidence",
+            ErrorCode = status == AgentResultStatus.Failed ? "ControlledFailure" : null,
+            Sources = [new("Observed fixture", new Uri("https://example.invalid/observed"))],
+            Warnings = ["Synthetic warning"],
+            Usage = knownUsage ? new(20, 5, 0.00008m, "USD") : null
+        };
+        Guid id;
+        using (var host = AppHost.CreateBuilder([], database.DatabasePath).ConfigureLogging(log => log.ClearProviders())
+            .ConfigureServices(services => services.AddSingleton<IAgentRuntime>(new FakeAgentRuntime(result: expected))).Build())
+        {
+            await host.StartAsync(); var window = host.Services.GetRequiredService<MainWindow>();
+            try
+            {
+                await Bind(window); var model = host.Services.GetRequiredService<DashboardViewModel>();
+                model.SubmitCommand.Execute(null); await model.SubmitCommand.ExecutionTask!.WaitAsync(TimeSpan.FromSeconds(10));
+                await Bind(window); id = model.CurrentRun!.Id;
+                Assert.Equal(runStatus, model.CurrentRun.Status); AssertMetadata(window, model, knownUsage);
+                var stored = await host.Services.GetRequiredService<PersonalAgent.Core.Persistence.IRunRepository>().GetAsync(id);
+                Assert.Equal(expected.Usage, stored!.Result!.Usage); Assert.Equal(expected.Warnings, stored.Result.Warnings); Assert.Equal(expected.Sources, stored.Run.Sources);
+            }
+            finally { window.Close(); await host.StopAsync(); }
+        }
+        using (var reopened = AppHost.CreateBuilder([], database.DatabasePath).ConfigureLogging(log => log.ClearProviders()).Build())
+        {
+            await reopened.StartAsync(); var window = reopened.Services.GetRequiredService<MainWindow>();
+            try
+            {
+                await Bind(window); var model = reopened.Services.GetRequiredService<DashboardViewModel>();
+                ((ComboBox)window.FindName("RunHistoryList")).SelectedItem = model.History.Single(run => run.Id == id);
+                await Until(model, () => model.CurrentRun?.Id == id && !model.IsActive); await Bind(window);
+                Assert.Equal(runStatus, model.CurrentRun!.Status); AssertMetadata(window, model, knownUsage);
+                Assert.Equal(expected.Usage, reopened.Services.GetRequiredService<TaskRunCoordinator>().GetResult(id)!.Usage);
+                Assert.False(model.ResumeCommand.CanExecute(null));
+            }
+            finally { window.Close(); await reopened.StopAsync(); }
+        }
+
+        static void AssertMetadata(MainWindow window, DashboardViewModel model, bool knownUsage)
+        {
+            Assert.Equal("Synthetic warning", ((TextBlock)window.FindName("RunWarningsText")).Text);
+            var usage = ((TextBlock)window.FindName("RunUsageText")).Text;
+            if (knownUsage) { Assert.Contains("input 20", usage); Assert.Contains("output 5", usage); Assert.Contains("Estimated cost: 0.00008 USD", usage); }
+            else { Assert.Contains("Token usage: unknown. Cost: unknown.", usage); Assert.DoesNotContain("input 0", usage); }
+            var sources = (ItemsControl)window.FindName("RunSourcesList");
+            Assert.Same(model.Sources, sources.ItemsSource); Assert.Equal("https://example.invalid/observed", Assert.IsType<SourceLink>(Assert.Single(sources.Items.Cast<object>())).Url.AbsoluteUri);
+        }
+    });
+
     [Fact]
     public Task DashboardUsesCommonCommandsAndShowsLiveProgressWhileDispatcherResponds() => OnWpfThread(async () =>
     {
@@ -273,7 +331,8 @@ public sealed class DashboardTests
                 finally { dispatcher.BeginInvokeShutdown(DispatcherPriority.Background); }
             }));
             Dispatcher.Run();
-        }) { IsBackground = true };
+        })
+        { IsBackground = true };
         thread.SetApartmentState(ApartmentState.STA); thread.Start();
         return completion.Task.WaitAsync(TimeSpan.FromSeconds(20));
     }

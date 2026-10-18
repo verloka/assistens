@@ -39,6 +39,13 @@ and MVP release gate remain unverified until their own backlog tasks are complet
 
 ## MAF runtime adapter (PA-049)
 
+PA-057: `--filter "StructuredResult|Dashboard|ToolRegistry"` verifies typed
+source/warning aggregation, reported usage even after budget failure, optional
+configured cost estimates, invalid-source refusal and retained action evidence
+when observation fails. DashboardTests reopens actual SQLite through the real host
+and XAML for completed/failed results and unknown usage. Prices in tests are
+synthetic; no provider price/billing claim. Model prose does not add source links.
+
 PA-056: `--filter AgentLimits` checks cumulative reported-token and output caps,
 step/repetition refusal before another GUI effect, profile generation settings,
 missing/invalid usage, duration/cancellation at the classified boundary and legacy

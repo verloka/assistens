@@ -81,7 +81,23 @@
                     <TextBlock x:Name="RunStatusText" Text="{Binding Status}" />
                 </StackPanel>
                 <ListBox x:Name="RunEventsList" Grid.Row="5" ItemsSource="{Binding Events}" DisplayMemberPath="Message" />
-                <TextBlock x:Name="RunSummaryText" Grid.Row="6" Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                <StackPanel Grid.Row="6" Margin="0,8,0,0">
+                    <TextBlock x:Name="RunSummaryText" Text="{Binding Summary}" TextWrapping="Wrap" />
+                    <TextBlock x:Name="RunWarningsText" Text="{Binding Warnings}" TextWrapping="Wrap" Foreground="DarkOrange" />
+                    <TextBlock x:Name="RunUsageText" Text="{Binding UsageSummary}" TextWrapping="Wrap" />
+                    <ScrollViewer MaxHeight="80" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="RunSourcesList" ItemsSource="{Binding Sources}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,4,0,0">
+                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Url}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </StackPanel>
             </Grid>
         </GroupBox>
     </Grid>

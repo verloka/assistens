@@ -82,6 +82,9 @@ public sealed partial class OpenAiModelProvider(ISecretStore secrets, HttpClient
             || profile.GenerationSettings.MaxOutputTokens is <= 0
             || profile.GenerationSettings.Temperature is { } temperature && (!float.IsFinite(temperature) || temperature is < 0 or > 2))
             throw Error("ModelProfileInvalid", "The model profile configuration is invalid.");
+        if (profile.Pricing is { } pricing && (pricing.InputPerMillionTokens < 0 || pricing.OutputPerMillionTokens < 0
+            || pricing.Currency is not { Length: 3 } || pricing.Currency.Any(character => character is < 'A' or > 'Z')))
+            throw Error("ModelProfileInvalid", "The configured model pricing is invalid.");
     }
     private static ModelProviderException Error(string code, string message) => new(code, message);
     [GeneratedRegex("^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,199}$", RegexOptions.CultureInvariant)]

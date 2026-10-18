@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Hosting;
 using PersonalAgent.Core.Application;
 using PersonalAgent.Core.Domain;
+using PersonalAgent.Core.Agents;
+using System.Globalization;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -59,6 +61,19 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
     public TaskRun? CurrentRun => currentRun;
     public string Status => currentRun?.Status.ToString() ?? "Ready";
     public string Summary => currentRun?.Summary ?? currentRun?.Reason ?? "";
+    public AgentRunResult? Result => currentRun is null ? null : state.GetResult(currentRun.Id);
+    public IReadOnlyList<SourceLink> Sources => Result?.Sources ?? currentRun?.Sources ?? [];
+    public string Warnings => string.Join("\n", Result?.Warnings ?? []);
+    public string UsageSummary
+    {
+        get
+        {
+            if (Result is null) return "";
+            if (Result.Usage is not { } usage) return "Token usage: unknown. Cost: unknown.";
+            var cost = usage.Cost is { } value ? value.ToString("0.########", CultureInfo.InvariantCulture) + " " + usage.Currency : "unknown";
+            return $"Tokens: input {usage.InputTokens}, output {usage.OutputTokens}. Estimated cost: {cost}.";
+        }
+    }
     public string Message => message;
     public bool IsActive => active;
     private bool CanControl => active && !disposed && !lifetime.IsCancellationRequested && currentRun is not null && !TaskRunStateMachine.IsTerminal(currentRun.Status);
@@ -115,6 +130,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
     private void Refresh()
     {
         Changed(nameof(CurrentRun)); Changed(nameof(Status)); Changed(nameof(Summary)); Changed(nameof(Message)); Changed(nameof(IsActive));
+        Changed(nameof(Result)); Changed(nameof(Sources)); Changed(nameof(Warnings)); Changed(nameof(UsageSummary));
         SubmitCommand.Refresh(); PauseCommand.Refresh(); ResumeCommand.Refresh(); CancelCommand.Refresh();
     }
     private void RefreshHistory()

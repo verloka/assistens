@@ -616,14 +616,15 @@
                                        "attempts":  1
                                    },
                         "PA-057":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T19:18:29.8352349+00:00",
+                                       "completed_at":  "2026-10-18T19:28:39.8185424+00:00",
                                        "evidence":  [
-
+                                                        "Existing AgentRunResult and SQLite ResultJson reused; typed validated sources/warnings retained across success and failure; cumulative usage and optional configured pricing; actual XAML/history reload covered. FDD scoped verification PASS; full Draft/live scenarios remain untested.",
+                                                        "Verification: Targeted StructuredResult|AgentLimits|Dashboard|ToolRegistry|MafAgentRuntime|OpenAiModelProvider: 75 passed. scripts/verify.ps1: locked restore/build 0 warnings/errors; 88 unit + 388 integration + 3 local fake-flow = 479 passed. git diff --check and taskctl doctor passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-058":  {
                                        "status":  "pending",
@@ -1306,6 +1307,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-056",
-    "updated_at":  "2026-10-18T19:16:37.1894850+00:00"
+    "last_task_id":  "PA-057",
+    "updated_at":  "2026-10-18T19:28:39.8291378+00:00"
 }

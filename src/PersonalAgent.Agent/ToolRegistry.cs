@@ -84,13 +84,13 @@ public sealed partial class ToolRegistry
                 throw new ModelProviderException("ToolNotAllowed", "The model requested an unapproved tool; no action was executed.");
             await invocation.WaitAsync(ct).ConfigureAwait(false);
             var clock = Stopwatch.StartNew();
-            var actionCompleted = false;
+            ToolResult? completedAction = null;
             try
             {
                 var result = await ExecuteOneAsync(entry, callId, arguments, ct).ConfigureAwait(false);
                 if (result.Status == ToolResultStatus.Success && entry.Descriptor.ObservationToolId is { } observationId)
                 {
-                    actionCompleted = true;
+                    completedAction = result with { Sources = result.Sources.ToArray(), Warnings = result.Warnings.ToArray() };
                     var observationEntry = allowed[observationId];
                     var observed = await ExecuteOneAsync(observationEntry, callId + ":observation", JsonSerializer.SerializeToElement(new { }), ct).ConfigureAwait(false);
                     var data = JsonSerializer.SerializeToElement(new
@@ -103,13 +103,17 @@ public sealed partial class ToolRegistry
                         observationErrorCode = observed.ErrorCode
                     });
                     if (observed.Status == ToolResultStatus.Success && observed.Images.Count > 0)
-                        result = result with { StructuredData = data, Images = observed.Images, Text = result.Text + " Fresh post-action observation attached; use its new observationId for the next input." };
+                        result = result with { StructuredData = data, Images = observed.Images,
+                            Sources = result.Sources.Concat(observed.Sources).ToArray(), Warnings = result.Warnings.Concat(observed.Warnings).ToArray(),
+                            Text = result.Text + " Fresh post-action observation attached; use its new observationId for the next input." };
                     else
                         result = new()
                         {
                             Status = ToolResultStatus.OutcomeUnknown,
                             ErrorCode = "PostActionObservationFailed",
                             StructuredData = data,
+                            Sources = result.Sources.Concat(observed.Sources).ToArray(),
+                            Warnings = result.Warnings.Concat(observed.Warnings).ToArray(),
                             Text = "The action completed but its resulting UI could not be observed. Do not repeat the action; check the current state explicitly."
                         };
                 }
@@ -121,9 +125,10 @@ public sealed partial class ToolRegistry
             {
                 return Map(entry.Descriptor, new()
                 {
-                    Status = actionCompleted ? ToolResultStatus.OutcomeUnknown : ToolResultStatus.Failed,
-                    ErrorCode = actionCompleted ? "PostActionObservationFailed" : "ToolExecutionFailed",
-                    Text = actionCompleted ? "The action completed but its resulting observation failed; do not repeat the action." : "Tool execution failed; no automatic retry was performed."
+                    Status = completedAction is not null ? ToolResultStatus.OutcomeUnknown : ToolResultStatus.Failed,
+                    ErrorCode = completedAction is not null ? "PostActionObservationFailed" : "ToolExecutionFailed",
+                    Sources = completedAction?.Sources ?? [], Warnings = completedAction?.Warnings ?? [],
+                    Text = completedAction is not null ? "The action completed but its resulting observation failed; do not repeat the action." : "Tool execution failed; no automatic retry was performed."
                 }, clock.Elapsed);
             }
             finally { invocation.Release(); }
@@ -148,12 +153,14 @@ public sealed partial class ToolRegistry
 
         private static Invocation Map(ToolDescriptor descriptor, ToolResult result, TimeSpan elapsed)
         {
-            if (!Enum.IsDefined(result.Status) || result.Images.Any(image => image.Bytes.IsEmpty || image.Bytes.Length > 20_000_000 || image.MediaType is not ("image/png" or "image/jpeg")))
+            result = result with { Sources = result.Sources.ToArray(), Warnings = result.Warnings.ToArray() };
+            if (!Enum.IsDefined(result.Status) || result.Sources.Any(source => string.IsNullOrWhiteSpace(source.Title) || !source.Url.IsAbsoluteUri || source.Url.Scheme is not ("https" or "http"))
+                || result.Images.Any(image => image.Bytes.IsEmpty || image.Bytes.Length > 20_000_000 || image.MediaType is not ("image/png" or "image/jpeg")))
                 result = new() { Status = ToolResultStatus.Failed, ErrorCode = "InvalidToolResult", Text = "The tool returned unsupported content." };
             List<AIContent> contents = [new TextContent(JsonSerializer.Serialize(new
             {
                 toolId = descriptor.Id, source = descriptor.Source, status = result.Status.ToString(), result.Text,
-                data = result.StructuredData, result.ErrorCode, durationMs = elapsed.TotalMilliseconds
+                data = result.StructuredData, result.ErrorCode, result.Sources, result.Warnings, durationMs = elapsed.TotalMilliseconds
             }))];
             contents.AddRange(result.Images.Select(image => new DataContent(image.Bytes.ToArray(), image.MediaType)));
             return new(descriptor, result, contents.AsReadOnly());

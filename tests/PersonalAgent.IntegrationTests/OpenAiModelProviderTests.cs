@@ -77,7 +77,7 @@ public sealed class OpenAiModelProviderTests
     }
 
     [Theory]
-    [InlineData("provider")][InlineData("schema")][InlineData("model")][InlineData("temperature")][InlineData("tokens")]
+    [InlineData("provider")][InlineData("schema")][InlineData("model")][InlineData("temperature")][InlineData("tokens")][InlineData("pricing")]
     public async Task InvalidProfileFailsBeforeCredentialOrNetworkAccess(string invalid)
     {
         var profile = invalid switch
@@ -86,6 +86,7 @@ public sealed class OpenAiModelProviderTests
             "schema" => Profile with { SchemaVersion = 999 },
             "model" => Profile with { ModelId = "../../outside" },
             "temperature" => Profile with { GenerationSettings = new(float.NaN) },
+            "pricing" => Profile with { Pricing = new(-1, 0, "usd") },
             _ => Profile with { GenerationSettings = new(MaxOutputTokens: 0) }
         };
         var store = new Secrets();

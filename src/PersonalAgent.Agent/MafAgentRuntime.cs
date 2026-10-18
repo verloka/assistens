@@ -3,6 +3,7 @@ using Microsoft.Extensions.AI;
 using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Application;
 using PersonalAgent.Core.Computer;
+using PersonalAgent.Core.Domain;
 using System.Text.Json;
 using System.Security.Cryptography;
 
@@ -14,19 +15,19 @@ public sealed class MafAgentRuntime(
     Func<AgentRequest, CancellationToken, ValueTask<IChatClient>> createClient,
     Func<Guid, CancellationToken, Task> waitAtBoundary,
     ToolRegistry? registry = null, Action? onModelObservationEvaluated = null,
-    ModelGenerationSettings? generationSettings = null) : IAgentRuntime
+    ModelGenerationSettings? generationSettings = null, ModelPricing? pricing = null) : IAgentRuntime
 {
     // The trusted composition root determines desktop requirements from the actual allowed tool descriptors.
     public MafAgentRuntime(IModelProvider provider, ModelProfile profile, bool requiresDesktop,
         Func<Guid, CancellationToken, Task> waitAtBoundary)
         : this((request, ct) => OpenProfileAsync(provider, profile, requiresDesktop, request, ct), waitAtBoundary,
-            generationSettings: profile.GenerationSettings)
+            generationSettings: profile.GenerationSettings, pricing: profile.Pricing)
     { }
 
     public MafAgentRuntime(IModelProvider provider, ModelProfile profile, ToolRegistry registry,
         Func<Guid, CancellationToken, Task> waitAtBoundary, Action? onModelObservationEvaluated = null)
         : this((request, ct) => OpenProfileAsync(provider, profile, registry.Bind(request).RequiresDesktop, request, ct),
-            waitAtBoundary, registry, onModelObservationEvaluated, profile.GenerationSettings)
+            waitAtBoundary, registry, onModelObservationEvaluated, profile.GenerationSettings, profile.Pricing)
     { }
 
     private static async ValueTask<IChatClient> OpenProfileAsync(IModelProvider provider, ModelProfile profile,
@@ -43,6 +44,11 @@ public sealed class MafAgentRuntime(
     {
         cancellationToken.ThrowIfCancellationRequested();
         request.Limits.Validate();
+        long totalInput = 0, totalOutput = 0;
+        var usageKnown = true;
+        var usageObserved = false;
+        var collectedSources = new List<SourceLink>();
+        var collectedWarnings = new List<string>();
         if (request.AllowedToolIds.Count != 0 && registry is null)
             return Failure("ToolRegistryUnavailable", "Approved tool bindings are not configured.", AgentResultStatus.Blocked);
         using var duration = new CancellationTokenSource(request.Limits.MaxDuration);
@@ -79,8 +85,6 @@ public sealed class MafAgentRuntime(
             await BoundaryAsync();
             Report(AgentEventKind.Started, "Model execution started.");
             var toolCalls = 0;
-            long totalInput = 0, totalOutput = 0;
-            var usageKnown = true;
             string? lastAction = null;
             var repeats = 0;
             for (long modelCalls = 0; modelCalls <= request.Limits.MaxSteps; modelCalls++)
@@ -121,12 +125,16 @@ public sealed class MafAgentRuntime(
                     return Failure("ModelContinuationPending", "Model execution is incomplete; explicit continuation is required.", AgentResultStatus.Blocked);
                 if (response.Usage is { InputTokenCount: { } input, OutputTokenCount: { } output })
                 {
-                    if (input < 0 || output < 0 || input > request.Limits.MaxTokens - totalInput - totalOutput
-                        || output > request.Limits.MaxTokens - totalInput - totalOutput - input)
+                    usageObserved = true;
+                    if (input < 0 || output < 0)
+                    { usageKnown = false; return Failure("TokenLimitExceeded", "The provider reported invalid token usage; no further action executed."); }
+                    try { totalInput = checked(totalInput + input); totalOutput = checked(totalOutput + output); }
+                    catch (OverflowException)
+                    { usageKnown = false; return Failure("TokenLimitExceeded", "The reported token totals cannot be represented safely; no further action executed."); }
+                    if (totalInput > request.Limits.MaxTokens || totalOutput > request.Limits.MaxTokens - totalInput)
                         return Failure("TokenLimitExceeded", "The provider reported invalid usage or exceeded the token budget; no further action executed.");
-                    totalInput += input; totalOutput += output;
                 }
-                else usageKnown = false;
+                else { usageKnown = false; usageObserved = true; }
                 onModelObservationEvaluated?.Invoke();
                 var calls = response.Messages.Where(message => message.Role == ChatRole.Assistant)
                     .SelectMany(message => message.Contents).OfType<FunctionCallContent>().ToArray();
@@ -157,6 +165,8 @@ public sealed class MafAgentRuntime(
                         var eventId = Guid.NewGuid();
                         ReportTool(AgentEventKind.ToolRequested, "Tool requested; authorization pending.", call.Name, eventId);
                         var outcome = await binding.InvokeAsync(call.Name, call.CallId, JsonSerializer.SerializeToElement(call.Arguments), ct).ConfigureAwait(false);
+                        collectedSources.AddRange(outcome.Result.Sources);
+                        collectedWarnings.AddRange(outcome.Result.Warnings);
                         toolCalls++;
                         await BoundaryAsync();
                         if (outcome.Result.Status != ToolResultStatus.Success)
@@ -176,15 +186,8 @@ public sealed class MafAgentRuntime(
                     .SelectMany(message => message.Contents).OfType<TextContent>().Select(content => content.Text));
                 if (string.IsNullOrWhiteSpace(summary))
                     return Failure("ModelResponseEmpty", "The model returned no public assistant response.", AgentResultStatus.Blocked);
-                var usage = usageKnown ? new AgentUsage(totalInput, totalOutput) : null;
                 Report(AgentEventKind.Completed, "Model execution completed.");
-                return new()
-                {
-                    Status = AgentResultStatus.Completed,
-                    Summary = summary,
-                    Usage = usage,
-                    Warnings = usageKnown ? [] : ["The provider did not report complete token usage; usage and cost are unknown."]
-                };
+                return Result(AgentResultStatus.Completed, summary);
             }
             return Failure("StepLimitExceeded", "The model step limit was reached; no further action executed.");
         }
@@ -213,6 +216,40 @@ public sealed class MafAgentRuntime(
         void ReportTool(AgentEventKind kind, string message, string toolId, Guid eventId) => progress.Report(new()
         { RunId = request.RunId, TimestampUtc = DateTimeOffset.UtcNow, Kind = kind, Message = message, ToolId = toolId, ToolCallId = eventId });
         int OutputLimit(long remaining) => (int)Math.Min(Math.Min(remaining, int.MaxValue), generationSettings?.MaxOutputTokens ?? int.MaxValue);
+
+        AgentRunResult Failure(string code, string summary, AgentResultStatus status = AgentResultStatus.Failed,
+            IReadOnlyList<string>? warnings = null) => Result(status, summary, code, warnings);
+        AgentRunResult Result(AgentResultStatus status, string summary, string? code = null, IReadOnlyList<string>? warnings = null)
+        {
+            AgentUsage? usage = null;
+            if (usageObserved && usageKnown)
+            {
+                decimal? cost = null; string? currency = null;
+                if (pricing is not null)
+                {
+                    try
+                    {
+                        if (pricing.InputPerMillionTokens < 0 || pricing.OutputPerMillionTokens < 0 || string.IsNullOrWhiteSpace(pricing.Currency))
+                            throw new ArgumentException();
+                        cost = checked(totalInput * pricing.InputPerMillionTokens + totalOutput * pricing.OutputPerMillionTokens) / 1_000_000m;
+                        currency = pricing.Currency;
+                    }
+                    catch (Exception error) when (error is OverflowException or ArgumentException)
+                    { collectedWarnings.Add("Configured pricing could not produce a safe cost estimate; cost is unknown."); }
+                }
+                usage = new(totalInput, totalOutput, cost, currency);
+            }
+            else if (usageObserved) collectedWarnings.Add("The provider did not report complete valid token usage; usage and cost are unknown.");
+            return new()
+            {
+                Status = status,
+                Summary = summary,
+                ErrorCode = code,
+                Usage = usage,
+                Sources = collectedSources.DistinctBy(source => source.Url.AbsoluteUri, StringComparer.Ordinal).ToArray(),
+                Warnings = collectedWarnings.Concat(warnings ?? []).Where(warning => !string.IsNullOrWhiteSpace(warning)).Distinct(StringComparer.Ordinal).ToArray()
+            };
+        }
     }
 
     private static string ActionSignature(FunctionCallContent call)
@@ -235,6 +272,4 @@ public sealed class MafAgentRuntime(
             else value.WriteTo(writer);
         }
     }
-    private static AgentRunResult Failure(string code, string summary, AgentResultStatus status = AgentResultStatus.Failed,
-        IReadOnlyList<string>? warnings = null) => new() { Status = status, ErrorCode = code, Summary = summary, Warnings = warnings ?? [] };
 }

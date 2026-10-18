@@ -1,4 +1,5 @@
 using System.Text.Json;
+using PersonalAgent.Core.Domain;
 
 namespace PersonalAgent.Core.Agents;
 
@@ -19,6 +20,8 @@ public sealed record ToolResult
     public JsonElement? StructuredData { get; init; }
     public IReadOnlyList<ToolImage> Images { get; init; } = [];
     public string? ErrorCode { get; init; }
+    public IReadOnlyList<SourceLink> Sources { get; init; } = [];
+    public IReadOnlyList<string> Warnings { get; init; } = [];
 }
 
 public interface IAgentTool
