@@ -69,14 +69,15 @@
                                        "attempts":  1
                                    },
                         "PA-007":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:27:51.8832994+00:00",
+                                       "completed_at":  "2026-10-18T10:30:25.5895943+00:00",
                                        "evidence":  [
-
+                                                        "McpTransportSpikeTests and McpTestServer: real SDK 2.2.0 initialize, list/schema, echo call over child-process stdio and loopback Kestrel Streamable HTTP; child shutdown verified. FDD-004 and consumers FDD-001/003/007 inspected: diagnostic scope PASS; business S1-S3 NOT TESTED; all Drafts preserved.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter McpTransportSpikeTests --no-restore: 2 passed; scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 1 unit + 14 integration passed; E2E suite empty"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-008":  {
                                        "status":  "pending",
@@ -1259,6 +1260,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-006",
-    "updated_at":  "2026-10-18T08:06:20.5841274+00:00"
+    "last_task_id":  "PA-007",
+    "updated_at":  "2026-10-18T10:30:25.6001253+00:00"
 }

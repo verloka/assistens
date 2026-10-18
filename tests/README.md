@@ -67,3 +67,26 @@ Limits: this fake is non-streaming. Live OpenAI/Anthropic, vision, durable appro
 identity/expiry checks, restart/session persistence, replay protection and unknown
 external outcomes are not covered. The SDK diagnostic is not the application's
 complete approval or task flow; those FDD scenarios remain untested.
+
+## MCP transport diagnostic (PA-007)
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --filter McpTransportSpikeTests
+```
+
+`PersonalAgent.McpTestServer` is a test-only executable exposing an in-memory
+`echo` tool. With MCP SDK 2.2.0 the tests initialize a real client, list the tool,
+check its input schema and invoke it over both actual transports:
+
+- `StdioClientTransport` launches the built fixture via `dotnet`. Server logs and
+  its diagnostic process ID go to stderr; stdout carries MCP only. Client disposal
+  is followed by an assertion that the child exits.
+- `HttpClientTransport` connects to an in-process Kestrel server bound to
+  `127.0.0.1` on an ephemeral port at `/mcp`. `StreamableHttp` is selected explicitly,
+  preventing automatic legacy SSE fallback. The server is stopped/disposed afterward.
+
+The HTTP fixture uses `ModelContextProtocol.AspNetCore` 2.2.0; production modules
+remain unchanged. This verifies local transport/discovery/call compatibility, not
+remote OAuth, TLS, reconnects, tool policy, run integration or corporate access.
+FDD-004 S1-S3 remain untested as complete business outcomes. SDK transport reference:
+[official documentation](https://csharp.sdk.modelcontextprotocol.io/v2/concepts/transports/transports.html).

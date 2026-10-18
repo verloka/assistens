@@ -48,3 +48,9 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 - FDD develop/verify: actual diff adds SDK diagnostics and documentation only. Inspected FDD-005 and consumers FDD-001/FDD-004/FDD-007; scoped SDK handshake PASS; complete business S1-S3 remain NOT TESTED, all flows remain Draft. Kept scenario markers untested and added explicitly limited implementation evidence.
 - Unresolved: none for PA-006 acceptance (reproducible SDK smoke exists). Live model and application-policy verification remain future tasks.
 - User requested finishing the current task and stopping. PA-007 is pending and was not started; no autonomous continuation after this handoff.
+
+## 2026-10-18 13:30:26 +03:00 | PA-007 | done
+- Added test-only MCP server (2.2.0) and two real transport tests: stdio child process and loopback Kestrel Streamable HTTP. Both initialize, discover the echo schema and invoke it; shutdown releases server resources and the child exit is asserted. No commercial credentials or production policy changes.
+- Checks: targeted McpTransportSpikeTests 2 passed; scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 1 unit + 14 integration passed; E2E scaffold empty. ASP.NET shared-framework pruning explains the integration lock-file reduction; production locks unchanged.
+- FDD develop/verify: reviewed FDD-004, approval dependency FDD-005 and reverse consumers FDD-001/FDD-003/FDD-007. Actual diff only adds diagnostics. SDK transport scope PASS; complete S1-S3 NOT TESTED. All flows remain Draft; limited implementation reference added without changing scenario coverage.
+- Unresolved: remote TLS/OAuth, corporate servers, reconnect and production policy are future scope. No blocker for PA-007. Next: PA-008 Windows diagnostic.

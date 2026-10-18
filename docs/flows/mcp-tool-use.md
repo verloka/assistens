@@ -41,6 +41,7 @@ Status: Draft
 
 ## Implementation References
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §8; backlog PR-09, PR-10.
+- SDK diagnostic only (PA-007): `tests/PersonalAgent.IntegrationTests/McpTransportSpikeTests.cs` and `tests/PersonalAgent.McpTestServer/Program.cs` verify initialization, schema discovery and an in-memory echo call over stdio and loopback Streamable HTTP, including resource cleanup. This does not implement application trust/allowlists, approval, model integration or run failure handling; complete S1-S3 remain `[untested]`. Reproduction: `tests/README.md`.
 
 ## Unknowns
 - Which Jira/ADO/GitLab endpoints are accessible and provider permissions must be verified at deployment.

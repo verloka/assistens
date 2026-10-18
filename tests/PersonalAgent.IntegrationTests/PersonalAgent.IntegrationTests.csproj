@@ -21,6 +21,11 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/PersonalAgent.App/PersonalAgent.App.csproj" />
+    <ProjectReference Include="../PersonalAgent.McpTestServer/PersonalAgent.McpTestServer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>
