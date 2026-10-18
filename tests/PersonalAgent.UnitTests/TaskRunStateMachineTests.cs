@@ -78,7 +78,7 @@ public sealed class TaskRunStateMachineTests
 
     [Theory]
     [InlineData(RunStatus.Created, RunStatus.Completed)]
-    [InlineData(RunStatus.Queued, RunStatus.Paused)]
+    [InlineData(RunStatus.Queued, RunStatus.PausedForUser)]
     [InlineData(RunStatus.Paused, RunStatus.Completed)]
     [InlineData(RunStatus.Running, RunStatus.Queued)]
     [InlineData(RunStatus.Pausing, RunStatus.Running)]

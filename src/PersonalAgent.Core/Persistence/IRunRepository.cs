@@ -11,5 +11,6 @@ public interface IRunRepository
 {
     Task CreateAsync(TaskRun run, Conversation conversation, AgentRequest request, IReadOnlyList<RunEvent> initialEvents, CancellationToken cancellationToken = default);
     Task<StoredRun?> GetAsync(Guid runId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TaskRun>> ListAsync(CancellationToken cancellationToken = default);
     Task UpdateAsync(TaskRun run, long expectedVersion, IReadOnlyList<RunEvent> newEvents, AgentRunResult? result = null, CancellationToken cancellationToken = default);
 }

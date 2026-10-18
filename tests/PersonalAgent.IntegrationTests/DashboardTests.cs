@@ -11,6 +11,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using PersonalAgent.IntegrationTests.Fakes;
 
 namespace PersonalAgent.IntegrationTests;
 
@@ -117,6 +118,56 @@ public sealed class DashboardTests
             await Dispatcher.Yield(DispatcherPriority.Background);
         }
         finally { window.Close(); await host.StopAsync(); }
+    });
+
+    [Fact]
+    public Task DashboardReopensPersistedHistoryThroughRealHostAndXaml() => OnWpfThread(async () =>
+    {
+        using var database = new TemporaryAgentDatabase();
+        Guid id;
+        IReadOnlyList<RunEvent> original;
+        using (var host = AppHost.CreateBuilder([], database.DatabasePath).ConfigureLogging(log => log.ClearProviders())
+            .ConfigureServices(services => services.AddSingleton<IAgentRuntime>(provider => new FakeAgentRuntime(
+                [new("Persisted visible step")], provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync))).Build())
+        {
+            await host.StartAsync();
+            var window = host.Services.GetRequiredService<MainWindow>();
+            try
+            {
+                await Bind(window);
+                var model = host.Services.GetRequiredService<DashboardViewModel>();
+                model.SubmitCommand.Execute(null);
+                await model.SubmitCommand.ExecutionTask!.WaitAsync(TimeSpan.FromSeconds(10));
+                Assert.Equal(RunStatus.Completed, model.CurrentRun!.Status);
+                id = model.CurrentRun.Id;
+                original = model.Events.ToArray();
+                Assert.Single(model.History);
+            }
+            finally { window.Close(); await host.StopAsync(); }
+        }
+        using (var host = AppHost.CreateBuilder([], database.DatabasePath).ConfigureLogging(log => log.ClearProviders()).Build())
+        {
+            await host.StartAsync();
+            var window = host.Services.GetRequiredService<MainWindow>();
+            try
+            {
+                await Bind(window);
+                var model = host.Services.GetRequiredService<DashboardViewModel>();
+                var history = (ComboBox)window.FindName("RunHistoryList");
+                Assert.Same(model.History, history.ItemsSource);
+                Assert.Equal(id, Assert.Single(model.History).Id);
+                history.SelectedItem = model.History[0];
+                await Dispatcher.Yield(DispatcherPriority.DataBind);
+                Assert.Equal(id, model.CurrentRun!.Id);
+                Assert.Equal("Completed", ((TextBlock)window.FindName("RunStatusText")).Text);
+                Assert.Contains("fake", ((TextBlock)window.FindName("RunSummaryText")).Text);
+                Assert.Equal(original, model.Events);
+                Assert.Contains(model.Events, value => value.Message == "Persisted visible step");
+                Assert.False(model.IsActive);
+                Assert.False(model.ResumeCommand.CanExecute(null));
+            }
+            finally { window.Close(); await host.StopAsync(); }
+        }
     });
 
     private static async Task Until(DashboardViewModel model, Func<bool> predicate)

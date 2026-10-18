@@ -9,9 +9,10 @@ internal sealed class TemporaryAgentDatabase : IDisposable, IDbContextFactory<Ag
 {
     private readonly string directory = Path.Combine(Path.GetTempPath(), "PersonalAgent.Tests", Guid.NewGuid().ToString("N"));
     public TemporaryAgentDatabase() => Directory.CreateDirectory(directory);
+    public string DatabasePath => Path.Combine(directory, "history.db");
     public AgentDbContext Open() => new(new DbContextOptionsBuilder<AgentDbContext>().UseSqlite(new SqliteConnectionStringBuilder
     {
-        DataSource = Path.Combine(directory, "history.db"), ForeignKeys = true, Pooling = false
+        DataSource = DatabasePath, ForeignKeys = true, Pooling = false
     }.ToString()).Options);
     public void Dispose() => Directory.Delete(directory, recursive: true);
     public AgentDbContext CreateDbContext() => Open();

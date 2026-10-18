@@ -201,14 +201,15 @@
                                        "attempts":  1
                                    },
                         "PA-019":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T11:02:54.8486694+00:00",
+                                       "completed_at":  "2026-10-18T11:14:05.9303983+00:00",
                                        "evidence":  [
-
+                                                        "Coordinator stages async serialized revisions and commits repository before queue/agent/events/terminal publication; query locks exclude DB I/O. Production WPF entry uses LocalAppData history DB; RunHistoryService migrates/loads finished attempts without replay; Dashboard finished-task selector displays reopened events/result. PersistenceRuntimeTests 7 and restart XAML test cover metadata and save-failure safety. FDD-001/007 scoped PASS; notifications/incomplete recovery remain future Draft scenarios.",
+                                                        "Verification: PersistenceRuntimeTests 7 passed; DashboardTests 3 passed including fresh host/XAML same SQLite file; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 46 integration + 3 local fake-flow passed; diff check passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-020":  {
                                        "status":  "pending",
@@ -1271,6 +1272,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-018",
-    "updated_at":  "2026-10-18T11:02:53.2548535+00:00"
+    "last_task_id":  "PA-019",
+    "updated_at":  "2026-10-18T11:14:05.9407833+00:00"
 }

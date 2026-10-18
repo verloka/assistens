@@ -107,6 +107,14 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
         }
     }
 
+    public async Task<IReadOnlyList<TaskRun>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        var rows = await db.TaskRuns.AsNoTracking().OrderByDescending(row => row.CreatedAtUtc).ThenBy(row => row.Id).ToListAsync(cancellationToken);
+        foreach (var row in rows) CheckSchema(row);
+        return rows.Select(ToDomain).ToArray();
+    }
+
     private static void ValidateEvents(Guid runId, IReadOnlyList<RunEvent> events, long last)
     {
         if (events.Count == 0) throw new ArgumentException("A state write requires appended history.");
@@ -132,7 +140,7 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
         row.Status = run.Status; row.RunVersion = run.RunVersion; row.PauseScope = run.PauseScope; row.Reason = run.Reason;
         row.StartedAtUtc = run.StartedAtUtc; row.EndedAtUtc = run.EndedAtUtc; row.Summary = run.Summary; row.ErrorCode = run.ErrorCode;
         row.SourcesJson = JsonSerializer.Serialize(run.Sources);
-        if (result is not null) row.ResultJson = JsonSerializer.Serialize(result);
+        row.ResultJson = result is null ? null : JsonSerializer.Serialize(result);
     }
     private static TaskRun ToDomain(TaskRunRow row) => new()
     {

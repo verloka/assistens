@@ -9,7 +9,7 @@ public static class TaskRunStateMachine
     {
         RunStatus.Created => to is RunStatus.Queued or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Skipped,
         RunStatus.Queued => to is RunStatus.Running or RunStatus.WaitingForDesktop or RunStatus.WaitingForUser
-            or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Skipped,
+            or RunStatus.Paused or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Skipped,
         RunStatus.Running => to is RunStatus.WaitingForDesktop or RunStatus.WaitingForUser or RunStatus.WaitingForApproval
             or RunStatus.Pausing or RunStatus.Blocked or RunStatus.Completed or RunStatus.Failed or RunStatus.Cancelled or RunStatus.Interrupted,
         RunStatus.WaitingForDesktop or RunStatus.WaitingForUser or RunStatus.WaitingForApproval =>

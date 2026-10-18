@@ -20,7 +20,7 @@ public partial class App : Application
         base.OnStartup(e);
         try
         {
-            var host = AppHost.CreateBuilder(e.Args).Build();
+            var host = AppHost.CreateBuilder(e.Args, AppHost.DefaultHistoryPath).Build();
             _desktopHost = new DesktopHost(host);
             _logger = host.Services.GetRequiredService<ILogger<App>>();
             _stoppingRegistration = host.Services.GetRequiredService<IHostApplicationLifetime>()

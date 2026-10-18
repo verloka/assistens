@@ -25,25 +25,29 @@ public sealed class TaskRunner(TaskRunCoordinator coordinator, IAgentRuntime run
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, execution.Cancellation, duration.Token);
         try
         {
-            if (!await coordinator.StartExecutionAsync(runId, linked.Token)) return;
-            var result = await runtime.ExecuteAsync(execution.Request, new RunProgress(coordinator, runId), linked.Token);
-            if (result.Status == AgentResultStatus.Completed) await coordinator.WaitAtBoundaryAsync(runId, linked.Token);
+            if (!await coordinator.StartExecutionAsync(runId, linked.Token).ConfigureAwait(false)) return;
+            var result = await runtime.ExecuteAsync(execution.Request, new RunProgress(coordinator, runId), linked.Token).ConfigureAwait(false);
+            if (result.Status == AgentResultStatus.Completed) await coordinator.WaitAtBoundaryAsync(runId, linked.Token).ConfigureAwait(false);
             linked.Token.ThrowIfCancellationRequested();
-            coordinator.FinishExecution(runId, result);
+            await coordinator.FinishExecutionAsync(runId, result).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
-            coordinator.InterruptExecution(runId);
+            await coordinator.InterruptExecutionAsync(runId).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (execution.Cancellation.IsCancellationRequested) { }
         catch (OperationCanceledException) when (duration.IsCancellationRequested)
         {
-            coordinator.FinishExecution(runId, Failure("RunTimedOut", "Task exceeded its duration limit."));
+            await coordinator.FinishExecutionAsync(runId, Failure("RunTimedOut", "Task exceeded its duration limit.")).ConfigureAwait(false);
+        }
+        catch (RunPersistenceException)
+        {
+            await coordinator.FinishExecutionAsync(runId, Failure("HistorySaveFailed", "Task history could not be saved; execution stopped.")).ConfigureAwait(false);
         }
         catch (Exception)
         {
             // Exception text may contain tool/provider secrets. Public result is intentionally bounded.
-            coordinator.FinishExecution(runId, Failure("AgentExecutionFailed", "Agent execution failed."));
+            await coordinator.FinishExecutionAsync(runId, Failure("AgentExecutionFailed", "Agent execution failed.")).ConfigureAwait(false);
         }
         finally { coordinator.ReleaseExecution(runId); }
     }
@@ -58,7 +62,7 @@ public sealed class TaskRunner(TaskRunCoordinator coordinator, IAgentRuntime run
         public void Report(AgentEvent value)
         {
             if (value.RunId != runId) throw new InvalidOperationException("Progress run ID does not match execution.");
-            coordinator.RecordProgress(value);
+            coordinator.RecordProgressAsync(value).GetAwaiter().GetResult();
         }
     }
 }

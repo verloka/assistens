@@ -147,8 +147,10 @@ and business end-to-end acceptance remain separate backlog work.
 and checks bound submit/pause/resume/cancel, ordered progress/result, dispatcher
 responsiveness and shutdown. It never displays a window or injects desktop input.
 For an attended visual check, run `dotnet run --project src/PersonalAgent.App` and
-use Start local task; only a local fake profile is configured. History currently
-clears when the app closes. This does not validate a paid model or complete FDD-001.
+use Start local task; only a local fake profile is configured. The WPF entry point
+persists history in `%LocalAppData%/PersonalAgent/history.db`; select a finished task
+after restarting to inspect its events/result. This does not validate a paid model
+or complete FDD-001. Tests use isolated databases or memory-only host composition.
 
 ## SQLite schema (PA-017)
 
@@ -163,8 +165,7 @@ Only Persistence references EF. Schema rows map dates to UTC ticks (INTEGER) so
 SQLite can compare/order them; domain DTOs remain DateTimeOffset and SDK-free.
 RunVersion is application-managed concurrency, not a SQLite rowversion. Event
 UPDATE/DELETE triggers are custom migration SQL; future SQLite table rebuilds must
-preserve them. Application repository/runtime wiring is subsequent backlog work;
-the current Dashboard still keeps its history in memory.
+preserve them. PA-019 connects the repository to runtime and finished-task history.
 
 To reproduce migration tooling without changing global tools:
 
@@ -183,4 +184,14 @@ verification with EnsureCreated. References:
 eight competing writers produce one winner, stale/repeated versions fail without
 extra events, and a real event insert failure rolls back the run change. Attempt
 inputs and terminal outcomes cannot be replaced; unknown payload versions are
-rejected. There is no automatic replay or external call. Runtime wiring is PA-019.
+rejected. There is no automatic replay or external call.
+
+`dotnet test --filter PersistenceRuntimeTests` verifies committed creation/start
+before agent execution, durable progress/final metadata, pause/resume/cancel and
+save-failure handling. A failed completion save cannot publish Completed. The
+restart Dashboard test closes the host, opens a fresh host against the same real
+temporary SQLite file and checks actual XAML history/status/events/result. The
+coordinator serializes staged revisions, commits them, then publishes snapshots;
+query locks never cover database I/O. Every persisted progress update advances
+RunVersion. Finished history is loaded without enqueuing execution; incomplete-run
+recovery remains PA-021. No provider or native GUI work is configured.

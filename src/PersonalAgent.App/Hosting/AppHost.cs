@@ -4,12 +4,18 @@ using PersonalAgent.App.ViewModels;
 using PersonalAgent.Agent;
 using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Application;
+using PersonalAgent.Core.Persistence;
+using PersonalAgent.Persistence;
+using System.IO;
 
 namespace PersonalAgent.App;
 
 public static class AppHost
 {
-    public static IHostBuilder CreateBuilder(string[] args) => Host.CreateDefaultBuilder(args)
+    public static string DefaultHistoryPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PersonalAgent", "history.db");
+
+    // A path opts into persistent history. Tests/diagnostics can compose an isolated memory-only host.
+    public static IHostBuilder CreateBuilder(string[] args, string? historyDatabasePath = null) => Host.CreateDefaultBuilder(args)
         .UseContentRoot(AppContext.BaseDirectory)
         .ConfigureServices(services =>
         {
@@ -24,6 +30,12 @@ public static class AppHost
                 provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync));
             services.AddSingleton<TaskRunner>();
             services.AddHostedService<LifecycleLoggingService>();
+            if (historyDatabasePath is not null)
+            {
+                services.AddSingleton(new SqliteAgentDbContextFactory(historyDatabasePath));
+                services.AddSingleton<IRunRepository>(provider => new SqliteRunRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddHostedService<RunHistoryService>();
+            }
             services.AddHostedService<TaskRunnerService>();
         });
 }

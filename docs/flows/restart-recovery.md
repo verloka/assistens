@@ -49,5 +49,7 @@ Status: Draft
 
 - Repository foundation (PA-018): `src/PersonalAgent.Core/Persistence/IRunRepository.cs` and `src/PersonalAgent.Persistence/SqliteRunRepository.cs` persist SDK-neutral run/request/result/history; updates use RunVersion compare-and-swap and append events in the same transaction. `tests/PersonalAgent.IntegrationTests/PersistenceRepositoryTests.cs` verifies competing/repeated updates, event-failure rollback, immutable attempt inputs/terminal state and unknown payload version rejection. Runtime/startup recovery remains pending; complete S1-S3 remain `[untested]`.
 
+- Durable execution/history (PA-019): `TaskRunCoordinator` stages revisions, awaits repository commits, then publishes events/terminal results; `App/Hosting/RunHistoryService.cs` migrates and loads finished history without queueing work. `PersistenceRuntimeTests.cs` and the restart case in `DashboardTests.cs` verify real SQLite close/reopen, complete event/result metadata, pause/cancel and storage failure before execution/publication. Incomplete startup recovery, unknown external outcomes and notification replay still require PA-021 and later tasks; S1-S3 remain `[untested]`.
+
 ## Unknowns
 - Exact recovery database migrations and idempotency key shape will be validated during implementation.

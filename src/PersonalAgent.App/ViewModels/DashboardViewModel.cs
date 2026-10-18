@@ -16,7 +16,8 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
     private TaskRun? currentRun;
     private bool active;
     private bool disposed;
-    private string message = "Local demo: no model or desktop actions. History clears when the app closes.";
+    private string message = "Local demo: no model or desktop actions.";
+    private TaskRun? selectedHistory;
 
     public DashboardViewModel(ITaskCommands commands, TaskRunCoordinator state, IHostApplicationLifetime host)
     {
@@ -29,10 +30,25 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         ResumeCommand = new AsyncCommand(() => ControlAsync(run => commands.ResumeAsync(new(Guid.NewGuid(), run.Id, run.RunVersion), lifetime.Token)),
             () => CanControl && CurrentRun!.Status is RunStatus.Paused or RunStatus.PausedForUser);
         CancelCommand = new AsyncCommand(() => ControlAsync(run => commands.CancelAsync(new(Guid.NewGuid(), run.Id, run.RunVersion), lifetime.Token)), () => CanControl);
+        RefreshHistory();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public ObservableCollection<RunEvent> Events { get; } = [];
+    public ObservableCollection<TaskRun> History { get; } = [];
+    public TaskRun? SelectedHistory
+    {
+        get => selectedHistory;
+        set
+        {
+            if (active || value is null) return;
+            selectedHistory = value;
+            currentRun = state.GetRun(value.Id);
+            Events.Clear();
+            foreach (var entry in state.GetEvents(value.Id)) Events.Add(entry);
+            Changed(); Refresh();
+        }
+    }
     public AsyncCommand SubmitCommand { get; }
     public AsyncCommand PauseCommand { get; }
     public AsyncCommand ResumeCommand { get; }
@@ -66,11 +82,13 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
             }
         }
         catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { message = "Application is stopping."; }
+        catch (RunPersistenceException) { message = "Task history could not be saved; task was not started."; }
         catch (Exception) { message = "Task could not be started or observed. Review the current status."; }
         finally
         {
             active = false;
             if (currentRun is not null) currentRun = state.GetRun(currentRun.Id);
+            RefreshHistory();
             Refresh();
         }
     }
@@ -80,6 +98,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         if (currentRun is null) return;
         try { currentRun = await command(state.GetRun(currentRun.Id)); }
         catch (RunVersionConflictException) { message = "Task changed while the command was pending; status refreshed."; }
+        catch (RunPersistenceException) { message = "Task history could not be saved; command was not applied."; }
         catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { message = "Application is stopping."; }
         catch (InvalidOperationException) { message = "Command is unavailable in the current task state."; }
         finally { if (currentRun is not null) currentRun = state.GetRun(currentRun.Id); Refresh(); }
@@ -89,6 +108,11 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
     {
         Changed(nameof(CurrentRun)); Changed(nameof(Status)); Changed(nameof(Summary)); Changed(nameof(Message)); Changed(nameof(IsActive));
         SubmitCommand.Refresh(); PauseCommand.Refresh(); ResumeCommand.Refresh(); CancelCommand.Refresh();
+    }
+    private void RefreshHistory()
+    {
+        History.Clear();
+        foreach (var run in state.GetRuns().Where(run => TaskRunStateMachine.IsTerminal(run.Status))) History.Add(run);
     }
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
     public void Dispose() { if (disposed) return; disposed = true; lifetime.Cancel(); lifetime.Dispose(); }
