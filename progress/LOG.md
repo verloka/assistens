@@ -263,3 +263,8 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 ## 2026-10-18 16:25:01 +03:00 | PA-033 | waiting; updated attended fixture launched
 - Continued user's explicit diagnostic-launch workflow: dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build, exec session74122. Process/window present. App starts non-activating; no SCROLL/CLICK/capture/input triggered. Await user's four direction reports and visible movement, then close.
 - Checks: unchanged a296e6a build/235 automated tests passed; doctor validates125 states and next has no ready task. PA-033 remains blocked until actual native scroll observation; PA-026/030 hardware gates unchanged.
+
+## 2026-10-18 16:31:12 +03:00 | PA-033 | done (all4 actual scroll results)
+- User returned SCROLL Down/Up/Left/Right OK at physical (718,629), observed=1 each, expected and received deltas -240/+240. Actual offsets from (400,400) became (400,464)/(400,336)/(336,400)/(464,400), proving correct axis/sign in dedicated area. Exec session74122 exited0; no diagnostic remains.
+- Checks: code unchanged at a296e6a; existing19 scroll+23 click+18 primitive cases and full verify60 unit+172 integration+3 fake-flow passed, build0 warnings/errors. Doctor passed; repository clean before evidence change. Actual hook/message/offset condition inspected and real report matches required criterion; no duplicate native action or unchanged-code test rerun needed. Diff check passed.
+- FDD verify: scoped FDD-002 scroll result PASS with reverse FDD-001/003/007 unchanged. Full S1-S4, production lease/pause/lock/UIPI remain NOT TESTED and Draft. Updated evidence only, no contract promotion. Unblocked/resumed/completed PA-033. Unresolved PA-026/030 hardware checks retained. Next PA-034.

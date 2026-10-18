@@ -214,7 +214,11 @@ results fault the sender without replaying movement or wheel input.
 invalid direction, stale/denied/locked context, revocation, pre-cancellation and
 partial insertion with no retry. Click and primitive suites remain regressions.
 
-Actual Windows scrolling remains **NOT TESTED**. In WindowsSmoke activate the
+Actual Windows scrolling: user returned **Down/Up/Left/Right OK** on 2026-10-18,
+one actual matching native event each at physical (718,629). Down/Up moved
+vertical offset 400 to 464/336; Left/Right moved horizontal offset 400 to 336/464.
+Received deltas matched -240/+240, and the diagnostic exited 0. This verifies the
+dedicated fixture on that setup. To repeat in WindowsSmoke activate the
 window, select each of Down/Up/Left/Right in the list above **SCROLL**, and
 left-click **SCROLL** once per direction. Keep the pointer/session still until
 the report. The dedicated area resets to offset (400,400), takes a fresh

@@ -353,14 +353,15 @@
                                        "attempts":  2
                                    },
                         "PA-033":  {
-                                       "status":  "blocked",
-                                       "started_at":  "2026-10-18T13:20:39.0483613+00:00",
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:31:11.2785578+00:00",
+                                       "completed_at":  "2026-10-18T13:31:11.8983526+00:00",
                                        "evidence":  [
-
+                                                        "Actual WindowsSmoke user SCROLL Down/Up/Left/Right OK, observed1 each, actual deltas-240/+240, offsets(400,400)-\u003e(400,464)/(400,336)/(336,400)/(464,400), physical(718,629), exec74122 exit0. Scoped FDD-002 scroll acceptance PASS; full S1-S4 remain NOT TESTED/Draft.",
+                                                        "Verification: Actual user-operated native wheel and offset result for all4 directions; code unchanged at a296e6a. Prior 19 scroll+23 click+18 primitive tests passed; scripts/verify.ps1 build0warnings/errors,60unit+172integration+3localfake passed. No duplicate real input."
                                                     ],
-                                       "note":  "Implemented bounded 4-direction scroll with shared authorized anchor gate and 19 fake-native cases; full verify passed. Actual scrolling in dedicated WindowsSmoke area needs attended SCROLL Down/Up/Left/Right OK, observed=1, correct native deltas and visible offset change; not yet observed. See tests/README.md. No automatic wheel/desktop capture/input performed.",
-                                       "attempts":  1
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
                                    },
                         "PA-034":  {
                                        "status":  "pending",
@@ -1284,5 +1285,5 @@
                                    }
                     },
     "last_task_id":  "PA-033",
-    "updated_at":  "2026-10-18T13:24:39.8565852+00:00"
+    "updated_at":  "2026-10-18T13:31:11.9109480+00:00"
 }
