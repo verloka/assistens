@@ -353,14 +353,14 @@
                                        "attempts":  2
                                    },
                         "PA-033":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T13:20:39.0483613+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Implemented bounded 4-direction scroll with shared authorized anchor gate and 19 fake-native cases; full verify passed. Actual scrolling in dedicated WindowsSmoke area needs attended SCROLL Down/Up/Left/Right OK, observed=1, correct native deltas and visible offset change; not yet observed. See tests/README.md. No automatic wheel/desktop capture/input performed.",
+                                       "attempts":  1
                                    },
                         "PA-034":  {
                                        "status":  "pending",
@@ -1283,6 +1283,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-032",
-    "updated_at":  "2026-10-18T13:20:10.0992060+00:00"
+    "last_task_id":  "PA-033",
+    "updated_at":  "2026-10-18T13:24:39.8565852+00:00"
 }

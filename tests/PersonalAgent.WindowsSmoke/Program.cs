@@ -24,11 +24,16 @@ internal sealed class SmokeWindow : Window
     private readonly TextBox report = new() { IsReadOnly = true, AcceptsReturn = true, Height = 130, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
     private readonly Image preview = new() { Height = 170, Margin = new Thickness(0, 8, 0, 0) };
     private readonly Button run = new() { Content = "Capture this window and type one x in the test field", Margin = new Thickness(0, 8, 0, 8) };
-    private readonly Button clickTest = new() { Content = "CLICK selected button in TEST TARGET (moves pointer once)", Margin = new Thickness(0, 0, 0, 8) };
+    private readonly Button clickTest = new() { Content = "CLICK: left-click here to inject the selected button into TEST TARGET", Margin = new Thickness(0, 0, 0, 8) };
     private readonly ComboBox clickButton = new() { ItemsSource = Enum.GetValues<MouseButton>(), SelectedIndex = 0, Margin = new Thickness(0, 0, 0, 8) };
     private readonly Border clickTarget = new() { Height = 48, Background = System.Windows.Media.Brushes.LightSkyBlue,
         Child = new TextBlock { Text = "TEST TARGET: no external effect", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } };
     private readonly List<(System.Windows.Input.MouseButton Button, bool Up)> observedClicks = [];
+    private readonly Button scrollTest = new() { Content = "SCROLL: left-click here to send 2 ticks in the selected direction", Margin = new Thickness(0, 8, 0, 8) };
+    private readonly ComboBox scrollDirection = new() { ItemsSource = Enum.GetValues<ScrollDirection>(), SelectedIndex = 1 };
+    private readonly ScrollViewer scrollTarget = new() { Height = 90, HorizontalScrollBarVisibility = ScrollBarVisibility.Visible,
+        VerticalScrollBarVisibility = ScrollBarVisibility.Visible, Background = System.Windows.Media.Brushes.LightGoldenrodYellow };
+    private readonly List<(int Message, int Delta, ScreenPoint Point)> observedScroll = [];
     private nint handle;
     private bool registered;
     private bool hotkeyObserved;
@@ -36,11 +41,12 @@ internal sealed class SmokeWindow : Window
     private long primaryGeneration;
     private CancellationTokenSource? primaryCancellation;
     private CancellationTokenSource? clickCancellation;
+    private CancellationTokenSource? scrollCancellation;
     private bool typingDiagnostic;
 
     public SmokeWindow()
     {
-        Title = "PersonalAgent attended Windows diagnostic (PA-008/025/026/032)";
+        Title = "PersonalAgent attended Windows diagnostic (PA-008/025/026/032/033)";
         Width = 680;
         Height = 660;
         ShowActivated = false;
@@ -71,6 +77,14 @@ internal sealed class SmokeWindow : Window
         clickTarget.PreviewMouseDown += (_, args) => { observedClicks.Add((args.ChangedButton, false)); args.Handled = true; };
         clickTarget.PreviewMouseUp += (_, args) => { observedClicks.Add((args.ChangedButton, true)); args.Handled = true; };
         panel.Children.Add(new TextBlock { Text = "CAPTURE CHECK: this blue bar must appear on the display containing this window", Background = System.Windows.Media.Brushes.DodgerBlue, Margin = new Thickness(0, 0, 0, 8) });
+        panel.Children.Add(scrollDirection);
+        panel.Children.Add(scrollTest);
+        var scrollContent = new StackPanel { Width = 1400, Height = 1400 };
+        for (var row = 0; row < 40; row++)
+            scrollContent.Children.Add(new TextBlock { Height = 35, Text = $"SCROLL TARGET row {row:D2}    |    column 1                  column 2                  column 3                  column 4                  column 5" });
+        scrollTarget.Content = scrollContent;
+        panel.Children.Add(scrollTarget);
+        scrollTest.Click += async (_, _) => await RunScrollAsync();
         panel.Children.Add(target);
         panel.Children.Add(report);
         panel.Children.Add(preview);
@@ -86,6 +100,7 @@ internal sealed class SmokeWindow : Window
             Volatile.Write(ref primaryConsent, 0);
             primaryCancellation?.Cancel();
             clickCancellation?.Cancel();
+            scrollCancellation?.Cancel();
             if (registered) Native.UnregisterHotKey(handle, 1);
             HwndSource.FromHwnd(handle)?.RemoveHook(OnMessage);
         };
@@ -95,7 +110,7 @@ internal sealed class SmokeWindow : Window
     {
         var label = area switch { ScreenshotArea.PrimaryMonitor => "PRIMARY", ScreenshotArea.VirtualDesktop => "VIRTUAL", _ => "MONITOR" };
         // A second click must not replace/revoke an in-flight capture's consent or token.
-        if (primaryCancellation is not null || clickCancellation is not null || typingDiagnostic) { Write("Wait for the current diagnostic."); return; }
+        if (primaryCancellation is not null || clickCancellation is not null || scrollCancellation is not null || typingDiagnostic) { Write("Wait for the current diagnostic."); return; }
         try
         {
             RequireForeground();
@@ -135,7 +150,7 @@ internal sealed class SmokeWindow : Window
 
     private async Task RunClickAsync()
     {
-        if (clickCancellation is not null || primaryCancellation is not null || typingDiagnostic) { Write("Wait for the current diagnostic."); return; }
+        if (clickCancellation is not null || primaryCancellation is not null || scrollCancellation is not null || typingDiagnostic) { Write("Wait for the current diagnostic."); return; }
         clickTest.IsEnabled = false;
         using var cancellation = new CancellationTokenSource();
         clickCancellation = cancellation;
@@ -168,9 +183,51 @@ internal sealed class SmokeWindow : Window
         }
     }
 
+    private async Task RunScrollAsync()
+    {
+        if (clickCancellation is not null || primaryCancellation is not null || scrollCancellation is not null || typingDiagnostic) { Write("Wait for the current diagnostic."); return; }
+        scrollTest.IsEnabled = false;
+        using var cancellation = new CancellationTokenSource();
+        scrollCancellation = cancellation;
+        try
+        {
+            RequireForeground();
+            var direction = (ScrollDirection)scrollDirection.SelectedItem;
+            scrollTarget.BringIntoView();
+            scrollTarget.ScrollToHorizontalOffset(400);
+            scrollTarget.ScrollToVerticalOffset(400);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            var beforeX = scrollTarget.HorizontalOffset;
+            var beforeY = scrollTarget.VerticalOffset;
+            if (beforeX < 100 || beforeY < 100) throw new InvalidOperationException("Scroll target needs room in both directions.");
+            var center = new Point(scrollTarget.ViewportWidth / 2, scrollTarget.ViewportHeight / 2);
+            var physical = scrollTarget.PointToScreen(center);
+            var point = new ScreenPoint((int)Math.Round(physical.X), (int)Math.Round(physical.Y));
+            bool Allowed() => IsActive && Native.GetForegroundWindow() == handle && scrollTarget.IsVisible &&
+                scrollTarget.PointToScreen(center) == physical && Native.WindowFromPoint(new(point.X, point.Y)) == handle &&
+                new[] { 1, 2, 4, 16, 17, 18, 91, 92 }.All(key => (Native.GetAsyncKeyState(key) & 0x8000) == 0);
+            var generation = Interlocked.Increment(ref primaryGeneration);
+            (bool, long) Authorize() => Dispatcher.Invoke(() => (Allowed(), generation));
+            var frame = await new WindowsScreenCapture(Authorize).CaptureAsync(new(ScreenshotArea.VirtualDesktop), cancellation.Token);
+            observedScroll.Clear();
+            await new WindowsMouseInput(Authorize).ScrollAsync(frame, point, direction, 2, cancellation.Token);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            var horizontal = direction is ScrollDirection.Left or ScrollDirection.Right;
+            var expectedDelta = direction is ScrollDirection.Down or ScrollDirection.Left ? -240 : 240;
+            var expectedMessage = horizontal ? 0x20e : 0x20a;
+            var difference = horizontal ? scrollTarget.HorizontalOffset - beforeX : scrollTarget.VerticalOffset - beforeY;
+            var expectedSign = direction is ScrollDirection.Down or ScrollDirection.Right ? 1 : -1;
+            var correct = observedScroll.SequenceEqual(new[] { (expectedMessage, expectedDelta, point) }) && difference * expectedSign > 0;
+            Write($"SCROLL {direction} {(correct ? "OK" : "FAILED")}; expectedDelta={expectedDelta}; deltas={string.Join(",", observedScroll.Select(item => item.Delta))}; observed={observedScroll.Count}; " +
+                $"offset=({beforeX},{beforeY})->({scrollTarget.HorizontalOffset},{scrollTarget.VerticalOffset}); physical={point}; no retry/files/uploads.");
+        }
+        catch (Exception exception) { Write($"SCROLL BLOCKED: {exception.Message}"); }
+        finally { scrollCancellation = null; scrollTest.IsEnabled = true; }
+    }
+
     private async void RunSmoke(object sender, RoutedEventArgs args)
     {
-        if (clickCancellation is not null || primaryCancellation is not null || typingDiagnostic) { Write("Wait for the current diagnostic."); return; }
+        if (clickCancellation is not null || primaryCancellation is not null || scrollCancellation is not null || typingDiagnostic) { Write("Wait for the current diagnostic."); return; }
         typingDiagnostic = true;
         run.IsEnabled = false;
         try
@@ -221,6 +278,22 @@ internal sealed class SmokeWindow : Window
 
     private nint OnMessage(nint hwnd, int message, nint wParam, nint lParam, ref bool handled)
     {
+        if (scrollCancellation is not null && message is 0x20a or 0x20e)
+        {
+            // The dedicated fixture consumes actual wheel messages only over its own scroll target.
+            // Signed coordinates preserve negative-monitor positions; no wheel input is forwarded.
+            var point = new ScreenPoint(unchecked((short)lParam.ToInt64()), unchecked((short)(lParam.ToInt64() >> 16)));
+            var local = scrollTarget.PointFromScreen(new(point.X, point.Y));
+            if (local.X >= 0 && local.Y >= 0 && local.X < scrollTarget.ViewportWidth && local.Y < scrollTarget.ViewportHeight)
+            {
+                var delta = unchecked((short)(wParam.ToInt64() >> 16));
+                observedScroll.Add((message, delta, point));
+                if (message == 0x20a) scrollTarget.ScrollToVerticalOffset(scrollTarget.VerticalOffset - delta / 120d * 32);
+                else scrollTarget.ScrollToHorizontalOffset(scrollTarget.HorizontalOffset + delta / 120d * 32);
+                handled = true;
+                return 0;
+            }
+        }
         if (message == 0x0312 && wParam == 1)
         {
             hotkeyObserved = true;

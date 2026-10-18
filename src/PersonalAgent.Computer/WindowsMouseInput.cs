@@ -5,6 +5,7 @@ namespace PersonalAgent.Computer;
 // Driver primitive only. The future tool supplies a fresh observed frame and trusted lease policy.
 internal sealed class WindowsMouseInput
 {
+    internal const int MaxScrollTicks = 10;
     private readonly WindowsInputSender sender;
     private readonly Func<IReadOnlyList<ScreenMonitor>> readMonitors;
 
@@ -16,13 +17,30 @@ internal sealed class WindowsMouseInput
 
     internal Task ClickAsync(ScreenCapture context, ScreenPoint point, MouseButton button, CancellationToken ct = default)
     {
-        context.Validate();
         if (!Enum.IsDefined(button)) throw new ArgumentOutOfRangeException(nameof(button));
+        var move = PrepareMove(context, point);
+        var down = button switch { MouseButton.Left => 2u, MouseButton.Right => 8u, _ => 32u };
+        return sender.SendAsync(() => [move(), NativeInput.Mouse(down), NativeInput.Mouse(down << 1)], context.DesktopGeneration, ct);
+    }
+
+    internal Task ScrollAsync(ScreenCapture context, ScreenPoint point, ScrollDirection direction, int amount, CancellationToken ct = default)
+    {
+        if (!Enum.IsDefined(direction)) throw new ArgumentOutOfRangeException(nameof(direction));
+        if (amount is < 1 or > MaxScrollTicks) throw new ArgumentOutOfRangeException(nameof(amount));
+        var move = PrepareMove(context, point);
+        var delta = amount * 120 * (direction is ScrollDirection.Down or ScrollDirection.Left ? -1 : 1);
+        var wheel = direction is ScrollDirection.Left or ScrollDirection.Right ? 0x1000u : 0x800u;
+        return sender.SendAsync(() => [move(), NativeInput.Mouse(wheel, data: unchecked((uint)delta))], context.DesktopGeneration, ct);
+    }
+
+    private Func<NativeInput> PrepareMove(ScreenCapture context, ScreenPoint point)
+    {
+        context.Validate();
         // Snapshot mutable monitor collections before waiting. No screenshot bytes are logged or forwarded.
         var monitors = context.Monitors.ToArray();
         if (!context.SourceBounds.Contains(point) || !monitors.Any(monitor => monitor.Bounds.Contains(point)))
             throw Error("InvalidCoordinates");
-        return sender.SendAsync(() =>
+        return () =>
         {
             var current = readMonitors().ToArray();
             if (current.Length == 0 || current.Count(m => m.IsPrimary) != 1 || current.Select(m => m.Id).Distinct().Count() != current.Length)
@@ -39,9 +57,8 @@ internal sealed class WindowsMouseInput
             // Nearest normalized pixel center, ties toward the lower bin, including 65536-wide desktops.
             var x = (int)(((2L * ((long)point.X - left) + 1) * 65536 + width - 1) / (2 * width));
             var y = (int)(((2L * ((long)point.Y - top) + 1) * 65536 + height - 1) / (2 * height));
-            var down = button switch { MouseButton.Left => 2u, MouseButton.Right => 8u, _ => 32u };
-            return [NativeInput.Mouse(0xc001, x, y), NativeInput.Mouse(down), NativeInput.Mouse(down << 1)];
-        }, context.DesktopGeneration, ct);
+            return NativeInput.Mouse(0xc001, x, y);
+        };
     }
     private static ComputerInputException Error(string code) => new(code, 0, 0, 0, true);
 }

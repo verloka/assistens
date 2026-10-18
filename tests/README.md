@@ -181,8 +181,8 @@ and release-only cleanup after partial clicks. No real pointer is moved.
 
 For actual acceptance run `dotnet run --project tests/PersonalAgent.WindowsSmoke`
 in an unlocked interactive session. Activate its window and keep TEST TARGET
-visible. Release keys/buttons. Select Left, press **CLICK selected button in
-TEST TARGET**, then do not move the pointer or switch applications until its
+visible. Release keys/buttons. Select Left, left-click **CLICK**, then
+do not move the pointer or switch applications until its
 report appears. Repeat for Right and Middle. The gesture captures a fresh
 in-memory virtual frame, checks foreground/target location and released user
 keys, then moves/clicks once inside this fixture. The report must show exactly
@@ -196,11 +196,41 @@ Actual PA-032 click results: user returned **Left/Right/Middle OK** on 2026-10-1
 checks also OK, and diagnostic exited 0. Launch CLICK with the left mouse button;
 the selection chooses the button injected into TEST TARGET. The target records
 matching down/up events without opening a menu or performing a middle-click action.
-Native checks cannot
-atomically reserve the foreground desktop; use only this dedicated window and
+Native checks cannot atomically reserve the foreground desktop; use only this dedicated window and
 keep the session stable during the check. Production lease/pause/approval policy
 and full business scenarios remain later tasks.
 Reference: [Microsoft MOUSEINPUT contract](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-mouseinput).
+
+## Scroll acceptance (PA-033)
+
+`WindowsMouseInput.ScrollAsync` shares the click anchor/generation/topology and
+authorization boundary. Amount is a positive count of 1-10 wheel ticks, 120 delta
+units each; direction controls the sign/vertical or horizontal wheel flag. Each
+call sends one absolute move and one bounded wheel event. Partial/unknown native
+results fault the sender without replaying movement or wheel input.
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter ComputerScroll` runs
+19 fake-native cases for four directions, min/max and invalid amounts, anchor,
+invalid direction, stale/denied/locked context, revocation, pre-cancellation and
+partial insertion with no retry. Click and primitive suites remain regressions.
+
+Actual Windows scrolling remains **NOT TESTED**. In WindowsSmoke activate the
+window, select each of Down/Up/Left/Right in the list above **SCROLL**, and
+left-click **SCROLL** once per direction. Keep the pointer/session still until
+the report. The dedicated area resets to offset (400,400), takes a fresh
+in-memory frame, then receives two wheel ticks. Its native window hook records
+actual WM_MOUSEWHEEL/WM_MOUSEHWHEEL, verifies the screen anchor and scrolls only
+this test area. No click/focus change in another application or clipboard is used.
+The result requires the exact message/delta and actual offset movement in the
+selected direction; check the visible content and return all four `SCROLL ...`
+lines (expected `OK`, `observed=1`, delta -240 Down/Left or +240 Up/Right), then
+close the diagnostic. A BLOCKED/FAILED line is evidence to investigate, not pass.
+The pointer is not restored automatically. All production takeover/lease and
+live lock/elevation checks remain separate, untested acceptance.
+
+References: [MOUSEINPUT](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-mouseinput),
+[WM_MOUSEWHEEL](https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mousewheel),
+[WM_MOUSEHWHEEL](https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mousehwheel).
 
 ## Screen-independent computer test doubles (PA-029)
 
