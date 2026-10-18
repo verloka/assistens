@@ -1,0 +1,1259 @@
+{
+    "schema_version":  1,
+    "plan_version":  "1.1",
+    "task_states":  {
+                        "PA-001":  {
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T07:44:56.5107670+00:00",
+                                       "completed_at":  "2026-10-18T07:47:44.8935962+00:00",
+                                       "evidence":  [
+                                                        "PersonalAgent.sln; global.json SDK 10.0.401; seven src modules and three xUnit projects; ArchitectureTests validates Core isolation, module boundaries and acyclic references; taskctl report string fixed for PowerShell 5.1 parsing. No business-flow change; FDD not applicable.",
+                                                        "Verification: dotnet build --no-restore: passed on Windows, 0 warnings/errors; dotnet test tests/PersonalAgent.UnitTests --filter ArchitectureTests --no-build: 1 passed; taskctl doctor: 125 tasks valid"
+                                                    ],
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
+                                   },
+                        "PA-002":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-003":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-004":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-005":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-006":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-007":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-008":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-009":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-010":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-011":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-012":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-013":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-014":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-015":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-016":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-017":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-018":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-019":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-020":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-021":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-022":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-023":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-024":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-025":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-026":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-027":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-028":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-029":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-030":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-031":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-032":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-033":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-034":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-035":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-036":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-037":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-038":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-039":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-040":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-041":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-042":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-043":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-044":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-045":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-046":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-047":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-048":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-049":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-050":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-051":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-052":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-053":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-054":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-055":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-056":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-057":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-058":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-059":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-060":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-061":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-062":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-063":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-064":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-065":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-066":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-067":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-068":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-069":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-070":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-071":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-072":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-073":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-074":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-075":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-076":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-077":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-078":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-079":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-080":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-081":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-082":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-083":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-084":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-085":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-086":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-087":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-088":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-089":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-090":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-091":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-092":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-093":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-094":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-095":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-096":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-097":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-098":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-099":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-100":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-101":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-102":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-103":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-104":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-105":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-106":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-107":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-108":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-109":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-110":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-111":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-112":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-113":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-114":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-115":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-116":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-117":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-118":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-119":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-120":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-121":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-122":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-123":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-124":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   },
+                        "PA-125":  {
+                                       "status":  "pending",
+                                       "started_at":  null,
+                                       "completed_at":  null,
+                                       "evidence":  [
+
+                                                    ],
+                                       "note":  null,
+                                       "attempts":  0
+                                   }
+                    },
+    "last_task_id":  "PA-001",
+    "updated_at":  "2026-10-18T07:47:44.9101245+00:00"
+}

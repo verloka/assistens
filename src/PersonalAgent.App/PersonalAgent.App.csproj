@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../PersonalAgent.Core/PersonalAgent.Core.csproj" />
+    <ProjectReference Include="../PersonalAgent.Agent/PersonalAgent.Agent.csproj" />
+    <ProjectReference Include="../PersonalAgent.Computer/PersonalAgent.Computer.csproj" />
+    <ProjectReference Include="../PersonalAgent.Mcp/PersonalAgent.Mcp.csproj" />
+    <ProjectReference Include="../PersonalAgent.Channels.Telegram/PersonalAgent.Channels.Telegram.csproj" />
+    <ProjectReference Include="../PersonalAgent.Persistence/PersonalAgent.Persistence.csproj" />
+  </ItemGroup>
+</Project>
