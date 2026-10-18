@@ -281,6 +281,24 @@ local text/cancellation only, not global hotkey/lease/takeover races or full E2E
 
 Reference: [Microsoft KEYBDINPUT](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-keybdinput).
 
+## Key chords and modifier lifetime (PA-035)
+
+Internal `WindowsKeyboardInput.PressKeyAsync` parses Ctrl/Alt/Shift plus a known
+letter/digit, F1-F12, or named edit/navigation key. Modifiers are distinct and
+canonicalized Ctrl+Alt+Shift; navigation keys use the native extended flag.
+An explicit trusted canonical-chord allowlist is mandatory and defaults denied,
+in addition to desktop authorization/generation. Unknown names/Win chords are
+rejected. Existing user-held modifiers/main key block insertion without release.
+One balanced atomic batch releases main key then modifiers in reverse order;
+partial/unknown insertion uses existing release-only cleanup/fault handling.
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter ComputerPressKey`
+checks 29 fake-native cases, including every partial prefix of Ctrl+Alt+Shift+A,
+cancel during complete/partial send, native exception, default/explicit policy,
+extended keys, parse errors, existing user keys, pre-cancel and stale generation.
+No global chord is injected by this suite. Actual native key effects and live
+lock/UIPI/takeover remain for the attended input harness and later lease tasks.
+
 ## Screen-independent computer test doubles (PA-029)
 
 PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit

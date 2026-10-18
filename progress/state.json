@@ -375,14 +375,15 @@
                                        "attempts":  3
                                    },
                         "PA-035":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:43:02.1412503+00:00",
+                                       "completed_at":  "2026-10-18T13:47:34.2010664+00:00",
                                        "evidence":  [
-
+                                                        "WindowsKeyboardInput.PressKeyAsync canonical known chords, explicit trusted default-denied chord policy, preexisting user-key protection, native extended flags and shared balanced batch/release-only cleanup. ComputerPressKeyTests tracks key state across every partial prefix/native exception/cancel; FDD-002 scoped invariants reviewed, full live takeover not claimed.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter ComputerPressKey|ComputerType|ComputerInputSender --no-restore:72passed; scripts/verify.ps1 locked restore/build0warnings/errors,60unit+227integration+3localfake-flow passed (29PressKey cases). No real chord injected; diff check passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-036":  {
                                        "status":  "pending",
@@ -1285,6 +1286,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-034",
-    "updated_at":  "2026-10-18T13:43:00.8221591+00:00"
+    "last_task_id":  "PA-035",
+    "updated_at":  "2026-10-18T13:47:34.2115789+00:00"
 }

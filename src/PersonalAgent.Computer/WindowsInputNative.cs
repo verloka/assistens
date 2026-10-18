@@ -10,8 +10,8 @@ internal struct NativeInput
 
     internal static NativeInput Unicode(char value, bool up) => new()
     { Type = 1, Data = new() { Keyboard = new() { Scan = value, Flags = 4u | (up ? 2u : 0) } } };
-    internal static NativeInput Key(ushort key, bool up) => new()
-    { Type = 1, Data = new() { Keyboard = new() { VirtualKey = key, Flags = up ? 2u : 0 } } };
+    internal static NativeInput Key(ushort key, bool up, bool extended = false) => new()
+    { Type = 1, Data = new() { Keyboard = new() { VirtualKey = key, Flags = (up ? 2u : 0) | (extended ? 1u : 0) } } };
     internal static NativeInput Mouse(uint flags, int x = 0, int y = 0, uint data = 0) => new()
     { Data = new() { Mouse = new() { X = x, Y = y, Data = data, Flags = flags } } };
 }
@@ -34,8 +34,13 @@ internal interface IWindowsInputNative
     bool IsDesktopAvailable();
     InputInsertion Send(NativeInput[] inputs);
 }
-internal sealed class WindowsInputNative : IWindowsInputNative
+internal interface IWindowsKeyboardNative : IWindowsInputNative
 {
+    bool IsKeyDown(ushort key);
+}
+internal sealed class WindowsInputNative : IWindowsKeyboardNative
+{
+    public bool IsKeyDown(ushort key) => (GetAsyncKeyState(key) & 0x8000) != 0;
     public bool IsDesktopAvailable() => new WindowsCaptureNative().IsDesktopAvailable();
     public InputInsertion Send(NativeInput[] inputs)
     {
@@ -44,4 +49,6 @@ internal sealed class WindowsInputNative : IWindowsInputNative
     }
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint SendInput(uint count, [In] NativeInput[] inputs, int size);
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int key);
 }
