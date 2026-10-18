@@ -180,7 +180,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             if (change.Run.Status == RunStatus.Pausing) throw new InvalidOperationException("Wait for the current step to reach the pause boundary.");
             if (change.Run.Status is not (RunStatus.Paused or RunStatus.PausedForUser or RunStatus.Running) && change.Run.PauseScope != PauseScope.GuiOnly)
                 throw new InvalidOperationException("Run is not paused.");
-            desktopAccess?.ResumeRun(change.Run.Id);
+            if (change.Run.Status == RunStatus.Running && change.Run.PauseScope is null) return; // Idempotent task resume grants no GUI permission.
+            change.ResumeDesktopVersion = desktopAccess?.ValidateResumeRun(change.Run.Id);
             if (change.Run.Status is RunStatus.Paused or RunStatus.PausedForUser)
             {
                 Move(change, change.Run.StartedAtUtc is null ? RunStatus.Queued : RunStatus.Running, "Task resumed");
@@ -382,12 +383,23 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             lock (sync)
             {
                 ObjectDisposedException.ThrowIf(disposed, this);
+                if (change.ResumeDesktopVersion is { } pauseVersion && desktopAccess?.TryResumeRun(runId, pauseVersion) != true)
+                { change.ResumeSuperseded = true; change.Wake = false; }
                 Commit(change);
                 if (commandId is { } id) receipts.Add(id, (fingerprint!, runId));
                 result = change.Entry.Run;
             }
         }
         finally { writes.Release(); }
+        if (change.ResumeSuperseded)
+            return await ChangeAsync(runId, paused =>
+            {
+                if (TaskRunStateMachine.IsTerminal(paused.Run.Status)) return;
+                _ = desktopAccess?.PauseRunAsync(runId);
+                if (paused.Run.PauseScope is null)
+                    Move(paused, paused.Run.Status == RunStatus.Queued ? RunStatus.Paused : RunStatus.Pausing,
+                        "New user takeover superseded pending resume", PauseScope.EntireRun);
+            }, CancellationToken.None).ConfigureAwait(false);
         if (change.Cancel)
         {
             await change.Entry.Cancellation.CancelAsync().ConfigureAwait(false);
@@ -471,6 +483,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
     private sealed class Change(Entry entry)
     {
         public Task? DesktopDrain;
+        public long? ResumeDesktopVersion;
+        public bool ResumeSuperseded;
         public Entry Entry { get; } = entry;
         public TaskRun Run = entry.Run;
         public AgentRunResult? Result = entry.Result;

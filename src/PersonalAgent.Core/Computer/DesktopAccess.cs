@@ -14,6 +14,7 @@ public sealed record DesktopAccessSnapshot(Guid? OwnerRunId, long Generation)
     public DesktopAccessState State { get; init; }
     public bool InputCleanupUncertain { get; init; }
     public Guid? HumanControlOwnerRunId { get; init; }
+    public long PauseVersion { get; init; }
 }
 public interface IDesktopAccessCoordinator
 {
@@ -24,6 +25,8 @@ public interface IDesktopAccessCoordinator
     Task RevokeAsync(DesktopLease lease);
     Task PauseRunAsync(Guid runId);
     void ResumeRun(Guid runId);
+    long ValidateResumeRun(Guid runId);
+    bool TryResumeRun(Guid runId, long expectedPauseVersion);
     Task CancelRunAsync(Guid runId);
     Guid? TakeControl();
     void ReportInputCleanupFailure(DesktopLease lease);
@@ -47,13 +50,14 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
     private bool userControl;
     private Guid? humanControlOwner;
     private bool inputCleanupUncertain;
+    private long pauseVersion;
 
     public DesktopAccessSnapshot Snapshot
     {
         get { lock (sync) return new(current?.RunId, generation) { State = current is null ?
             (userControl ? DesktopAccessState.PausedForUser : DesktopAccessState.Free) :
             !revoked ? DesktopAccessState.Granted : active > 0 ? DesktopAccessState.Pausing : DesktopAccessState.PausedForUser,
-            InputCleanupUncertain = inputCleanupUncertain, HumanControlOwnerRunId = humanControlOwner }; }
+            InputCleanupUncertain = inputCleanupUncertain, HumanControlOwnerRunId = humanControlOwner, PauseVersion = pauseVersion }; }
     }
 
     public Task<DesktopLease> AcquireAsync(Guid runId, CancellationToken ct = default)
@@ -117,7 +121,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
         if (runId == Guid.Empty) throw new ArgumentException("Run ID required.", nameof(runId));
         lock (sync)
         {
-            pausedRuns.Add(runId);
+            if (pausedRuns.Add(runId)) pauseVersion++;
             if (userControl && humanControlOwner is null) humanControlOwner = runId;
             if (current?.RunId != runId) return Task.CompletedTask;
             return RevokeAsync(current);
@@ -128,9 +132,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
     {
         lock (sync)
         {
-            if (inputCleanupUncertain) throw new DesktopAccessException("InputCleanupUncertain");
-            if (userControl && humanControlOwner is { } owner && owner != runId) throw new DesktopAccessException("DesktopPaused");
-            if (userControl && current is not null && current.RunId != runId) throw new DesktopAccessException("DesktopPaused");
+            ValidateResumeRun(runId);
             if (current?.RunId == runId && revoked)
             {
                 if (active > 0) throw new DesktopAccessException("DesktopPausing");
@@ -142,12 +144,35 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
         }
     }
 
+    public long ValidateResumeRun(Guid runId)
+    {
+        lock (sync)
+        {
+            if (inputCleanupUncertain) throw new DesktopAccessException("InputCleanupUncertain");
+            if (userControl && humanControlOwner is { } owner && owner != runId) throw new DesktopAccessException("DesktopPaused");
+            if (userControl && current is not null && current.RunId != runId) throw new DesktopAccessException("DesktopPaused");
+            if (current?.RunId == runId && active > 0) throw new DesktopAccessException("DesktopPausing");
+            return pauseVersion;
+        }
+    }
+
+    public bool TryResumeRun(Guid runId, long expectedPauseVersion)
+    {
+        lock (sync)
+        {
+            if (pauseVersion != expectedPauseVersion) return false;
+            try { ResumeRun(runId); return true; }
+            catch (DesktopAccessException) { return false; }
+        }
+    }
+
     // Human takeover is global: even a run with no current lease cannot acquire behind the user's back.
     public Guid? TakeControl()
     {
         lock (sync)
         {
             userControl = true;
+            pauseVersion++;
             if (current is null) return null;
             var runId = current.RunId;
             humanControlOwner = runId;
@@ -164,6 +189,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
         {
             if (!ReferenceEquals(current, lease)) return;
             inputCleanupUncertain = true; revoked = true; userControl = true;
+            pauseVersion++;
             humanControlOwner = lease.RunId; pausedRuns.Add(lease.RunId);
         }
     }
@@ -173,6 +199,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
         lock (sync)
         {
             inputCleanupUncertain = true; userControl = true;
+            pauseVersion++;
             humanControlOwner ??= runId; pausedRuns.Add(runId);
             if (current is not null) revoked = true;
         }

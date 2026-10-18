@@ -700,3 +700,24 @@ clear it, and history restoration preserves that block. Cancel/Skip wait for
 active input and retain uncertain release evidence instead of erasing it.
 Checkpoint failure leaves the gate closed without a success message or automatic
 retry. Actual physical-input takeover/resume remains the PA-048 attended gate.
+
+## Safe resume and fresh observation (PA-045)
+
+WindowsComputerController is bound permanently to one opaque lease. A trusted
+runtime must call ScreenshotAsync, supply that current image for UI re-evaluation,
+then ConfirmObservation with the exact returned object before Click/Scroll/Type/
+PressKey. This acknowledgment is not a model-callable permission tool. Foreign,
+old, unconfirmed or failed-refresh frames cannot authorize input; the controller
+owns its geometry copy. Resume creates a new grant/controller, never replaces the
+old object's lease or replays pending arguments. No automatic desktop capture or
+acquisition occurs when resuming independent non-GUI work. App GUI admission and
+production tool registration remain disabled/default denied.
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter "ComputerResume|SafeResume"`
+covers eleven cases: four input paths require fresh/confirmed observation, changed
+geometry after pause/resume rejects old coordinates/controllers, failed refresh
+invalidates its old frame, callers cannot mutate private geometry, real SQLite
+resume write delay/failure keeps admission closed, a new takeover wins a pending
+resume without waking old GUI steps, and idempotent Running Resume cannot clear
+human control. Native boundaries are fake; actual physical changed-window resume
+is still part of attended PA-048.

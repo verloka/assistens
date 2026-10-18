@@ -485,14 +485,15 @@
                                        "attempts":  1
                                    },
                         "PA-045":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T15:30:46.5635468+00:00",
+                                       "completed_at":  "2026-10-18T15:38:19.9933820+00:00",
                                        "evidence":  [
-
+                                                        "Lease-bound WindowsComputerController requires own fresh capture and trusted reference-bound re-evaluation acknowledgment before all input; immutable old lease/frame queues cannot act after resume. Task resume validates then persists before pause-version CAS opens admission; new takeover wins without waking old GUI waiters, failed store stays blocked. Legacy five-op contract/fakes preserved; no tool/DI registration or auto capture on non-GUI Resume.",
+                                                        "Verification: ComputerResume|SafeResume11passed; related integration25passed before added Running no-permission case; core24passed. Final scripts/verify.ps1 locked restore/build0warnings/errors,76unit+279integration+3localfake-flow passed (358). Fake-native/real-SQLite only; real changed-window E2E remains PA048."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-046":  {
                                        "status":  "pending",
@@ -1295,6 +1296,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-044",
-    "updated_at":  "2026-10-18T15:30:17.3727887+00:00"
+    "last_task_id":  "PA-045",
+    "updated_at":  "2026-10-18T15:38:20.0029988+00:00"
 }

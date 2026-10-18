@@ -10,6 +10,13 @@ public interface IComputerController
     Task PressKeyAsync(KeyCombination keys, CancellationToken ct = default);
 }
 
+// Trusted runtime acknowledges only the current frame after supplying it for UI re-evaluation.
+// This acknowledgment is not an LLM-callable permission tool.
+public interface IObservedComputerController : IComputerController
+{
+    void ConfirmObservation(ScreenCapture observation);
+}
+
 public enum MouseButton { Left, Right, Middle }
 public enum ScrollDirection { Up, Down, Left, Right }
 public sealed record KeyCombination(string Chord);
