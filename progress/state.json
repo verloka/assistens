@@ -47,14 +47,15 @@
                                        "attempts":  1
                                    },
                         "PA-005":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T08:02:02.0489679+00:00",
+                                       "completed_at":  "2026-10-18T08:03:03.1763885+00:00",
                                        "evidence":  [
-
+                                                        "Reused existing Unit/Integration/E2E projects, passing architecture smoke and ProbeService/CancellableWorker/recording logger fakes. Added scripts/verify.ps1 (PowerShell 5.1, locked restore/build/test, fail-fast) and tests/README.md with commands and honest empty E2E scope.",
+                                                        "Verification: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: restore passed, build 0 warnings/errors, 1 unit + 7 integration passed; E2E suite empty. git diff --cached --check passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-006":  {
                                        "status":  "pending",
@@ -1257,6 +1258,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-004",
-    "updated_at":  "2026-10-18T08:01:58.4155076+00:00"
+    "last_task_id":  "PA-005",
+    "updated_at":  "2026-10-18T08:03:03.1884096+00:00"
 }

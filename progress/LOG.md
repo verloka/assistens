@@ -34,3 +34,8 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 - Added three scoped ADRs: verified SDK baseline; planned Windows capture/input boundary; planned protected secret storage. The latter two make no implementation/hardware/security acceptance claim.
 - Checks: dotnet restore and restore --locked-mode passed; dotnet build --no-restore 0 warnings/errors; dotnet test --no-build 1 architecture + 7 integration passed (SDK type-load check included); E2E suite still empty; cached diff check passed.
 - FDD: package/configuration maintenance; no business contracts changed. Provider calls, approval/resume and transport behavior remain unverified until PA-006/PA-007. No external keys used. Unresolved: none for PA-004. Next: PA-005.
+
+## 2026-10-18 11:03:03 +03:00 | PA-005 | done
+- Inspected and reused all three existing test projects and host probes/fakes; no duplicate scaffolding or smoke tests. Added fail-fast PowerShell 5.1 verify.ps1 for locked restore, build and tests, plus tests/README.md with focused commands and verification boundaries.
+- Checks: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 passed: restore, build 0 warnings/errors, 1 unit + 7 integration tests; E2ETests remains an empty scaffold. Cached diff whitespace check passed. FDD not applicable to documentation/test-command maintenance.
+- Unresolved: none for PA-005. Next: PA-006 MAF local tool calling and approval/resume diagnostic; do not assume live provider credentials.
