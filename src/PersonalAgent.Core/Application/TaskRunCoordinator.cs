@@ -143,6 +143,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         {
             if (TaskRunStateMachine.IsTerminal(change.Run.Status)) throw new InvalidOperationException("Cannot resume a terminal run.");
             if (change.Run.Status == RunStatus.Pausing) throw new InvalidOperationException("Wait for the current step to reach the pause boundary.");
+            if (change.Run.Status is not (RunStatus.Paused or RunStatus.PausedForUser or RunStatus.Running) && change.Run.PauseScope != PauseScope.GuiOnly)
+                throw new InvalidOperationException("Run is not paused.");
             desktopAccess?.ResumeRun(change.Run.Id);
             if (change.Run.Status is RunStatus.Paused or RunStatus.PausedForUser)
             {

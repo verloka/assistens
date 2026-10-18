@@ -37,6 +37,10 @@ internal sealed class SmokeWindow : Window
     private readonly Button typeTest = new() { Content = "TYPE TEXT: left-click to enter Unicode, multiline and tab in this window", Margin = new Thickness(0, 8, 0, 8) };
     private readonly Button typeCancelTest = new() { Content = "TYPE CANCEL: left-click to stop after the first atomic chunk", Margin = new Thickness(0, 0, 0, 8) };
     private readonly Button keyTest = new() { Content = "KEY Ctrl+A: left-click to select this window's text and check modifier release", Margin = new Thickness(0, 0, 0, 8) };
+    private readonly Button armTakeControl = new() { Content = "ARM TAKE CONTROL: register Ctrl+Shift+F10 (fake gate loop; no desktop input)", Margin = new Thickness(0, 8, 0, 8) };
+    private WindowsTakeControlHotkey? takeControlHotkey;
+    private CancellationTokenSource? takeControlLoop;
+    private int simulatedActions;
     private readonly TextBox typeTarget = new() { Height = 85, IsReadOnly = true, AcceptsReturn = true, AcceptsTab = true,
         HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
     private nint handle;
@@ -52,7 +56,7 @@ internal sealed class SmokeWindow : Window
 
     public SmokeWindow()
     {
-        Title = "PersonalAgent attended Windows diagnostic (PA-008/025/026/032/033/034/037)";
+        Title = "PersonalAgent attended Windows diagnostic (PA-037/042)";
         Width = 680;
         Height = 660;
         ShowActivated = false;
@@ -95,9 +99,11 @@ internal sealed class SmokeWindow : Window
         panel.Children.Add(typeCancelTest);
         panel.Children.Add(keyTest);
         panel.Children.Add(typeTarget);
+        panel.Children.Add(armTakeControl);
         typeTest.Click += async (_, _) => await RunTypeAsync(false);
         typeCancelTest.Click += async (_, _) => await RunTypeAsync(true);
         keyTest.Click += async (_, _) => await RunKeyAsync();
+        armTakeControl.Click += async (_, _) => await ArmTakeControlAsync();
         panel.Children.Add(target);
         panel.Children.Add(report);
         panel.Children.Add(preview);
@@ -115,6 +121,9 @@ internal sealed class SmokeWindow : Window
             clickCancellation?.Cancel();
             scrollCancellation?.Cancel();
             typeCancellation?.Cancel();
+            takeControlLoop?.Cancel();
+            takeControlLoop?.Dispose();
+            takeControlHotkey?.Dispose();
             if (registered) Native.UnregisterHotKey(handle, 1);
             HwndSource.FromHwnd(handle)?.RemoveHook(OnMessage);
         };
@@ -309,6 +318,62 @@ internal sealed class SmokeWindow : Window
         }
         catch (Exception exception) { Write($"KEY BLOCKED: {exception.Message}"); }
         finally { typingDiagnostic = false; keyTest.IsEnabled = true; }
+    }
+
+    private async Task ArmTakeControlAsync()
+    {
+        if (typingDiagnostic || clickCancellation is not null || primaryCancellation is not null || scrollCancellation is not null)
+        { Write("Wait for the current diagnostic."); return; }
+        try
+        {
+            RequireForeground();
+            if (registered) { Native.UnregisterHotKey(handle, 1); registered = false; }
+            takeControlLoop?.Cancel(); takeControlLoop?.Dispose();
+            takeControlHotkey?.Dispose(); takeControlHotkey = null;
+            var desktop = new DesktopAccessCoordinator(_ => true);
+            var lease = await desktop.AcquireAsync(Guid.NewGuid());
+            var cancellation = new CancellationTokenSource(); takeControlLoop = cancellation;
+            var token = cancellation.Token;
+            simulatedActions = 0;
+            takeControlHotkey = new WindowsTakeControlHotkey(() =>
+            {
+                var outsideFocus = Native.GetForegroundWindow() != handle;
+                var minimized = WindowState == WindowState.Minimized;
+                desktop.TakeControl(); // Closes new fake/native-bound entries immediately, before UI reporting.
+                _ = ReportTakeControlAsync(desktop, lease, outsideFocus, minimized, token);
+            });
+            Write("TAKE CONTROL ARMED. Minimize this window yourself, activate another app, then press Ctrl+Shift+F10. No screenshot/typing/click is generated; loop counts fake atomic entries only. Restore to read result.");
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    while (true)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        try { using var atomic = desktop.EnterAtomic(lease); Interlocked.Increment(ref simulatedActions); }
+                        catch (DesktopAccessException) { break; }
+                        await Task.Delay(50, token);
+                    }
+                }
+                catch (OperationCanceledException) { }
+            });
+        }
+        catch (Exception exception) { Write($"TAKE CONTROL BLOCKED: {exception.Message}"); }
+    }
+
+    private async Task ReportTakeControlAsync(DesktopAccessCoordinator desktop, DesktopLease lease,
+        bool outsideFocus, bool minimized, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await desktop.RevokeAsync(lease);
+            var count = Volatile.Read(ref simulatedActions);
+            await Task.Delay(300, cancellationToken);
+            var after = Volatile.Read(ref simulatedActions);
+            var blocked = !desktop.IsCurrent(lease) && after == count;
+            Write($"TAKE CONTROL {(blocked && outsideFocus && minimized ? "OK" : "FAILED")}; outsideFocus={outsideFocus}; minimized={minimized}; gateClosed={!desktop.IsCurrent(lease)}; fakeActions={count}->{after}; no LLM/native input/capture.");
+        }
+        catch (OperationCanceledException) { }
     }
 
     // Fixture-only deterministic cancellation after a successfully inserted first batch. Native input

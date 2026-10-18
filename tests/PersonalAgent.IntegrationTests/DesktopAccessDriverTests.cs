@@ -139,6 +139,7 @@ public sealed class DesktopAccessDriverTests
         public Task PauseRunAsync(Guid runId) => inner.PauseRunAsync(runId);
         public void ResumeRun(Guid runId) => inner.ResumeRun(runId);
         public Task CancelRunAsync(Guid runId) => inner.CancelRunAsync(runId);
+        public Guid? TakeControl() => inner.TakeControl();
         public Task<bool> ReleaseAsync(DesktopLease lease, CancellationToken ct = default) => inner.ReleaseAsync(lease, ct);
     }
     private sealed class CaptureProbe : IWindowsCaptureNative

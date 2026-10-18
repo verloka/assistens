@@ -374,6 +374,38 @@ checks the resumed state persisted. Existing command-id/version/persistence/UI
 regressions remain applicable. These tests do not invoke real MCP or prove global
 hotkey, full safe-pause storage ordering or fresh-screenshot resume orchestration.
 
+## Global Take Control hotkey (PA-042)
+
+Real WPF App startup registers Ctrl+Shift+F10 through a message-only HWND. Gesture
+is configurable through TakeControlHotkeyGesture/Start; a settings UI is not added.
+Conflicts/errors are reported and GUI remains blocked. Shutdown unregisters and
+destroys the HWND. The callback calls Core TakeControl synchronously, globally
+blocking both current and future lease entry before asynchronous task persistence.
+Even without a current owner, GUI stays closed until an explicit valid resume;
+canceling a run does not automatically return control to the agent.
+
+`TakeControlHotkeyTests` covers fake registration/no-repeat, matching/irrelevant
+message signatures, conflict errors, idempotent cleanup, callback exception and
+unsupported config. `TakeControlPersistenceTests` uses the real app callback and
+SQLite with a deliberately held update to show gate closure does not wait for the
+pause save. Unit tests cover no-owner takeover, another run's invalid resume and
+queued Resume rejection without clearing human control. No global shortcut is
+registered by these tests; owned hidden HWNDs are the only native window resource.
+
+Actual outside-focus acceptance is **NOT TESTED**. In WindowsSmoke first run
+KEY Ctrl+A (PA-037), then left-click **ARM TAKE CONTROL**. The shortcut is only
+registered after this explicit gesture. Minimize the window yourself, activate
+another application and press Ctrl+Shift+F10, then restore WindowsSmoke and copy
+the `TAKE CONTROL ...` line. Expect OK, outsideFocus=True, minimized=True,
+gateClosed=True and unchanged fakeActions count. The loop exercises real lease
+atomic entry but never sends desktop clicks/typing/capture. If registration fails,
+report BLOCKED without claiming success. Close the window to unregister; no auto
+resume or window activation occurs. This proves the shortcut plus local gate on
+that setup, not the later real click/type/hotkey/resume E2E-03 acceptance.
+
+References: [RegisterHotKey](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey),
+[WM_HOTKEY](https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-hotkey).
+
 ## Screen-independent computer test doubles (PA-029)
 
 PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit

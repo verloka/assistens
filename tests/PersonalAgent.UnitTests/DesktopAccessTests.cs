@@ -5,6 +5,32 @@ namespace PersonalAgent.UnitTests;
 public sealed class DesktopAccessTests
 {
     [Fact]
+    public async Task TakeControlWithoutOwnerBlocksFutureGrantsUntilExplicitResume()
+    {
+        var coordinator = new DesktopAccessCoordinator(_ => true);
+        Assert.Null(coordinator.TakeControl());
+        Assert.Equal(DesktopAccessState.PausedForUser, coordinator.Snapshot.State);
+        var owner = Guid.NewGuid();
+        await Assert.ThrowsAsync<DesktopAccessException>(() => coordinator.AcquireAsync(owner));
+        coordinator.ResumeRun(owner);
+        Assert.True(coordinator.IsCurrent(await coordinator.AcquireAsync(owner)));
+    }
+
+    [Fact]
+    public async Task AnotherRunCannotClearHumanTakeoverReservation()
+    {
+        var coordinator = new DesktopAccessCoordinator(_ => true);
+        var lease = await coordinator.AcquireAsync(Guid.NewGuid());
+        Assert.Equal(lease.RunId, coordinator.TakeControl());
+        Assert.False(coordinator.IsCurrent(lease));
+        Assert.Throws<DesktopAccessException>(() => coordinator.ResumeRun(Guid.NewGuid()));
+        await Assert.ThrowsAsync<DesktopAccessException>(() => coordinator.AcquireAsync(Guid.NewGuid()));
+        coordinator.ResumeRun(lease.RunId);
+        Assert.False(coordinator.IsCurrent(lease));
+        Assert.True((await coordinator.AcquireAsync(lease.RunId)).Generation > lease.Generation);
+    }
+
+    [Fact]
     public async Task RevocationClosesGateSynchronouslyButReleaseWaitsForActiveSection()
     {
         var coordinator = new DesktopAccessCoordinator(_ => true);

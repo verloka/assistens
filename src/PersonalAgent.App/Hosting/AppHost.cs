@@ -26,6 +26,7 @@ public static class AppHost
             services.AddSingleton<DashboardViewModel>();
             services.AddSingleton<IDesktopAccessCoordinator>(_ => new DesktopAccessCoordinator());
             services.AddSingleton<TaskRunCoordinator>();
+            services.AddSingleton<TakeControlHotkeyService>();
             services.AddSingleton<ITaskCommands>(provider => provider.GetRequiredService<TaskRunCoordinator>());
             services.AddSingleton<IAgentRuntime>(provider => new FakeAgentRuntime(
                 [new("Read local task", TimeSpan.FromSeconds(1)), new("Prepare local result", TimeSpan.FromSeconds(1))],

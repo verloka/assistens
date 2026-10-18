@@ -24,6 +24,7 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 - After implementing each milestone, inspect new WPF actions, Telegram commands, scheduled triggers, MCP tools and background workers. Record any entry point not covered by an indexed flow here before closing the task.
 
 ## Coverage Notes
+- PA-042 adds real-App startup registration of a local Take Control shortcut (App.xaml.cs -> TakeControlHotkeyService -> desktop resource gate, then asynchronous task pause). It maps to FDD-002/FDD-001. Fake registration and delayed-SQLite callback tests do not prove an actual outside-focus global keypress; attended WindowsSmoke ARM observation remains pending. No production computer tool/model path is enabled.
 
 - Areas inspected: product requirements in `docs/DEVELOPMENT_PLAN_v1.1.md`; backlog catalog; preliminary FDD flow contracts; application host and diagnostic health screen. `tests/PersonalAgent.IntegrationTests/HealthScreenTests.cs` covers actual XAML bindings, dispatcher responsiveness and shutdown cancellation; it does not verify the business scenarios below.
 - Implemented partial task path (PA-009..PA-015): neutral domain/contracts, session-local commands/queue and fake runtime, and Dashboard progress. `tests/PersonalAgent.IntegrationTests/DashboardTests.cs` loads actual XAML and uses the real host/runner on STA without showing windows; it verifies progress, pause/resume/cancel, responsiveness and shutdown. This is not durable/business E2E coverage.

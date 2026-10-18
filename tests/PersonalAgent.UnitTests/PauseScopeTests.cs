@@ -7,6 +7,17 @@ namespace PersonalAgent.UnitTests;
 public sealed class PauseScopeTests
 {
     [Fact]
+    public async Task InvalidQueuedResumeCannotClearGlobalHumanControl()
+    {
+        var desktop = new DesktopAccessCoordinator(_ => true);
+        using var runs = new TaskRunCoordinator(desktopAccess: desktop);
+        var run = await runs.SubmitAsync(Submit());
+        desktop.TakeControl();
+        await Assert.ThrowsAsync<InvalidOperationException>(() => runs.ResumeAsync(new(Guid.NewGuid(), run.Id, run.RunVersion)));
+        await Assert.ThrowsAsync<DesktopAccessException>(() => desktop.AcquireAsync(run.Id));
+    }
+
+    [Fact]
     public async Task GuiOnlyAllowsIndependentPermittedReadAndBlocksDesktopWritesAndDependentReads()
     {
         var desktop = new DesktopAccessCoordinator(_ => true);

@@ -14,6 +14,7 @@ public partial class App : Application
     private CancellationTokenRegistration _stoppingRegistration;
     private bool _shutdownStarted;
     private bool _shutdownComplete;
+    private TakeControlHotkeyService? _takeControl;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -34,6 +35,10 @@ public partial class App : Application
             if (_shutdownStarted)
                 return;
 
+            _takeControl = host.Services.GetRequiredService<TakeControlHotkeyService>();
+            if (!_takeControl.Start())
+                MessageBox.Show("Ctrl+Shift+F10 is unavailable. Desktop automation remains blocked; see diagnostic output.",
+                    "Take Control shortcut unavailable", MessageBoxButton.OK, MessageBoxImage.Warning);
             MainWindow = host.Services.GetRequiredService<MainWindow>();
             MainWindow.Closing += OnMainWindowClosing;
             MainWindow.Show();
@@ -69,6 +74,7 @@ public partial class App : Application
         _stoppingRegistration.Dispose();
         try
         {
+            _takeControl?.Dispose(); _takeControl = null;
             if (_desktopHost is not null)
                 await _desktopHost.StopAsync();
         }

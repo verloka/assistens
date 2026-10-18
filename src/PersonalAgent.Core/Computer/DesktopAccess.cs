@@ -23,6 +23,7 @@ public interface IDesktopAccessCoordinator
     Task PauseRunAsync(Guid runId);
     void ResumeRun(Guid runId);
     Task CancelRunAsync(Guid runId);
+    Guid? TakeControl();
     Task<bool> ReleaseAsync(DesktopLease lease, CancellationToken ct = default);
 }
 
@@ -38,10 +39,12 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
     private int active;
     private TaskCompletionSource? drained;
     private readonly HashSet<Guid> pausedRuns = [];
+    private bool userControl;
 
     public DesktopAccessSnapshot Snapshot
     {
-        get { lock (sync) return new(current?.RunId, generation) { State = current is null ? DesktopAccessState.Free :
+        get { lock (sync) return new(current?.RunId, generation) { State = current is null ?
+            (userControl ? DesktopAccessState.PausedForUser : DesktopAccessState.Free) :
             !revoked ? DesktopAccessState.Granted : active > 0 ? DesktopAccessState.Pausing : DesktopAccessState.PausedForUser }; }
     }
 
@@ -54,7 +57,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
         lock (sync)
         {
             ct.ThrowIfCancellationRequested();
-            if (pausedRuns.Contains(runId)) throw new DesktopAccessException("DesktopPaused");
+            if (userControl || pausedRuns.Contains(runId)) throw new DesktopAccessException("DesktopPaused");
             if (!allowed) throw new DesktopAccessException("DesktopAccessDenied");
             if (current is not null)
             {
@@ -115,12 +118,27 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
     {
         lock (sync)
         {
+            if (userControl && current is not null && current.RunId != runId) throw new DesktopAccessException("DesktopPaused");
             if (current?.RunId == runId && revoked)
             {
                 if (active > 0) throw new DesktopAccessException("DesktopPausing");
                 current = null; // Never reopen the old lease; next acquire gets a new generation.
             }
             pausedRuns.Remove(runId);
+            userControl = false;
+        }
+    }
+
+    // Human takeover is global: even a run with no current lease cannot acquire behind the user's back.
+    public Guid? TakeControl()
+    {
+        lock (sync)
+        {
+            userControl = true;
+            if (current is null) return null;
+            var runId = current.RunId;
+            _ = PauseRunAsync(runId);
+            return runId;
         }
     }
 

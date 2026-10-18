@@ -450,14 +450,14 @@
                                        "attempts":  1
                                    },
                         "PA-042":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T14:06:00.4978085+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Implemented message-only HWND/no-repeat configurable TakeControl hotkey, conflict/disposal handling, real App startup service and synchronous global Core gate before async run pause. Fake registration/message and delayed-SQLite callback tests pass; full333tests build0warnings/errors. Actual minimized/outside-focus Ctrl+Shift+F10 observation not yet run. WindowsSmoke ARM needs TAKE CONTROL OK outsideFocusTrue,minimizedTrue,gateClosedTrue,stable fakeActions. No native input/capture in ARM.",
+                                       "attempts":  1
                                    },
                         "PA-043":  {
                                        "status":  "pending",
@@ -1290,6 +1290,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-041",
-    "updated_at":  "2026-10-18T14:05:59.5006442+00:00"
+    "last_task_id":  "PA-042",
+    "updated_at":  "2026-10-18T14:14:49.3237048+00:00"
 }
