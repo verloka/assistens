@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-005
-- Current task: none
-- Modified files: scripts/verify.ps1; tests/README.md; progress/state.json, LOG.md, CHECKPOINT.md.
-- Verified build/test: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 (locked restore passed, build 0 warnings/errors, 1 unit + 7 integration passed; E2ETests empty); git diff --cached --check passed.
-- Runtime blockers / waiting on user: none for PA-005.
-- Decisions: reuse existing test scaffolds and fakes. Standard command is scripts/verify.ps1; live/manual checks and business E2E remain separate. All FDD flows remain Draft.
-- Next instruction: run taskctl.ps1 next; inspect any in_progress task first. Next eligible task is PA-006, a real SDK tool/approval spike with fake model where possible.
+- Last completed task: PA-006
+- Current task: none; session stopped at the user's explicit request after completing PA-006. PA-007 remains pending.
+- Modified files: IntegrationTests/Fakes/ScriptedChatClient.cs; IntegrationTests/MafToolApprovalSpikeTests.cs; tests/README.md; docs/flows/action-approval.md and index.md; progress/state.json, LOG.md, CHECKPOINT.md.
+- Verified build/test: dotnet test tests/PersonalAgent.IntegrationTests --filter MafToolApprovalSpikeTests --no-restore (5 passed); powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 (locked restore passed; build 0 warnings/errors; 1 unit + 12 integration passed; E2E suite empty); git diff --cached --check passed.
+- Runtime blockers / waiting on user: none for PA-006. Live providers/vision, persistent approvals, owner/expiry/replay validation and business E2E remain unverified future scope. PA-002 user-observed WPF open/close smoke passed with actual host stop log and exit 0.
+- Decisions: real MAF 1.25.0 pipeline plus local scripted model verifies function calls, approval/denial, bound arguments and cancellation without API credits. No production policy or external actions added. All business flows remain Draft, complete scenarios untested. Existing unrelated README/.gitignore edits and initial untracked planning assets remain untouched.
+- Next instruction: STOP for this session. On an explicit future resume, read AGENTS.md and this checkpoint, run taskctl.ps1 doctor and next, inspect any in_progress task first. Expected next task: PA-007 local MCP stdio/HTTP diagnostic; do not recreate completed PA-001..PA-006.

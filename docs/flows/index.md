@@ -28,6 +28,7 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 - Areas inspected: product requirements in `docs/DEVELOPMENT_PLAN_v1.1.md`; backlog catalog; preliminary FDD flow contracts; application host and diagnostic health screen. `tests/PersonalAgent.IntegrationTests/HealthScreenTests.cs` covers actual XAML bindings, dispatcher responsiveness and shutdown cancellation; it does not verify the business scenarios below.
 - Areas **not** implemented/verified: task execution, persistence/recovery, desktop automation, model/MCP/channel integrations and business E2E outcomes. PA-002 startup/shutdown alone has a user-observed Windows smoke result in `progress/LOG.md`.
 - All scenarios are `[untested]` until associated automated/manual tests have actually been implemented and verified.
+- PA-006's `tests/PersonalAgent.IntegrationTests/MafToolApprovalSpikeTests.cs` verifies the SDK-only local function and approval handshake with a scripted model. It does not complete FDD-005 or its reverse consumers FDD-001/FDD-004/FDD-007; their business scenario coverage remains untested.
 - Current Drafts are proposed contracts only. Validate against source code and explicit user approval before changing status to `Active`.
 - Flow relationships are directional; when a dependency changes, inspect all **reverse consumers** in the index.
 - FDD documentation and `tasks.json` serve different purposes: flows capture outcomes/invariants, tasks capture implementation order. `progress/state.json` remains the sole task-status authority.
