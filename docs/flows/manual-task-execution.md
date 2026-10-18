@@ -55,5 +55,7 @@ Status: Draft
 
 - Dashboard (PA-015): `src/PersonalAgent.App/ViewModels/DashboardViewModel.cs`, `Hosting/TaskRunnerService.cs` and `MainWindow.xaml` compose the local fake task path. `tests/PersonalAgent.IntegrationTests/DashboardTests.cs` checks actual XAML commands, ordered progress, pause/resume/cancel, responsive dispatcher and host shutdown without displaying a window. The observable session-local path works; durable storage and notifications required by complete S1-S3 remain `[untested]`.
 
+- Fake-flow acceptance (PA-016): `tests/PersonalAgent.E2ETests/LocalFakeFlowTests.cs` traces submit/progress/pause to complete/cancel/failure through real commands/coordinator/runner/fake runtime and verifies one attempt/history. `TaskCommandsTests.cs` also races Cancel/Resume at one version; `TaskRunnerTests.cs` compares streamed/recorded tool metadata. This local suite does not cover persistence or delivery, so complete S1-S3 remain `[untested]`.
+
 ## Unknowns
 - Durable storage, notifications and business E2E acceptance remain pending. Confirm approval and proof as code lands.

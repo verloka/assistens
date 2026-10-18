@@ -168,14 +168,15 @@
                                        "attempts":  1
                                    },
                         "PA-016":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:52:02.0851810+00:00",
+                                       "completed_at":  "2026-10-18T10:54:03.6875847+00:00",
                                        "evidence":  [
-
+                                                        "LocalFakeFlowTests real command/coordinator/runner/fake pipeline: duplicate submits, progress, pause, explicit resume/cancel, completed/cancelled/failed result, one attempt and matching ordered streamed/stored history. Concurrent Cancel/Resume unit race 100 iterations and live tool metadata regression added. Existing lifecycle/UI/cancel tests reused. FDD-001 scoped reference; complete business S1-S3 still untested Drafts.",
+                                                        "Verification: LocalFakeFlowTests 3 passed; final scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 36 unit + 31 integration + 3 local fake-flow tests passed; no live MVP E2E acceptance"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-017":  {
                                        "status":  "pending",
@@ -1268,6 +1269,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-015",
-    "updated_at":  "2026-10-18T10:52:00.8368521+00:00"
+    "last_task_id":  "PA-016",
+    "updated_at":  "2026-10-18T10:54:03.6970921+00:00"
 }

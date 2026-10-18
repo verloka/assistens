@@ -89,4 +89,37 @@ public sealed class TaskCommandsTests
     }
 
     private static SubmitTaskCommand Submit() => new(Guid.NewGuid(), "Local diagnostic", new TaskOrigin("desktop"));
+
+    [Fact]
+    public async Task CommandsConcurrentCancelAndResumeRespectVersionAndNeverReviveCancelledAttempt()
+    {
+        using var coordinator = new TaskRunCoordinator();
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            var run = await coordinator.SubmitAsync(Submit());
+            var paused = await coordinator.PauseAsync(new(Guid.NewGuid(), run.Id, run.RunVersion));
+            var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var cancel = Task.Run(async () =>
+            {
+                await start.Task;
+                try { await coordinator.CancelAsync(new(Guid.NewGuid(), run.Id, paused.RunVersion)); return true; }
+                catch (RunVersionConflictException) { return false; }
+            });
+            var resume = Task.Run(async () =>
+            {
+                await start.Task;
+                try { await coordinator.ResumeAsync(new(Guid.NewGuid(), run.Id, paused.RunVersion)); return true; }
+                catch (RunVersionConflictException) { return false; }
+            });
+            start.SetResult();
+            var accepted = await Task.WhenAll(cancel, resume);
+            Assert.Single(accepted, value => value);
+            var current = coordinator.GetRun(run.Id);
+            if (current.Status != RunStatus.Cancelled)
+                current = await coordinator.CancelAsync(new(Guid.NewGuid(), run.Id, current.RunVersion));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => coordinator.ResumeAsync(new(Guid.NewGuid(), run.Id, current.RunVersion)));
+            Assert.Equal(RunStatus.Cancelled, coordinator.GetRun(run.Id).Status);
+            Assert.Single(coordinator.GetEvents(run.Id), value => value.EventType == RunEventType.RunFinished);
+        }
+    }
 }

@@ -18,4 +18,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../../src/PersonalAgent.Core/PersonalAgent.Core.csproj" />
+    <ProjectReference Include="../../src/PersonalAgent.Agent/PersonalAgent.Agent.csproj" />
+  </ItemGroup>
+
 </Project>

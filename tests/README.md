@@ -28,12 +28,13 @@ Run a focused group with `dotnet test --filter DesktopHostTests` or
   probes/fakes (`ProbeService`, `CancellableWorker`, recording logger) cover
   cancellation and failure cleanup. WPF tests load the real XAML on STA threads
   and pump the dispatcher without displaying windows or generating input.
-- `PersonalAgent.E2ETests`: reserved scaffold; no tests yet. A successful command
-  or a "no tests available" message is not business E2E acceptance.
+- `PersonalAgent.E2ETests`: deterministic application fake-flow (PA-016), covering
+  submit/progress/pause and complete/cancel/failure with one consistent history.
+  No live model, desktop, SQLite or notification delivery is tested here.
 
 Add scenario links to existing FDD Drafts only when corresponding tests exist;
 never promote them to Active without explicit approval. Keep live/manual provider,
-device and corporate checks separate from fake/local evidence. The ten E2E cases
+device and corporate checks separate from fake/local evidence. The ten MVP E2E cases
 and MVP release gate remain unverified until their own backlog tasks are completed.
 
 ## MAF tool and approval diagnostic (PA-006)

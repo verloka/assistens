@@ -194,6 +194,42 @@ public sealed class TaskRunnerTests
             return inner.ExecuteAsync(request, progress, ct);
         }
     }
+
+    [Fact]
+    public async Task TaskRunnerStreamPreservesToolMetadataAndMatchesRecordedHistory()
+    {
+        using var coordinator = new TaskRunCoordinator();
+        using var stop = new CancellationTokenSource();
+        var callId = Guid.NewGuid();
+        var runtime = new DelegateRuntime((request, progress, _) =>
+        {
+            progress.Report(new AgentEvent
+            {
+                RunId = request.RunId, TimestampUtc = DateTimeOffset.UtcNow, Kind = AgentEventKind.ToolCompleted,
+                Message = "Synthetic tool metadata only", ToolId = "test.read", ToolCallId = callId
+            });
+            return Task.FromResult(Success());
+        });
+        var run = await coordinator.SubmitAsync(Submit());
+        var observed = Collect();
+        var loop = new TaskRunner(coordinator, runtime).RunAsync(stop.Token);
+        try
+        {
+            var values = await observed.WaitAsync(TimeSpan.FromSeconds(5));
+            var toolEvent = Assert.Single(values, value => value.EventType == RunEventType.ToolExecuted);
+            Assert.Equal(callId, toolEvent.ToolCallId);
+            Assert.Equal("test.read", toolEvent.ToolId);
+            Assert.Equal(values, coordinator.GetEvents(run.Id));
+        }
+        finally { stop.Cancel(); await loop; }
+
+        async Task<List<RunEvent>> Collect()
+        {
+            var values = new List<RunEvent>();
+            await foreach (var value in coordinator.WatchRunAsync(run.Id, stop.Token)) values.Add(value);
+            return values;
+        }
+    }
     private sealed class DelegateRuntime(Func<AgentRequest, IProgress<AgentEvent>, CancellationToken, Task<AgentRunResult>> execute) : IAgentRuntime
     {
         public Task<AgentRunResult> ExecuteAsync(AgentRequest request, IProgress<AgentEvent> progress, CancellationToken ct) => execute(request, progress, ct);
