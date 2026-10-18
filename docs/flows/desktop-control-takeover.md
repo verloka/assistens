@@ -57,6 +57,8 @@ Status: Draft
 
 - Atomic input primitive (PA-031): internal `WindowsInputSender` and `WindowsInputNative` share a process-local input lock, require a trusted authorization/generation callback and active Default desktop, and send only bounded balanced batches. Partial/unknown results never replay presses; cleanup releases only the batch's possible held inputs, and the sender refuses later input after native failure. `tests/PersonalAgent.IntegrationTests/ComputerInputSenderTests.cs` checks native ABI and fake-native denial, cancellation, concurrency, partial insertion and cleanup failures. WindowsSmoke reuses this sender only after its attended gesture. The revised native path has not been manually rerun; production lease/takeover, real UIPI/lock races and full S1-S4 remain `[untested]`.
 
+- Click foundation (PA-032, attended acceptance pending): internal `WindowsMouseInput` rejects points outside observed bounds/monitors and stale generation/DPI/monitor context. Geometry-dependent input is prepared inside the authorized input lock, with session and policy rechecked afterwards; physical points map to virtual absolute input without DPI scaling. `tests/PersonalAgent.IntegrationTests/ComputerClickTests.cs` checks fake-native left/right/middle batches, physical mapping, gaps, stale context, denial and release-only partial-click cleanup. The attended WindowsSmoke CLICK action checks one down/up pair in its own target and never starts automatically. Real target observations and complete S1-S4 remain `[untested]`; no agent tool is exposed.
+
 ## Unknowns
 - Concrete Windows APIs, pause latency and live race results must be established in the implementation.
 

@@ -171,6 +171,33 @@ The native API does not reliably identify UIPI as the reason for zero insertion;
 NativeError is diagnostic only, and successful insertion is not UI outcome proof.
 Reference: [Microsoft SendInput contract](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput).
 
+## Attended click acceptance (PA-032)
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter ComputerClick` covers
+23 fake-native cases: left/right/middle batches, exact physical pixel mapping
+including negative origins/mixed DPI and wide desktop boundaries, off-frame/gap
+rejection before native input, stale generation/topology, denied/locked session
+and release-only cleanup after partial clicks. No real pointer is moved.
+
+For actual acceptance run `dotnet run --project tests/PersonalAgent.WindowsSmoke`
+in an unlocked interactive session. Activate its window and keep TEST TARGET
+visible. Release keys/buttons. Select Left, press **CLICK selected button in
+TEST TARGET**, then do not move the pointer or switch applications until its
+report appears. Repeat for Right and Middle. The gesture captures a fresh
+in-memory virtual frame, checks foreground/target location and released user
+keys, then moves/clicks once inside this fixture. The report must show exactly
+`CLICK Left OK`, `CLICK Right OK`, `CLICK Middle OK` with `observed=2` for each.
+Paste those report lines and close the window. If BLOCKED/FAILED occurs, record
+it without retrying automatically. No files/uploads, external-app clicks or
+automatic diagnostic launches are performed. The pointer is not moved back.
+
+Actual PA-032 click results: **NOT TESTED**. The revised native path and real
+pixel positioning require this attended observation. Native checks cannot
+atomically reserve the foreground desktop; use only this dedicated window and
+keep the session stable during the check. Production lease/pause/approval policy
+and full business scenarios remain later tasks.
+Reference: [Microsoft MOUSEINPUT contract](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-mouseinput).
+
 ## Screen-independent computer test doubles (PA-029)
 
 PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit

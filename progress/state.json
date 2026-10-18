@@ -342,14 +342,14 @@
                                        "attempts":  1
                                    },
                         "PA-032":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T13:11:40.4980706+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Click implementation and 23 fake-native cases complete; attended WindowsSmoke has explicit Left/Right/Middle CLICK target check. Acceptance requires actual CLICK Left/Right/Middle OK with observed=2 in dedicated window, not yet observed. Run dotnet run --project tests/PersonalAgent.WindowsSmoke and follow tests/README.md. No real capture/input or diagnostic launch this session.",
+                                       "attempts":  1
                                    },
                         "PA-033":  {
                                        "status":  "pending",
@@ -1282,6 +1282,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-031",
-    "updated_at":  "2026-10-18T13:11:39.6640023+00:00"
+    "last_task_id":  "PA-032",
+    "updated_at":  "2026-10-18T13:15:48.9667945+00:00"
 }

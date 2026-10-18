@@ -13,29 +13,39 @@ internal sealed class WindowsInputSender
     internal WindowsInputSender(Func<(bool Allowed, long Generation)>? authorize, IWindowsInputNative native)
     { this.authorize = authorize ?? (() => (false, 0)); this.native = native; }
 
-    internal async Task SendAsync(NativeInput[] inputs, long generation, CancellationToken ct = default)
+    internal Task SendAsync(NativeInput[] inputs, long generation, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(inputs);
-        if (inputs.Length is < 1 or > 64) throw new ArgumentOutOfRangeException(nameof(inputs));
-        if (generation < 0) throw new ArgumentOutOfRangeException(nameof(generation));
         var batch = inputs.ToArray();
         Validate(batch);
+        return SendAsync(() => batch, generation, ct);
+    }
+
+    // Prepare geometry-dependent input inside the same serialized, authorized desktop boundary.
+    internal async Task SendAsync(Func<NativeInput[]> prepare, long generation, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(prepare);
+        if (generation < 0) throw new ArgumentOutOfRangeException(nameof(generation));
         ct.ThrowIfCancellationRequested();
         await InputLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            await Task.Run(() => SendCore(batch, generation, ct), CancellationToken.None).ConfigureAwait(false);
+            await Task.Run(() => SendCore(prepare, generation, ct), CancellationToken.None).ConfigureAwait(false);
         }
         finally { InputLock.Release(); }
     }
 
-    private void SendCore(NativeInput[] batch, long generation, CancellationToken ct)
+    private void SendCore(Func<NativeInput[]> prepare, long generation, CancellationToken ct)
     {
+        NativeInput[] batch = [];
         ct.ThrowIfCancellationRequested();
         if (faulted) throw new ComputerInputException("InputStateUnknown", batch.Length, null, 0, false);
         try
         {
             CheckAuthorization(generation);
+            if (!native.IsDesktopAvailable()) throw new ComputerInputException("DesktopUnavailable", batch.Length, 0, 0, true);
+            batch = prepare();
+            Validate(batch);
             if (!native.IsDesktopAvailable()) throw new ComputerInputException("DesktopUnavailable", batch.Length, 0, 0, true);
             // Session checks can take time. Recheck policy/generation and cancellation immediately before input.
             CheckAuthorization(generation);
@@ -80,6 +90,7 @@ internal sealed class WindowsInputSender
 
     private static void Validate(NativeInput[] batch)
     {
+        if (batch.Length is < 1 or > 64) throw new ArgumentOutOfRangeException(nameof(batch));
         var held = new List<NativeInput>();
         foreach (var input in batch)
         {
