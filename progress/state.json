@@ -179,14 +179,15 @@
                                        "attempts":  1
                                    },
                         "PA-017":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:54:04.9681153+00:00",
+                                       "completed_at":  "2026-10-18T10:59:06.4345939+00:00",
                                        "evidence":  [
-
+                                                        "Persistence-only EF Core SQLite/Design 10.0.12 context, entities and generated migration/snapshot: TaskDefinitions/Conversations/TaskRuns/RunEvents, restricted FKs, status/date and run-sequence indexes, UTC tick converters, RunVersion concurrency token, payload schema version and append-only DB triggers. Real file schema tests verify migration repeat/reopen/constraints. FDD-007 scoped schema reference; no runtime persistence/recovery claim.",
+                                                        "Verification: PersistenceSchemaTests 3 passed; dotnet-ef migrations has-pending-model-changes reports none; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 34 integration + 3 local fake-flow passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-018":  {
                                        "status":  "pending",
@@ -1269,6 +1270,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-016",
-    "updated_at":  "2026-10-18T10:54:03.6970921+00:00"
+    "last_task_id":  "PA-017",
+    "updated_at":  "2026-10-18T10:59:06.4451261+00:00"
 }

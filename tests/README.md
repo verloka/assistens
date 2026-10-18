@@ -149,3 +149,31 @@ responsiveness and shutdown. It never displays a window or injects desktop input
 For an attended visual check, run `dotnet run --project src/PersonalAgent.App` and
 use Start local task; only a local fake profile is configured. History currently
 clears when the app closes. This does not validate a paid model or complete FDD-001.
+
+## SQLite schema (PA-017)
+
+`dotnet test --filter PersistenceSchemaTests` uses real temporary SQLite files,
+applies/reapplies migrations, closes/reopens connections and checks UTC storage,
+foreign keys, unique run/event sequence, versioned payload constraints and append-only
+event triggers. No user database is opened. Pooling is disabled in test fixtures so
+temporary files can be removed after all contexts close.
+
+EF Core SQLite/Design 10.0.12 matches the existing 10.0.12 dependency baseline.
+Only Persistence references EF. Schema rows map dates to UTC ticks (INTEGER) so
+SQLite can compare/order them; domain DTOs remain DateTimeOffset and SDK-free.
+RunVersion is application-managed concurrency, not a SQLite rowversion. Event
+UPDATE/DELETE triggers are custom migration SQL; future SQLite table rebuilds must
+preserve them. Application repository/runtime wiring is subsequent backlog work;
+the current Dashboard still keeps its history in memory.
+
+To reproduce migration tooling without changing global tools:
+
+```powershell
+dotnet tool install dotnet-ef --tool-path artifacts/ef --version 10.0.12
+artifacts/ef/dotnet-ef migrations has-pending-model-changes --project src/PersonalAgent.Persistence
+```
+
+The design-time factory targets an in-memory database. Do not replace migration
+verification with EnsureCreated. References:
+[EF SQLite limitations](https://learn.microsoft.com/en-us/ef/core/providers/sqlite/limitations),
+[EF design-time context](https://learn.microsoft.com/en-us/ef/core/cli/dbcontext-creation).
