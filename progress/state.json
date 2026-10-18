@@ -245,14 +245,15 @@
                                        "attempts":  1
                                    },
                         "PA-023":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T11:35:36.3586504+00:00",
+                                       "completed_at":  "2026-10-18T11:37:59.1778294+00:00",
                                        "evidence":  [
-
+                                                        "Audited/reused real SQLite schema/repository/runtime/conversation/crash/idempotency suites; added PersistenceUpgradeTests only for gaps: real original-schema data upgrades/reapply without history or trigger loss and no invented legacy keys; Created-state recovery known-local/unknown-provider is conservative and repeat-safe. No production behavior change; FDD recovery/lifecycle test coverage reviewed, full business scopes remain untested Drafts.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter Persistence --no-restore: 37 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 37 unit + 71 integration + 3 local fake-flow passed; diff check passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-024":  {
                                        "status":  "pending",
@@ -1275,6 +1276,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-022",
-    "updated_at":  "2026-10-18T11:35:35.1041974+00:00"
+    "last_task_id":  "PA-023",
+    "updated_at":  "2026-10-18T11:37:59.1878267+00:00"
 }

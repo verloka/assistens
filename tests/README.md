@@ -232,3 +232,11 @@ Tests also lose the creation acknowledgement after commit: redelivery resolves t
 original queued local/no-tool run and permits its first execution once. Started,
 uncertain or terminal attempts never requeue through this path. Actual Telegram
 polling and scheduler occurrence generation remain later backlog work.
+
+For the full deterministic storage/restart regression group, run
+`dotnet test tests/PersonalAgent.IntegrationTests --filter Persistence`.
+`PersistenceUpgradeTests` starts at the original schema, writes legacy history,
+upgrades/reapplies all migrations and checks data/append-only triggers and nullable
+legacy submission keys. It also checks conservative/idempotent Created-state
+recovery. Existing schema, repository, runtime, conversation, process-crash and
+idempotency tests are reused; all use temporary databases and no external LLM.
