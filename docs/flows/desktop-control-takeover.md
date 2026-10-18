@@ -55,3 +55,6 @@ Status: Draft
 
 ## Unknowns
 - Concrete Windows APIs, pause latency and live race results must be established in the implementation.
+
+## Image payload foundation
+- PA-028: `src/PersonalAgent.Core/Computer/ScreenshotSerialization.cs` defines provider-neutral encoding options and `IScreenshotSerializer`. `src/PersonalAgent.Computer/WindowsScreenshotSerializer.cs` validates PNG/JPEG bytes and dimensions, limits input/output, strips image metadata and resizes only when explicitly enabled. Physical source bounds, monitor DPI, capture time and generation remain unchanged; coordinates use actual encoded dimensions. `src/PersonalAgent.Agent/ScreenshotMessageContent.cs` creates actual SDK text/binary content without making a provider call. `tests/PersonalAgent.IntegrationTests/ScreenshotSerializationTests.cs` checks codecs, PNG pixels, limits, malformed input, metadata stripping, resize mapping, cancellation and SDK content. This is partial S2 foundation only; full S1-S4, native GUI and live vision remain `[untested]`.

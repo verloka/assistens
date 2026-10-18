@@ -129,6 +129,27 @@ API references: [SendInput](https://learn.microsoft.com/en-us/windows/win32/api/
 [RegisterHotKey](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey),
 [BitBlt](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt).
 
+## Bounded model image payloads (PA-028)
+
+`WindowsScreenshotSerializer` implements neutral `IScreenshotSerializer` using
+in-memory codecs; no display, file, network or model credentials are needed.
+Default options preserve PNG pixels and do not resize: maximum output 4096x4096,
+4 MiB encoded, input 32 MiB / 32 million pixels. Oversize images fail with
+ImageLimitExceeded. Enable ResizeToFit explicitly to fit width/height with aspect
+ratio preserved to pixel rounding, or choose JPEG and its quality explicitly.
+There is no automatic quality-reduction retry. SourceBounds, monitor metadata,
+time and generation remain intact; ScreenshotCoordinates uses the actual output
+dimensions. Input image text/EXIF metadata is not copied to the new bitmap.
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter ScreenshotSerializationTests`
+checks real PNG/JPEG decoding, PNG pixel fidelity, dimension/byte limits, default
+resize denial, explicit resize/mapping, malformed/mislabelled bytes, cancellation,
+metadata stripping and actual Microsoft.Extensions.AI ChatMessage/DataContent.
+These local tests make no paid inference call and prove no live vision behavior.
+
+API references: [DataContent binary constructor](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.ai.datacontent.-ctor),
+[WPF JPEG codecs](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/graphics-multimedia/how-to-encode-and-decode-a-jpeg-image).
+
 ## Local fake execution (PA-011/PA-012)
 
 `dotnet test --filter FakeAgentRuntimeTests` runs deterministic scripts through
