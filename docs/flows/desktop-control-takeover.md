@@ -51,5 +51,7 @@ Status: Draft
 
 - Virtual/selected-monitor capture (PA-026, two-display hardware verification pending): the existing capture adapter enumerates full physical topology, preserves signed bounds and each display's DPI, and rejects changed topology before returning a frame. The GDI copy fills display gaps black and copies monitor rectangles at offsets from the virtual origin. `tests/PersonalAgent.IntegrationTests/WindowsScreenCaptureTests.cs` checks negative X/Y, mixed DPI, selection, unknown monitor rejection, reordered enumeration, topology changes and overflow using fake native geometry plus real PNG encoding. The attended WindowsSmoke fixture has explicit VIRTUAL and SECONDARY buttons and prints source/topology/system bounds for comparison; no automatic capture/input is added. This is partial S2 validation only; full S1-S4 remain `[untested]`.
 
+- Coordinate foundation (PA-027): `src/PersonalAgent.Core/Computer/ScreenshotCoordinates.cs` maps encoded pixel centers to original physical bounds and back using integer arithmetic; physical geometry is not scaled by DPI a second time. It rejects out-of-frame points, monitor gaps and stale generations. `tests/PersonalAgent.UnitTests/CoordinatesTests.cs` covers 100/125/150% DPI, negative origins, resize/upscale, half-open bounds, extreme integers and stale context. This is partial S2 validation; no native click or fresh-resume orchestration is implemented, so full S1-S4 remain `[untested]`.
+
 ## Unknowns
 - Concrete Windows APIs, pause latency and live race results must be established in the implementation.

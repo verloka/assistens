@@ -288,14 +288,15 @@
                                        "attempts":  1
                                    },
                         "PA-027":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T12:04:41.1813889+00:00",
+                                       "completed_at":  "2026-10-18T12:06:02.0572063+00:00",
                                        "evidence":  [
-
+                                                        "src/PersonalAgent.Core/Computer/ScreenshotCoordinates.cs: pixel-center mapping, signed physical bounds, no double DPI scaling, inverse mapping, gap and generation rejection. CoordinatesTests.cs 16 cases. FDD-002 S2 foundation and FDD-001/003/007 consumers reviewed; full flows remain untested Drafts.",
+                                                        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter Coordinates --no-restore: 16 passed; scripts/verify.ps1: locked restore/build 0 warnings/errors, 56 unit + 99 integration + 3 local fake-flow passed; git diff --check passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-028":  {
                                        "status":  "pending",
@@ -1278,6 +1279,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-026",
-    "updated_at":  "2026-10-18T12:00:39.0277255+00:00"
+    "last_task_id":  "PA-027",
+    "updated_at":  "2026-10-18T12:06:02.0667247+00:00"
 }
