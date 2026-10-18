@@ -23,3 +23,8 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 - User requested launch; ran dotnet run --project src/PersonalAgent.App --no-build. User observed the empty desktop window and then confirmed closing it.
 - Checks: actual process session 29485 logged HostStarting 1000, Application started, Application is shutting down and HostStopping 1001; exited 0. Previously verified unchanged code build (0 warnings/errors), 1 architecture test and 4 host integration tests remain the automated evidence. Manual startup/shutdown smoke is now passed; no additional E2E claim.
 - Unblocked, resumed and completed PA-002 with user observation and actual process output. No code changes or unresolved PA-002 issues. Next: PA-003 health/status screen.
+
+## 2026-10-18 10:58:37 +03:00 | PA-003 | done
+- Added MVVM health/status view: actual Host lifetime state, registered hosted service names, asynchronous five-second diagnostic with duplicate prevention and shutdown cancellation. No LLM or desktop input.
+- Checks: HealthScreenTests 2 passed using actual XAML and STA dispatcher (no visible window); verifies bound status/components, dispatch while long operation is pending, disabled duplicate execution and cancellation/state refresh on stopping. dotnet build --no-restore: 0 warnings/errors; dotnet test --no-build: 1 architecture + 6 integration passed, E2E suite remains empty. Cached diff whitespace check passed.
+- FDD develop/verify: diagnostic maintenance adds no business outcome; reviewed lifecycle consumers FDD-001/FDD-007, preserved all unimplemented business scenarios and Draft statuses. Index now distinguishes implemented diagnostics from planned business flows. No false scenario coverage links. Unresolved: none for PA-003. Next: PA-004.

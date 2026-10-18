@@ -6,7 +6,41 @@
         xmlns:local="clr-namespace:PersonalAgent.App"
         mc:Ignorable="d"
         Title="Personal Agent" Height="450" Width="800" ShowActivated="False">
-    <Grid>
-
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="Personal Agent" FontSize="26" FontWeight="SemiBold" />
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,16">
+            <Ellipse Width="12" Height="12" Margin="0,0,8,0">
+                <Ellipse.Style>
+                    <Style TargetType="Ellipse">
+                        <Setter Property="Fill" Value="Gray" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HostStatus}" Value="Running">
+                                <Setter Property="Fill" Value="ForestGreen" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding HostStatus}" Value="Stopping">
+                                <Setter Property="Fill" Value="DarkOrange" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Ellipse.Style>
+            </Ellipse>
+            <TextBlock Text="Host: " FontWeight="SemiBold" />
+            <TextBlock x:Name="HostStatusText" Text="{Binding HostStatus}" />
+        </StackPanel>
+        <GroupBox Grid.Row="2" Header="Registered hosted components" Padding="12" Margin="0,0,0,16">
+            <ListBox x:Name="ComponentsList" ItemsSource="{Binding Components}" BorderThickness="0" />
+        </GroupBox>
+        <StackPanel Grid.Row="3">
+            <Button x:Name="DiagnosticButton" Content="Run test operation (5 seconds)"
+                    Command="{Binding RunDiagnosticCommand}" HorizontalAlignment="Left" Padding="12,6" />
+            <ProgressBar Height="4" Margin="0,12,0,8" IsIndeterminate="{Binding IsBusy}" />
+            <TextBlock x:Name="DiagnosticStatusText" Text="{Binding DiagnosticStatus}" TextWrapping="Wrap" />
+        </StackPanel>
     </Grid>
 </Window>

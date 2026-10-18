@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using PersonalAgent.App.ViewModels;
 
 namespace PersonalAgent.App;
 
@@ -11,6 +12,7 @@ public static class AppHost
         {
             services.Configure<HostOptions>(options => options.ShutdownTimeout = TimeSpan.FromSeconds(10));
             services.AddSingleton<MainWindow>();
+            services.AddSingleton<HealthViewModel>();
             services.AddHostedService<LifecycleLoggingService>();
         });
 }

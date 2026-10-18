@@ -16,8 +16,9 @@ namespace PersonalAgent.App;
 /// </summary>
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    public MainWindow(PersonalAgent.App.ViewModels.HealthViewModel viewModel)
     {
         InitializeComponent();
+        DataContext = viewModel;
     }
 }

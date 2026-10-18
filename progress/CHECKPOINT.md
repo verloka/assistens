@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-002 (implementation e9c1777; manual smoke now verified)
+- Last completed task: PA-003
 - Current task: none
-- Modified files: progress/state.json; progress/LOG.md; progress/CHECKPOINT.md
-- Verified build/test: dotnet run --project src/PersonalAgent.App --no-build: user observed blank WPF window and closed it; session 29485 logged hosted service start/stop and exited 0. Unchanged code previously passed dotnet build --no-restore (0 warnings/errors) and dotnet test --no-build (1 architecture + 4 lifecycle tests).
-- Runtime blockers / waiting on user: none for PA-002; manual blocker resolved.
-- Decisions: PA-002 completed using actual user observation plus real process output. All FDD flows remain Draft. Existing unrelated README/.gitignore edits and untracked planning/FDD assets remain untouched.
-- Next instruction: run taskctl.ps1 next; inspect any in_progress task first. Next eligible task is PA-003.
+- Modified files: App/Hosting/AppHost.cs; App/MainWindow.xaml(.cs); App/ViewModels/{HealthViewModel,AsyncCommand}.cs; IntegrationTests/HealthScreenTests.cs and csproj; docs/flows/index.md; progress/state.json, LOG.md, CHECKPOINT.md.
+- Verified build/test: HealthScreenTests 2 passed (real XAML/STA dispatcher without showing a window); dotnet build --no-restore (0 warnings/errors); dotnet test --no-build (1 architecture + 6 integration passed; E2E suite empty). PA-002 manual window open/close also passed with user observation and exit 0.
+- Runtime blockers / waiting on user: none for PA-003.
+- Decisions: health screen lists actual hosted services only. Diagnostic is local and asynchronous; all business flows remain Draft and scenarios untested. Existing unrelated workspace edits remain untouched.
+- Next instruction: run taskctl.ps1 next; inspect any in_progress task first. Next eligible task is PA-004: tested NuGet versions and initial ADR.
