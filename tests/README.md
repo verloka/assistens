@@ -331,6 +331,20 @@ FAKE/native-boundary safety suites cover
 faults/cancellation; no deliberate native modifier failure is injected on the
 user's desktop. Global lease/hotkey/resume acceptance remains a separate gate.
 
+## Input regression gate (PA-038)
+
+Existing ComputerClick/Scroll/Type/PressKey/InputSender/TextBoxInput suites cover
+bounds, special keys, partial/unknown outcomes, modifier cleanup and cancellation.
+ComputerInputSenderTests includes zero insertion with native error 5 and zero
+without a useful native error; these are synthetic failure cases, not a live UIPI
+test. InputSafety and DesktopAccessDriver additionally cover queued failures and
+lease revocation. On 2026-10-18, `dotnet test --filter Computer --no-restore`
+passed 4 unit + 116 integration tests; `dotnet test
+tests/PersonalAgent.IntegrationTests --no-build --filter "InputSafety|DesktopAccessDriver"`
+passed 19. Full `scripts/verify.ps1` passed 76 unit + 254 integration + 3 local
+fake-flow tests, build 0 warnings/errors and locked restore. Existing tests were
+audited and reused; real elevated-target/locked-desktop behavior remains untested.
+
 ## Desktop lease ownership (PA-039)
 
 `dotnet test tests/PersonalAgent.UnitTests --filter DesktopAccess` includes the

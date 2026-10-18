@@ -408,14 +408,15 @@
                                        "attempts":  2
                                    },
                         "PA-038":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T14:57:22.2594787+00:00",
+                                       "completed_at":  "2026-10-18T14:58:26.1459988+00:00",
                                        "evidence":  [
-
+                                                        "Audited existing ComputerClick/Scroll/Type/PressKey/InputSender/TextBoxInput, InputSafety and DesktopAccessDriver tests. Bounds/special keys/cleanup/partial failure/cancel/native error5 already covered; no duplicate code/tests. Actual own-target harness accepted PA-037. Full FDD scenarios remain Draft/untested; real UIPI not claimed.",
+                                                        "Verification: dotnet test --filter Computer --no-restore:4unit+116integration passed; InputSafety|DesktopAccessDriver:19passed. scripts/verify.ps1 locked restore/build0warnings/errors,76unit+254integration+3localfake-flow passed on Windows."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-039":  {
                                        "status":  "done",
@@ -1291,6 +1292,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-037",
-    "updated_at":  "2026-10-18T14:57:08.8277291+00:00"
+    "last_task_id":  "PA-038",
+    "updated_at":  "2026-10-18T14:58:26.1565325+00:00"
 }

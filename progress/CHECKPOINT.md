@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-037 (actual attended KEY 26/26, modifiersReleased=True)
-- Current task: none; next PA-038
-- Modified files: state, README, FDD-002 evidence, LOG/checkpoint; no production changes.
-- Verified build/test: WindowsSmoke exec89941 exited0; actual KEY PASS plus prior Click/Scroll/Type PASS. Unchanged3ccbf95 full verify333tests passed/build0warnings/errors. Diff/doctor to run before commit.
-- Runtime blockers / waiting on user: PA-042 first hotkey outsideFocusTrue,gateClosedTrue,96->96 passed scoped stop, but minimizedFalse; needs repeated ARM,minimize via title-bar minus,activate IDE,CtrlShiftF10 and report minimizedTrue. Diagnostic closed. PA-026/030 hardware unavailable.
-- Decisions: PA-037 accepted own-window harness only; no full E2E or minimized acceptance claimed. All flows remain Draft/full scenarios untested. No source or task catalog/dependency change.
-- Next instruction: doctor/next; start PA-038 and audit/run existing regression instead of duplicate tests. Reconcile PA-042 only with real minimized-window report; otherwise blocked. Relaunch attended diagnostic after tests; no shortcut/input until explicit user gesture.
+- Last completed task: PA-038 (existing regression audited and passed); PA-037 accepted actual KEY26/26 modifier release at c9c52d1.
+- Current task: none; no ready task until blocked dependencies verified.
+- Modified files: state, README regression evidence, LOG/checkpoint only; no source/test duplication.
+- Verified build/test: dotnet test --filter Computer --no-restore4unit+116integration; InputSafety|DesktopAccessDriver19passed; scripts/verify.ps1 locked restore/build0warnings/errors,76unit+254integration+3localfake-flow passed. Prior WindowsSmoke exec89941 exited0. Diff/doctor before commit.
+- Runtime blockers / waiting on user: PA-042 first hotkey outsideFocusTrue/gateClosedTrue/fake96->96, but minimizedFalse. Needs ARM, title-bar minimize, activate IDE, CtrlShiftF10,restore/report minimizedTrue. PA-026/030 unavailable multi-display hardware.
+- Decisions: no live UIPI/locked desktop/full E2E claim; all flows remain Draft/full scenarios untested. No task catalog/dependency change. User explicitly requested relaunch with short instructions.
+- Next instruction: doctor/next; relaunch WindowsSmoke --no-build for attended hotkey only. No registration/input/capture until user gesture. Reconcile PA-042 with real minimized report, then PA-043; otherwise manual blocker remains.
