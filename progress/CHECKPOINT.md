@@ -1,8 +1,8 @@
 # Agent checkpoint
 - Last completed task: PA-036
-- Current task: none; PA-037 next
-- Modified files: InputSafetyTests stateful/queued regressions,README/FDD reference,state/LOG/checkpoint; committed together. Production cleanup reused unchanged.
-- Verified build/test: InputSafety10passed; scripts/verify.ps1 locked restore/build0warnings/errors,60unit+237integration+3localfake-flow passed; diff check passed.
-- Runtime blockers / waiting on user: PA-026/030 multiple-display hardware remain blocked. Real key/hotkey/lease/takeover not tested; no diagnostic running.
-- Decisions: native cleanup available -> empty owned input; cleanup denial/lock -> explicit uncertainty and no later operation,never false success. Safety currently driver-instance, future coordinator owns cross-run policy. All flows Draft/full E2E untested.
-- Next instruction: doctor/next,startPA-037,reuse existing four-operation fixture; block if real acceptance unavailable and continue independentPA-039.
+- Current task: none; PA-037 blocked on actual added KEY observation, PA-039 next
+- Modified files: WindowsSmoke KEY Ctrl+A action, README four-operation checklist, FDD reference,state/LOG/checkpoint; committed together.
+- Verified build/test: WindowsSmoke build --no-restore0warnings/errors; prior unchanged-code verify60unit+237integration+3fake-flow passed. Diff check passed. KEY native observation NOT TESTED.
+- Runtime blockers / waiting on user: PA-037 needs KEY Ctrl+A OK, selectedChars=totalChars,modifiersReleasedTrue in own field. Prior Click/Scroll/Type actual observations complete. PA-026/030 hardware blocked. No diagnostic running; launch after independent development/build work.
+- Decisions: reuse existing fixture, allow exactlyCtrl+A and measure actual selection/released modifiers. No deliberate native partial modifier failure in user's desktop. All flows Draft/full business E2E untested.
+- Next instruction: doctor/next; start independentPA-039 one-owner monotonic lease; retain manualPA-037 dependency forPA-038.

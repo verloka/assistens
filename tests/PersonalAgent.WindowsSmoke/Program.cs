@@ -36,6 +36,7 @@ internal sealed class SmokeWindow : Window
     private readonly List<(int Message, int Delta, ScreenPoint Point)> observedScroll = [];
     private readonly Button typeTest = new() { Content = "TYPE TEXT: left-click to enter Unicode, multiline and tab in this window", Margin = new Thickness(0, 8, 0, 8) };
     private readonly Button typeCancelTest = new() { Content = "TYPE CANCEL: left-click to stop after the first atomic chunk", Margin = new Thickness(0, 0, 0, 8) };
+    private readonly Button keyTest = new() { Content = "KEY Ctrl+A: left-click to select this window's text and check modifier release", Margin = new Thickness(0, 0, 0, 8) };
     private readonly TextBox typeTarget = new() { Height = 85, IsReadOnly = true, AcceptsReturn = true, AcceptsTab = true,
         HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
     private nint handle;
@@ -51,7 +52,7 @@ internal sealed class SmokeWindow : Window
 
     public SmokeWindow()
     {
-        Title = "PersonalAgent attended Windows diagnostic (PA-008/025/026/032/033/034)";
+        Title = "PersonalAgent attended Windows diagnostic (PA-008/025/026/032/033/034/037)";
         Width = 680;
         Height = 660;
         ShowActivated = false;
@@ -92,9 +93,11 @@ internal sealed class SmokeWindow : Window
         scrollTest.Click += async (_, _) => await RunScrollAsync();
         panel.Children.Add(typeTest);
         panel.Children.Add(typeCancelTest);
+        panel.Children.Add(keyTest);
         panel.Children.Add(typeTarget);
         typeTest.Click += async (_, _) => await RunTypeAsync(false);
         typeCancelTest.Click += async (_, _) => await RunTypeAsync(true);
+        keyTest.Click += async (_, _) => await RunKeyAsync();
         panel.Children.Add(target);
         panel.Children.Add(report);
         panel.Children.Add(preview);
@@ -277,6 +280,35 @@ internal sealed class SmokeWindow : Window
             typingDiagnostic = false;
             typeTest.IsEnabled = typeCancelTest.IsEnabled = true;
         }
+    }
+
+    private async Task RunKeyAsync()
+    {
+        if (clickCancellation is not null || primaryCancellation is not null || scrollCancellation is not null || typingDiagnostic) { Write("Wait for the current diagnostic."); return; }
+        typingDiagnostic = true;
+        keyTest.IsEnabled = false;
+        try
+        {
+            RequireForeground();
+            if (Enumerable.Range(1, 254).Any(key => (Native.GetAsyncKeyState(key) & 0x8000) != 0))
+                throw new InvalidOperationException("Release all keys/buttons first.");
+            typeTarget.Text = "PressKey fixture selection";
+            typeTarget.IsReadOnly = true;
+            typeTarget.Select(0, 0);
+            typeTarget.BringIntoView();
+            typeTarget.Focus();
+            var generation = Interlocked.Increment(ref primaryGeneration);
+            (bool, long) Authorize() => Dispatcher.Invoke(() =>
+                (IsActive && Native.GetForegroundWindow() == handle && typeTarget.IsKeyboardFocused, Interlocked.Read(ref primaryGeneration)));
+            var native = new WindowsInputNative();
+            await new WindowsKeyboardInput(Authorize, native, chord => chord == "Ctrl+A").PressKeyAsync(new("Ctrl+A"), generation);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            var released = new ushort[] { 16, 17, 18 }.All(key => !native.IsKeyDown(key));
+            var correct = typeTarget.SelectionLength == typeTarget.Text.Length && typeTarget.SelectedText == typeTarget.Text && released;
+            Write($"KEY Ctrl+A {(correct ? "OK" : "FAILED")}; selectedChars={typeTarget.SelectionLength}; totalChars={typeTarget.Text.Length}; modifiersReleased={released}; no clipboard/retry/files/uploads.");
+        }
+        catch (Exception exception) { Write($"KEY BLOCKED: {exception.Message}"); }
+        finally { typingDiagnostic = false; keyTest.IsEnabled = true; }
     }
 
     // Fixture-only deterministic cancellation after a successfully inserted first batch. Native input

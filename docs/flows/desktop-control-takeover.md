@@ -67,6 +67,8 @@ Status: Draft
 
 - Atomic safety audit (PA-036): the existing shared sender already owns balanced release cleanup, fault latching and serialization. `tests/PersonalAgent.IntegrationTests/InputSafetyTests.cs` adds stateful fake-native cross-method and queued-failure cases for mouse/text/chords: after a partial/unknown effect only release events occur and queued/later operations on that driver cannot start. Cleanup rejection/lock is explicitly reported as unresolved held input rather than successful release. This is primitive-level proof; global production lease/takeover and full S1-S4 remain `[untested]`.
 
+- Four-operation diagnostic (PA-037, attended KEY observation pending): the existing WindowsSmoke fixture has an explicit repeatable Click/Scroll/Type/PressKey checklist in `tests/README.md`. The added KEY Ctrl+A action targets only its focused read-only field, checks actual selection and released modifiers, and permits exactly that chord. Prior click/scroll/type observations remain recorded; no actual KEY result yet. This local diagnostic is not production lease/hotkey/takeover/resume proof; full S1-S4 remain `[untested]`.
+
 ## Unknowns
 - Concrete Windows APIs, pause latency and live race results must be established in the implementation.
 

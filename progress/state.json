@@ -397,14 +397,14 @@
                                        "attempts":  1
                                    },
                         "PA-037":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T13:50:07.5294714+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Existing WindowsSmoke now has repeatable Click/Scroll/Type/PressKey checklist and explicit KEY Ctrl+A own-field selection + modifier-state observation. Prior3operations observed; added KEY path needs actual KEY Ctrl+A OK selectedChars=totalChars,modifiersReleasedTrue. Build0warnings/errors; no real keys injected. Continue independentPA-039.",
+                                       "attempts":  1
                                    },
                         "PA-038":  {
                                        "status":  "pending",
@@ -1287,6 +1287,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-036",
-    "updated_at":  "2026-10-18T13:50:06.6945794+00:00"
+    "last_task_id":  "PA-037",
+    "updated_at":  "2026-10-18T13:50:54.0885099+00:00"
 }

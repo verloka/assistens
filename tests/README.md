@@ -310,6 +310,26 @@ later input still refuses; the test does not falsely assert all physical keys
 were released. Existing cleanup is reused without a second input implementation.
 These cases do not establish cross-run lease policy or real global takeover.
 
+## Repeatable four-operation harness (PA-037)
+
+Reuse `dotnet run --project tests/PersonalAgent.WindowsSmoke` in an attended,
+unlocked desktop. Every action starts only from a left-click on its launch button;
+the diagnostic never launches another application or clicks an external target.
+Release keys/buttons and keep the session still during each action:
+
+1. Select Left and launch CLICK: expect matching target down/up and `CLICK Left OK`.
+2. Select Down and launch SCROLL: expect the dedicated area's offset increase and `SCROLL Down OK`.
+3. Launch TYPE TEXT: verify synthetic Unicode/multiline/tab content and `TYPE TEXT OK` (42/42).
+4. Launch KEY Ctrl+A: expect this window's read-only test text selected, `KEY Ctrl+A OK`,
+   selectedChars equal totalChars, modifiersReleased=True. Only this canonical chord
+   is permitted; it neither copies nor sends text outside this window.
+
+The first three operations have prior actual observations in the log; the added
+KEY Ctrl+A path is **NOT TESTED** until an actual attended report arrives.
+Return KEY report and close the window. FAKE/native-boundary safety suites cover
+faults/cancellation; no deliberate native modifier failure is injected on the
+user's desktop. Global lease/hotkey/resume acceptance remains a separate gate.
+
 ## Screen-independent computer test doubles (PA-029)
 
 PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit
