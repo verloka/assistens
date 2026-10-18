@@ -45,6 +45,7 @@ Status: Draft
 
 ## Implementation References
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §§5–9, 11, 13; backlog PR-02, PR-07, PR-12.
+- Domain foundation (PA-009/PA-010): `src/PersonalAgent.Core/Domain/TaskModels.cs` and `TaskRunStateMachine.cs`; `tests/PersonalAgent.UnitTests/DomainSerializationTests.cs` and `TaskRunStateMachineTests.cs` cover neutral JSON contracts, legal/illegal state changes, terminal immutability, pause boundaries and stale versions. Transitions return snapshots; callers must still implement atomic storage and actual cancellation/tool gates. Interrupted ends the attempt and cannot automatically resume. These unit checks do not complete S1-S3; all remain `[untested]`.
 
 ## Unknowns
 - Actual types and source/test paths are not yet implemented. Confirm approval and E2E proof as code lands.

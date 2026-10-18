@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-009
-- Current task: none
-- Modified files: Core/Domain/TaskModels.cs; UnitTests/DomainSerializationTests.cs, project and lock; progress state/log/checkpoint.
-- Verified build/test: dotnet test tests/PersonalAgent.UnitTests --filter DomainSerializationTests (2 passed); scripts/verify.ps1 (locked restore passed, build 0 warnings/errors, 3 unit + 14 integration passed; E2E empty); git diff --check passed.
-- Runtime blockers / waiting on user: PA-008 attended Windows capture/input/hotkey diagnostic result; see tests/README.md. No blocker for domain work.
-- Decisions: immutable SDK-neutral records; full plan 9.2 statuses; UTC date fields; no claimed persistence or business E2E. All flows Draft.
-- Next instruction: run taskctl.ps1 next; inspect any in_progress task first. Expected PA-010.
+- Last completed task: PA-010
+- Current task: none; reconcile PA-008 received manual evidence next
+- Modified files: Core/Domain/TaskRunStateMachine.cs, UnitTests/TaskRunStateMachineTests.cs, FDD-001 implementation reference, progress state/log/checkpoint.
+- Verified build/test: dotnet test tests/PersonalAgent.UnitTests --filter TaskRun --no-restore (21 passed); scripts/verify.ps1 (locked restore passed, build 0 warnings/errors, 24 unit + 14 integration passed; E2E empty).
+- Runtime blockers / waiting on user: PA-008 blocker resolved by user result, status completion still to record. Capture 850x700, DPI120, monitors1, origin0,0; one x and WM_HOTKEY observed; launched session41222 exited0 with no remaining WindowsSmoke process.
+- Decisions: terminal Interrupted cannot auto-resume; Blocked explicitly requeues. Pure snapshots require atomic store integration later. No native pause gate/durability/E2E claimed; all flows Draft.
+- Next instruction: unblock/start/done PA-008 using received real evidence, then taskctl.ps1 next; expected PA-011. Never keep two tasks in_progress.

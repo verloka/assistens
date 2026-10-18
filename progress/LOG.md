@@ -67,3 +67,10 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 - Checks: DomainSerializationTests 2 passed (JSON round-trip/link/result preservation and Core assembly references); scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 3 unit + 14 integration passed; E2E empty. git diff --check passed.
 - FDD develop/verify: reviewed lifecycle FDD-001 and consumers FDD-003/FDD-007, conversation consumer FDD-006. Actual diff adds neutral data contracts only; no execution/storage/delivery or approved contract changes. Complete scenarios remain NOT TESTED, all Drafts preserved. No extra flow documents.
 - Unresolved: PA-008 still awaits attended Windows result; unrelated to PA-009 dependency. Next: PA-010 state machine.
+
+## 2026-10-18 13:36:47 +03:00 | PA-010 | done
+- Added pure snapshot state machine: explicit legal transitions, stable start timestamp, UTC end timestamp, version increment/conflict, pause scope and required block/failure reasons. Completed/Failed/Cancelled/Skipped/Interrupted cannot transition; Blocked requires explicit requeue. Atomic compare-and-swap remains a store responsibility in PA-018, not claimed from this pure method.
+- Checks: dotnet test tests/PersonalAgent.UnitTests --filter TaskRun --no-restore: 21 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 24 unit + 14 integration passed; E2E empty.
+- FDD develop/verify: inspected lifecycle FDD-001 and reverse consumers FDD-003/FDD-007 plus pause/approval/delivery contracts FDD-002/FDD-005/FDD-006. Actual diff preserves terminal outcomes and separates pause from cancel. Domain scope PASS; no actual tool cancellation, durable store or native GUI gate claimed. Business scenarios remain NOT TESTED; all Drafts preserved.
+- PA-008 manual result arrived during PA-010: capture 850x700, DPI 120, one monitor, origin 0,0; exactly one x; WM_HOTKEY observed. Process session 41222 exited 0; no WindowsSmoke process remains. Reconcile PA-008 next without a second in_progress task.
+- Unresolved: none for PA-010. Next: record PA-008 completion, then PA-011.

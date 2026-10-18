@@ -101,14 +101,15 @@
                                        "attempts":  1
                                    },
                         "PA-010":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:34:32.3187616+00:00",
+                                       "completed_at":  "2026-10-18T10:36:47.4101773+00:00",
                                        "evidence":  [
-
+                                                        "TaskRunStateMachine: explicit transitions, terminal immutability including Interrupted, version conflict detection, UTC timestamps and pause scope; TaskRunStateMachineTests 21 cases. FDD-001/002/003/005/006/007 reviewed; partial domain reference only, business scenarios remain untested Drafts.",
+                                                        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter TaskRun --no-restore: 21 passed; scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 24 unit + 14 integration passed; E2E empty"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-011":  {
                                        "status":  "pending",
@@ -1261,6 +1262,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-009",
-    "updated_at":  "2026-10-18T10:34:01.4369530+00:00"
+    "last_task_id":  "PA-010",
+    "updated_at":  "2026-10-18T10:36:47.4216948+00:00"
 }
