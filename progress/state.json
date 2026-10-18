@@ -417,14 +417,15 @@
                                        "attempts":  0
                                    },
                         "PA-039":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:50:55.4282553+00:00",
+                                       "completed_at":  "2026-10-18T13:55:20.8229379+00:00",
                                        "evidence":  [
-
+                                                        "Core IDesktopAccessCoordinator,opaque DesktopLease,default-denied trusted admission,one owner,idempotent same-run acquire,monotonic in-process generation and grant-bound release. Concurrent24runs-\u003eone grant,stale/foreign release rejected. FDD-002 scoped foundation PASS; atomic/pause/idle/resume integration still later.",
+                                                        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter DesktopAccess --no-restore:7passed(6newownership+existingGUI-pause regression); scripts/verify.ps1 locked restore/build0warnings/errors,66unit+237integration+3localfake-flow passed; diff check passed. No screen/native dependencies."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-040":  {
                                        "status":  "pending",
@@ -1287,6 +1288,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-037",
-    "updated_at":  "2026-10-18T13:50:54.0885099+00:00"
+    "last_task_id":  "PA-039",
+    "updated_at":  "2026-10-18T13:55:20.8334772+00:00"
 }

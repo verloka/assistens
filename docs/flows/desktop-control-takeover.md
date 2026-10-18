@@ -69,6 +69,8 @@ Status: Draft
 
 - Four-operation diagnostic (PA-037, attended KEY observation pending): the existing WindowsSmoke fixture has an explicit repeatable Click/Scroll/Type/PressKey checklist in `tests/README.md`. The added KEY Ctrl+A action targets only its focused read-only field, checks actual selection and released modifiers, and permits exactly that chord. Prior click/scroll/type observations remain recorded; no actual KEY result yet. This local diagnostic is not production lease/hotkey/takeover/resume proof; full S1-S4 remain `[untested]`.
 
+- Lease ownership foundation (PA-039): Core `DesktopAccessCoordinator`/`IDesktopAccessCoordinator` and opaque `DesktopLease` establish one owner and increasing in-process generations. Trusted admission defaults denied; same-owner acquire is idempotent, another run gets DesktopBusy, and release requires the actual grant object so stale/foreign tokens cannot release a new grant. `tests/PersonalAgent.UnitTests/DesktopAccessTests.cs` covers concurrent owners, turnover and token identity without UI/native dependencies. Atomic driver gates, pause/idle/resume integration and full S1-S4 are not provided by this foundation and remain `[untested]`.
+
 ## Unknowns
 - Concrete Windows APIs, pause latency and live race results must be established in the implementation.
 

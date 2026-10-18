@@ -330,6 +330,17 @@ Return KEY report and close the window. FAKE/native-boundary safety suites cover
 faults/cancellation; no deliberate native modifier failure is injected on the
 user's desktop. Global lease/hotkey/resume acceptance remains a separate gate.
 
+## Desktop lease ownership (PA-039)
+
+`dotnet test tests/PersonalAgent.UnitTests --filter DesktopAccess` includes the
+Core ownership suite: trusted admission defaults denied, one concurrent owner,
+same-owner idempotency, opaque grant identity, stale/foreign release rejection
+and monotonically increasing generations over ownership turnover. No screen or
+SDK/native API is used. This foundation reports busy rather than queueing and
+does not yet implement idle/countdown, input atomic gates or pause/resume policy.
+Generations are local to coordinator lifetime; opaque identity prevents foreign
+grant reuse, and restart recovery still must discard old GUI work.
+
 ## Screen-independent computer test doubles (PA-029)
 
 PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit
