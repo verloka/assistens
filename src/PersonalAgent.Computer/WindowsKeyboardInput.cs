@@ -33,16 +33,24 @@ internal sealed class WindowsKeyboardInput
         var batches = new List<NativeInput[]>();
         for (var offset = 0; offset < normalized.Length;)
         {
+            if (normalized[offset] is '\n' or '\t')
+            {
+                // Edit controls filter Unicode control packets. Use real Enter/Tab pairs instead.
+                // Keep each separate so trusted target/focus policy is checked before more text.
+                var key = normalized[offset++] == '\n' ? (ushort)0x0d : (ushort)0x09;
+                batches.Add([NativeInput.Key(key, false), NativeInput.Key(key, true)]);
+                continue;
+            }
             var length = Math.Min(BatchCodeUnits, normalized.Length - offset);
+            var control = normalized.AsSpan(offset, length).IndexOfAny('\n', '\t');
+            if (control >= 0) length = control;
             // Keep both UTF-16 halves in the same atomic send, including at the 16-unit boundary.
             if (char.IsHighSurrogate(normalized[offset + length - 1])) length--;
             var batch = new List<NativeInput>(length * 2);
             foreach (var value in normalized.AsSpan(offset, length))
             {
-                // Enter produces multiline text in normal edit controls. Tab remains text (VK_PACKET),
-                // never a focus-changing VK_TAB shortcut. No clipboard, focus changes or modifier keys.
-                batch.Add(value == '\n' ? NativeInput.Key(0x0d, false) : NativeInput.Unicode(value, false));
-                batch.Add(value == '\n' ? NativeInput.Key(0x0d, true) : NativeInput.Unicode(value, true));
+                batch.Add(NativeInput.Unicode(value, false));
+                batch.Add(NativeInput.Unicode(value, true));
             }
             batches.Add(batch.ToArray());
             offset += length;

@@ -240,8 +240,10 @@ References: [MOUSEINPUT](https://learn.microsoft.com/en-us/windows/win32/api/win
 
 `WindowsKeyboardInput.TypeAsync` accepts at most 4096 UTF-16 units, validates the
 entire text before effects, rejects malformed surrogates and unsupported controls,
-normalizes CRLF/CR to newline, and sends balanced Enter pairs for newlines. Tabs
-are Unicode text packets, not a VK_TAB focus shortcut. Other text uses Unicode
+normalizes CRLF/CR to newline, and sends isolated balanced Enter/Tab pairs.
+The trusted target policy must permit these edit keys only in the intended
+multiline/tab-accepting field and reject a focus change before subsequent text.
+Other text uses Unicode
 packets, never clipboard writes. Atomic chunks contain at most 16 code units
 (32 native events), keeping surrogate pairs together. A shared input lock covers
 all chunks so another driver cannot insert a click/key halfway through text.
@@ -249,12 +251,20 @@ Each chunk rechecks trusted authorization, generation, session and cancellation.
 Already typed text remains after cancellation; there is no rollback or replay.
 
 `dotnet test tests/PersonalAgent.IntegrationTests --filter ComputerType` runs
-21 fake-native cases: text/Unicode/tab packets, line endings, surrogate edges,
+25 fake-native cases: text/Unicode, isolated Enter/Tab pairs, line endings, surrogate edges,
 limits/empty input, malformed text, default denial, stopping after a full first
 chunk, revocation/lock/stale generation, partial cleanup/fault and no interleaving.
 These tests do not type into Windows or read/change clipboard contents.
+`ComputerTextBoxInputTests` also runs a real, unshown WPF TextBox: ordinary
+text composition removes a tab even with AcceptsTab enabled. This caught the
+wrong assumption behind the first attended TYPE TEXT failure. Four new control
+batch/policy cases failed against the old driver and pass with isolated key pairs.
 
-Actual typing remains **NOT TESTED**. Activate WindowsSmoke and release all keys.
+Attended result before the tab fix: user repeatedly reported TYPE TEXT FAILED,
+41/42 characters, while TYPE CANCEL passed (15 characters, one call). The missing
+tab is reproduced by the WPF input-pipeline test above. Actual TYPE TEXT with the
+corrected driver is **NOT TESTED**; the earlier cancellation observation remains
+recorded. Activate WindowsSmoke and release all keys.
 Left-click **TYPE TEXT**. The fixture focuses only its own multiline field and
 types a synthetic sample with Cyrillic, CJK, emoji, punctuation, newline and tab.
 Do not touch keyboard/mouse or switch applications until the report. Check the

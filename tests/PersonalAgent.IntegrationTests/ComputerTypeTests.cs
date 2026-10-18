@@ -9,7 +9,7 @@ public sealed class ComputerTypeTests
     [Fact]
     public async Task UnicodeAndSpecialTextReachesNativeAsBalancedPacketPairsWithoutModifiers()
     {
-        const string text = "Привіт 世界 café e\u0301 🙂 <> & \" ' \\ + =\tend";
+        const string text = "Привіт 世界 café e\u0301 🙂 <> & \" ' \\ + =end";
         var native = new TypeProbe();
         await new WindowsKeyboardInput(() => (true, 1), native).TypeAsync(text, 1);
         Assert.Equal(text, Decode(native.Batches));
@@ -25,6 +25,38 @@ public sealed class ComputerTypeTests
                 Assert.Equal(batch[i].Data.Keyboard.Scan, batch[i + 1].Data.Keyboard.Scan);
             }
         }
+    }
+
+    [Theory]
+    [InlineData("a\tb", 9)]
+    [InlineData("a\nb", 13)]
+    public async Task TabAndEnterUseIsolatedKeyBatchesBeforeContinuingText(string text, ushort key)
+    {
+        var native = new TypeProbe();
+        await new WindowsKeyboardInput(() => (true, 1), native).TypeAsync(text, 1);
+        Assert.Equal(3, native.Batches.Count);
+        Assert.Equal("a", Decode([native.Batches[0]]));
+        var control = native.Batches[1];
+        Assert.Equal(2, control.Length);
+        Assert.Equal(key, control[0].Data.Keyboard.VirtualKey);
+        Assert.Equal(key, control[1].Data.Keyboard.VirtualKey);
+        Assert.Equal(0u, control[0].Data.Keyboard.Flags);
+        Assert.Equal(2u, control[1].Data.Keyboard.Flags);
+        Assert.Equal("b", Decode([native.Batches[2]]));
+    }
+
+    [Theory]
+    [InlineData("a\tb")]
+    [InlineData("a\nb")]
+    public async Task TargetPolicyIsRecheckedAfterControlKeyBeforeAnyFollowingText(string text)
+    {
+        var native = new TypeProbe();
+        var allowed = true;
+        native.AfterSend = () => { if (native.Batches.Count == 2) allowed = false; };
+        var error = await Assert.ThrowsAsync<ComputerInputException>(() =>
+            new WindowsKeyboardInput(() => (allowed, 1), native).TypeAsync(text, 1));
+        Assert.Equal("InputDenied", error.Code);
+        Assert.Equal(2, native.Batches.Count);
     }
 
     [Theory]
