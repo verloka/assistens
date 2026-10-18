@@ -463,14 +463,14 @@
                                        "attempts":  2
                                    },
                         "PA-043":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T15:02:30.5286993+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Tray/mini-window implementation and five STA fake-tray regressions complete. Need attended real-App report: opt-in close-to-tray keeps icon/menu available, tray Pause \u0026 Take Control then Controls shows Paused while main window hidden, Open restores and Exit shuts down. Real tray/menu not observed by agent; no hardware evidence fabricated.",
+                                       "attempts":  1
                                    },
                         "PA-044":  {
                                        "status":  "pending",
@@ -1293,6 +1293,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-042",
-    "updated_at":  "2026-10-18T15:01:45.6642904+00:00"
+    "last_task_id":  "PA-043",
+    "updated_at":  "2026-10-18T15:08:16.7376778+00:00"
 }

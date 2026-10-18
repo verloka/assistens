@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,8 +12,8 @@ public partial class App : Application
     private ILogger<App>? _logger;
     private CancellationTokenRegistration _stoppingRegistration;
     private bool _shutdownStarted;
-    private bool _shutdownComplete;
     private TakeControlHotkeyService? _takeControl;
+    private DesktopShell? _shell;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -40,7 +39,9 @@ public partial class App : Application
                 MessageBox.Show("Ctrl+Shift+F10 is unavailable. Desktop automation remains blocked; see diagnostic output.",
                     "Take Control shortcut unavailable", MessageBoxButton.OK, MessageBoxImage.Warning);
             MainWindow = host.Services.GetRequiredService<MainWindow>();
-            MainWindow.Closing += OnMainWindowClosing;
+            _shell = new DesktopShell((MainWindow)MainWindow, host.Services.GetRequiredService<ControlWindow>(),
+                host.Services.GetRequiredService<ViewModels.ControlPanelViewModel>(), new WindowsTrayIcon(), () => BeginShutdown());
+            _shell.Start();
             MainWindow.Show();
         }
         catch (OperationCanceledException) when (_shutdownStarted)
@@ -56,15 +57,6 @@ public partial class App : Application
         }
     }
 
-    private void OnMainWindowClosing(object? sender, CancelEventArgs e)
-    {
-        if (_shutdownComplete)
-            return;
-
-        e.Cancel = true;
-        BeginShutdown();
-    }
-
     private async void BeginShutdown(int exitCode = 0)
     {
         if (_shutdownStarted)
@@ -75,6 +67,7 @@ public partial class App : Application
         try
         {
             _takeControl?.Dispose(); _takeControl = null;
+            _shell?.Dispose(); _shell = null;
             if (_desktopHost is not null)
                 await _desktopHost.StopAsync();
         }
@@ -85,7 +78,6 @@ public partial class App : Application
         }
         finally
         {
-            _shutdownComplete = true;
             Shutdown(exitCode);
         }
     }

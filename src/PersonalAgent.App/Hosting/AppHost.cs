@@ -24,6 +24,8 @@ public static class AppHost
             services.AddSingleton<MainWindow>();
             services.AddSingleton<HealthViewModel>();
             services.AddSingleton<DashboardViewModel>();
+            services.AddSingleton<ControlPanelViewModel>();
+            services.AddSingleton<ControlWindow>();
             services.AddSingleton<IDesktopAccessCoordinator>(_ => new DesktopAccessCoordinator());
             services.AddSingleton<TaskRunCoordinator>();
             services.AddSingleton<TakeControlHotkeyService>();

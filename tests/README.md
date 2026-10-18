@@ -408,8 +408,9 @@ queued Resume rejection without clearing human control. No global shortcut is
 registered by these tests; owned hidden HWNDs are the only native window resource.
 
 The first actual outside-focus report had outsideFocus=True, gateClosed=True and
-fakeActions=96->96, but minimized=False, so minimized-window acceptance remains
-**NOT TESTED**. KEY Ctrl+A (PA-037) also passed; to repeat only this gate, left-click
+fakeActions=96->96, but minimized=False. The repeated actual report passed with
+outsideFocus=True, minimized=True, gateClosed=True, fakeActions=146->146;
+diagnostic exited0. KEY Ctrl+A (PA-037) also passed. To repeat only this gate, left-click
 **ARM TAKE CONTROL**. The shortcut is only
 registered after this explicit gesture. Minimize the window yourself, activate
 another application and press Ctrl+Shift+F10, then restore WindowsSmoke and copy
@@ -422,6 +423,35 @@ that setup, not the later real click/type/hotkey/resume E2E-03 acceptance.
 
 References: [RegisterHotKey](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey),
 [WM_HOTKEY](https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-hotkey).
+
+## Tray and mini-window (PA-043)
+
+Real App startup creates the tray icon; headless AppHost instances do not. Closing
+the main window exits by default. Check **Keep running in tray when closing** to
+hide it instead; tray **Open** restores it only on user request. **Controls** opens
+a non-activating mini-window with Pause & Take Control, Resume and Cancel. Closing
+that window hides it. Tray **Exit** stops the host and disposes the tray/hotkey.
+Take Control uses the existing immediate local gate and common task pause command;
+Resume/Cancel use the same versioned task commands. No native input/capture occurs.
+The Paused label means new GUI actions are blocked; PA-044 still owns the complete
+physical-release/persistence confirmation. No automatic resume follows hide/open,
+cancel or a scheduled tick. New Task/schedule management remain their later UI scope.
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter DesktopShell` exercises
+five STA cases using actual WPF XAML/common commands and a fake tray boundary:
+opt-in hide, default exit, disposal/start failure, paused bindings, explicit fresh
+lease after Resume, Cancel preserving human pause, and Pausing until atomic drain.
+The tests never show windows or register a real tray/global hotkey. Actual tray
+visibility/menu acceptance is **NOT TESTED** until an attended report arrives:
+
+1. Run `dotnet run --project src/PersonalAgent.App --no-build`.
+2. Check **Keep running in tray when closing**, then close the main window with X.
+3. Find the Personal Agent tray icon (possibly under the hidden-icons arrow).
+   Right-click it and select **Pause & Take Control**, then **Controls**.
+4. Confirm **Paused** is visible with the main window hidden. No task is needed.
+5. Use tray **Open** to restore the main window, then tray **Exit** to shut down.
+
+NotifyIcon reference: [Microsoft component overview](https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/notifyicon-component-overview-windows-forms).
 
 ## Screen-independent computer test doubles (PA-029)
 

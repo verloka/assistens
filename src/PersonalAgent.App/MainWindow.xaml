@@ -38,6 +38,10 @@
             <ListBox x:Name="ComponentsList" ItemsSource="{Binding Components}" BorderThickness="0" />
         </GroupBox>
         <StackPanel Grid.Row="3">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <CheckBox x:Name="CloseToTrayCheckBox" Content="Keep running in tray when closing" VerticalAlignment="Center" />
+                <Button x:Name="OpenControlsButton" Content="Controls" Padding="10,4" Margin="12,0" />
+            </StackPanel>
             <Button x:Name="DiagnosticButton" Content="Run test operation (5 seconds)"
                     Command="{Binding RunDiagnosticCommand}" HorizontalAlignment="Left" Padding="12,6" />
             <ProgressBar Height="4" Margin="0,12,0,8" IsIndeterminate="{Binding IsBusy}" />
