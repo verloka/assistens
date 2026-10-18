@@ -2,19 +2,29 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using PersonalAgent.Core.Application;
 using PersonalAgent.Persistence;
+using PersonalAgent.Core.Persistence;
 using System.IO;
 
 namespace PersonalAgent.App;
 
-public sealed class RunHistoryService(SqliteAgentDbContextFactory contexts, TaskRunCoordinator coordinator) : IHostedService
+public sealed class RunHistoryService(SqliteAgentDbContextFactory contexts, TaskRunCoordinator coordinator, IRunRepository repository) : IHostedService, IDisposable
 {
+    private FileStream? ownership;
     public Task StartAsync(CancellationToken cancellationToken) => Task.Run(async () =>
     {
         Directory.CreateDirectory(Path.GetDirectoryName(contexts.DatabasePath)!);
-        await using var db = contexts.CreateDbContext();
-        await db.Database.MigrateAsync(cancellationToken);
-        await coordinator.LoadFinishedHistoryAsync(cancellationToken);
+        try
+        {
+            // Recovery is valid only after the previous owner exited. The OS releases this lock on crash.
+            ownership = new FileStream(contexts.DatabasePath + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            await using var db = contexts.CreateDbContext();
+            await db.Database.MigrateAsync(cancellationToken);
+            var safeQueued = await new RunRecovery(repository).RecoverAsync(cancellationToken);
+            await coordinator.RestoreHistoryAsync(safeQueued, cancellationToken);
+        }
+        catch { Dispose(); throw; }
     }, cancellationToken);
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    public Task StopAsync(CancellationToken cancellationToken) { Dispose(); return Task.CompletedTask; }
+    public void Dispose() { ownership?.Dispose(); ownership = null; }
 }

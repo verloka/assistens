@@ -12,6 +12,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using PersonalAgent.IntegrationTests.Fakes;
+using PersonalAgent.Persistence;
+using System.IO;
 
 namespace PersonalAgent.IntegrationTests;
 
@@ -169,6 +171,77 @@ public sealed class DashboardTests
             finally { window.Close(); await host.StopAsync(); }
         }
     });
+
+    [Fact]
+    public Task DashboardStartupShowsInterruptedAttemptAndNeverOffersResume() => OnWpfThread(async () =>
+    {
+        using var database = new TemporaryAgentDatabase();
+        await using (var db = database.Open()) await Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.MigrateAsync(db.Database);
+        var repository = new SqliteRunRepository(database);
+        Guid id;
+        using (var beforeCrash = new TaskRunCoordinator(repository))
+        {
+            var queued = await beforeCrash.SubmitAsync(new(Guid.NewGuid(), "Interrupted local fixture", new TaskOrigin("test")));
+            id = queued.Id;
+            var running = TaskRunStateMachine.Transition(queued, RunStatus.Running, queued.RunVersion, DateTimeOffset.UtcNow);
+            await repository.UpdateAsync(running, queued.RunVersion, [new RunEvent
+            {
+                Id = Guid.NewGuid(), RunId = id, Sequence = 3, EventType = RunEventType.RunStarted,
+                TimestampUtc = DateTimeOffset.UtcNow, Message = "Last durable running state"
+            }]);
+        }
+        using var host = AppHost.CreateBuilder([], database.DatabasePath).ConfigureLogging(log => log.ClearProviders()).Build();
+        await host.StartAsync();
+        var window = host.Services.GetRequiredService<MainWindow>();
+        try
+        {
+            await Bind(window);
+            var model = host.Services.GetRequiredService<DashboardViewModel>();
+            ((ComboBox)window.FindName("RunHistoryList")).SelectedItem = Assert.Single(model.History);
+            await Dispatcher.Yield(DispatcherPriority.DataBind);
+            Assert.Equal(id, model.CurrentRun!.Id);
+            Assert.Equal("Interrupted", ((TextBlock)window.FindName("RunStatusText")).Text);
+            Assert.Contains("Verify external effects", ((TextBlock)window.FindName("RunSummaryText")).Text);
+            Assert.False(model.ResumeCommand.CanExecute(null));
+            Assert.Equal(RunStatus.Interrupted, (await repository.GetAsync(id))!.Run.Status);
+        }
+        finally { window.Close(); await host.StopAsync(); }
+    });
+
+    [Fact]
+    public async Task HistoryOwnershipPreventsSecondHostFromRecoveringLiveRun()
+    {
+        using var database = new TemporaryAgentDatabase();
+        var entered = Signal();
+        var release = Signal();
+        using var first = AppHost.CreateBuilder([], database.DatabasePath).ConfigureLogging(log => log.ClearProviders())
+            .ConfigureServices(services => services.AddSingleton<IAgentRuntime>(provider => new FakeAgentRuntime(waitAtBoundary: async (id, ct) =>
+            {
+                entered.TrySetResult(); await release.Task.WaitAsync(ct);
+                await provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync(id, ct);
+            }))).Build();
+        await first.StartAsync();
+        try
+        {
+            var state = first.Services.GetRequiredService<TaskRunCoordinator>();
+            var run = await state.SubmitAsync(new(Guid.NewGuid(), "Live owned task", new TaskOrigin("test")));
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            using (var second = AppHost.CreateBuilder([], database.DatabasePath).ConfigureLogging(log => log.ClearProviders()).Build())
+            {
+                await Assert.ThrowsAsync<IOException>(() => second.StartAsync());
+                await second.StopAsync();
+            }
+            Assert.Equal(RunStatus.Running, state.GetRun(run.Id).Status);
+            var repository = new SqliteRunRepository(database);
+            Assert.Equal(RunStatus.Running, (await repository.GetAsync(run.Id))!.Run.Status);
+            release.SetResult();
+            await state.WaitForTerminalAsync(run.Id).WaitAsync(TimeSpan.FromSeconds(10));
+        }
+        finally { release.TrySetResult(); await first.StopAsync(); }
+        using var reopened = AppHost.CreateBuilder([], database.DatabasePath).ConfigureLogging(log => log.ClearProviders()).Build();
+        await reopened.StartAsync();
+        await reopened.StopAsync();
+    }
 
     private static async Task Until(DashboardViewModel model, Func<bool> predicate)
     {

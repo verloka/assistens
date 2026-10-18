@@ -51,5 +51,7 @@ Status: Draft
 
 - Durable execution/history (PA-019): `TaskRunCoordinator` stages revisions, awaits repository commits, then publishes events/terminal results; `App/Hosting/RunHistoryService.cs` migrates and loads finished history without queueing work. `PersistenceRuntimeTests.cs` and the restart case in `DashboardTests.cs` verify real SQLite close/reopen, complete event/result metadata, pause/cancel and storage failure before execution/publication. Incomplete startup recovery, unknown external outcomes and notification replay still require PA-021 and later tasks; S1-S3 remain `[untested]`.
 
+- Startup recovery (PA-021): `src/PersonalAgent.Core/Application/RunRecovery.cs` marks started nonterminal attempts Interrupted with a review warning and no replay. Unstarted local `fake` requests with no tools may queue once; unknown model/tool sets become Blocked for review. `RunHistoryService` holds exclusive database ownership so another host cannot recover a live run. `tests/PersonalAgent.IntegrationTests/PersistenceRecoveryTests.cs` kills a real child process after one sandbox-file effect but before acknowledgement; the effect is not repeated and the recovered runtime is never invoked. It also checks all started nonterminal states and safe queue restoration. `DashboardTests.cs` verifies actual Interrupted XAML and live-owner protection. No real GUI/MCP write, durable approval, per-tool OutcomeUnknown or notification replay acceptance is implied; complete S1-S3 remain `[untested]`.
+
 ## Unknowns
-- Exact recovery database migrations and idempotency key shape will be validated during implementation.
+- Durable command/occurrence idempotency, pending approvals, per-tool unknown outcomes and delivery/schedule recovery remain later backlog work.

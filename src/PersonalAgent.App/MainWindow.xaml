@@ -51,7 +51,7 @@
                 </Grid.RowDefinitions>
                 <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,0,0,8" />
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-                    <TextBlock Text="Finished tasks: " VerticalAlignment="Center" />
+                    <TextBlock Text="Task history: " VerticalAlignment="Center" />
                     <ComboBox x:Name="RunHistoryList" ItemsSource="{Binding History}" SelectedItem="{Binding SelectedHistory}"
                               DisplayMemberPath="Instructions" MinWidth="250" MaxWidth="600">
                         <ComboBox.Style>

@@ -43,10 +43,8 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         {
             if (active || value is null) return;
             selectedHistory = value;
-            currentRun = state.GetRun(value.Id);
-            Events.Clear();
-            foreach (var entry in state.GetEvents(value.Id)) Events.Add(entry);
-            Changed(); Refresh();
+            Changed();
+            _ = ObserveHistoryAsync(value.Id);
         }
     }
     public AsyncCommand SubmitCommand { get; }
@@ -74,12 +72,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         {
             currentRun = await commands.SubmitAsync(new(Guid.NewGuid(), Instructions, new TaskOrigin("desktop")), lifetime.Token);
             Refresh();
-            await foreach (var value in state.WatchRunAsync(currentRun.Id, lifetime.Token))
-            {
-                Events.Add(value);
-                currentRun = state.GetRun(value.RunId);
-                Refresh();
-            }
+            await WatchAsync(currentRun.Id);
         }
         catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { message = "Application is stopping."; }
         catch (RunPersistenceException) { message = "Task history could not be saved; task was not started."; }
@@ -103,6 +96,21 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         catch (InvalidOperationException) { message = "Command is unavailable in the current task state."; }
         finally { if (currentRun is not null) currentRun = state.GetRun(currentRun.Id); Refresh(); }
     }
+    private async Task ObserveHistoryAsync(Guid id)
+    {
+        active = true; Events.Clear(); currentRun = state.GetRun(id); Refresh();
+        try { await WatchAsync(id); }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
+        catch (Exception) { message = "Task history could not be observed."; }
+        finally { active = false; Refresh(); }
+    }
+    private async Task WatchAsync(Guid id)
+    {
+        await foreach (var value in state.WatchRunAsync(id, lifetime.Token))
+        {
+            Events.Add(value); currentRun = state.GetRun(value.RunId); Refresh();
+        }
+    }
 
     private void Refresh()
     {
@@ -112,7 +120,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
     private void RefreshHistory()
     {
         History.Clear();
-        foreach (var run in state.GetRuns().Where(run => TaskRunStateMachine.IsTerminal(run.Status))) History.Add(run);
+        foreach (var run in state.GetRuns()) History.Add(run);
     }
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
     public void Dispose() { if (disposed) return; disposed = true; lifetime.Cancel(); lifetime.Dispose(); }

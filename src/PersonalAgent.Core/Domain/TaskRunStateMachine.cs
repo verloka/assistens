@@ -7,7 +7,7 @@ public static class TaskRunStateMachine
 
     public static bool CanTransition(RunStatus from, RunStatus to) => from switch
     {
-        RunStatus.Created => to is RunStatus.Queued or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Skipped,
+        RunStatus.Created => to is RunStatus.Queued or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Skipped,
         RunStatus.Queued => to is RunStatus.Running or RunStatus.WaitingForDesktop or RunStatus.WaitingForUser
             or RunStatus.Paused or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Skipped,
         RunStatus.Running => to is RunStatus.WaitingForDesktop or RunStatus.WaitingForUser or RunStatus.WaitingForApproval

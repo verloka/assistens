@@ -60,4 +60,4 @@ Status: Draft
 - Durable runtime (PA-019): `src/PersonalAgent.Core/Application/TaskRunCoordinator.cs` serializes staged revisions and publishes only after `IRunRepository` commits. `src/PersonalAgent.App/Hosting/RunHistoryService.cs` and the Dashboard finished-task selector restore persisted events/results. `tests/PersonalAgent.IntegrationTests/PersistenceRuntimeTests.cs` checks real SQLite metadata and save failures; `DashboardTests.cs` includes a fresh-host/XAML history round-trip. These checks do not cover notification delivery or real tool policies, so complete S1-S3 remain `[untested]`.
 
 ## Unknowns
-- Notifications, incomplete-run recovery and complete business E2E acceptance remain pending. Confirm approval and proof as code lands.
+- Notifications, provider/tool outcome recovery and complete business E2E acceptance remain pending. Basic Interrupted startup recovery is documented in FDD-007. Confirm approval and proof as code lands.

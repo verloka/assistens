@@ -124,15 +124,17 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
     public Task<TaskRun> WaitForTerminalAsync(Guid runId, CancellationToken cancellationToken = default)
     { lock (sync) return Find(runId).Terminal.Task.WaitAsync(cancellationToken); }
 
-    // Incomplete-run recovery is a separate operation; history never queues execution.
-    public async Task LoadFinishedHistoryAsync(CancellationToken cancellationToken = default)
+    public Task LoadFinishedHistoryAsync(CancellationToken cancellationToken = default) => LoadHistoryAsync([], false, cancellationToken);
+    public Task RestoreHistoryAsync(IReadOnlyList<Guid> safeQueuedRuns, CancellationToken cancellationToken = default) => LoadHistoryAsync(safeQueuedRuns, true, cancellationToken);
+
+    private async Task LoadHistoryAsync(IReadOnlyList<Guid> safeQueuedRuns, bool includePending, CancellationToken cancellationToken)
     {
         if (repository is null) return;
         await writes.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             var summaries = await Task.Run(() => repository.ListAsync(cancellationToken), cancellationToken).ConfigureAwait(false);
-            foreach (var summary in summaries.Where(run => TaskRunStateMachine.IsTerminal(run.Status)))
+            foreach (var summary in summaries.Where(run => includePending || TaskRunStateMachine.IsTerminal(run.Status)))
             {
                 var stored = await Task.Run(() => repository.GetAsync(summary.Id, cancellationToken), cancellationToken).ConfigureAwait(false);
                 if (stored is null) continue;
@@ -141,8 +143,14 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
                     if (runs.ContainsKey(summary.Id)) continue;
                     var entry = new Entry(stored.Run, stored.Request) { Result = stored.Result };
                     entry.Events.AddRange(stored.Events);
-                    entry.Terminal.TrySetResult(entry.Run);
+                    if (TaskRunStateMachine.IsTerminal(entry.Run.Status)) entry.Terminal.TrySetResult(entry.Run);
                     runs.Add(entry.Run.Id, entry);
+                    if (safeQueuedRuns.Contains(entry.Run.Id))
+                    {
+                        if (entry.Run.Status != RunStatus.Queued || entry.Request.ModelProfileId != "fake" || entry.Request.AllowedToolIds.Count != 0)
+                            throw new InvalidOperationException("Recovered work is not a known-safe unstarted local task.");
+                        queue.Writer.TryWrite(entry.Run.Id);
+                    }
                 }
             }
         }

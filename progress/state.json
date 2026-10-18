@@ -223,14 +223,15 @@
                                        "attempts":  1
                                    },
                         "PA-021":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T11:18:05.6636602+00:00",
+                                       "completed_at":  "2026-10-18T11:28:32.2261780+00:00",
                                        "evidence":  [
-
+                                                        "Core RunRecovery plus startup integration: started nonterminal attempts become Interrupted with review warning; terminal history unchanged; only unstarted fake/no-tool requests restore once, unknown model/tool sets Blocked. Exclusive DB owner prevents live-run recovery by another host. Actual child-process kill fixture commits synthetic write, one sandbox effect before ack, then no recovered dispatch/repeated effect. XAML shows Interrupted and disabled Resume. No live MCP/SendInput or per-tool OutcomeUnknown claim; FDD Draft scopes retained.",
+                                                        "Verification: PersistenceRecoveryTests 10 passed incl real process kill and 8 interrupted states; DashboardTests 5 passed incl Interrupted XAML and owner protection; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 61 integration + 3 local fake-flow passed; diff check passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-022":  {
                                        "status":  "pending",
@@ -1273,6 +1274,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-020",
-    "updated_at":  "2026-10-18T11:18:04.4122455+00:00"
+    "last_task_id":  "PA-021",
+    "updated_at":  "2026-10-18T11:28:32.2357012+00:00"
 }

@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/PersonalAgent.App/PersonalAgent.App.csproj" />
     <ProjectReference Include="../PersonalAgent.McpTestServer/PersonalAgent.McpTestServer.csproj" />
+    <ProjectReference Include="../PersonalAgent.RecoveryTestProcess/PersonalAgent.RecoveryTestProcess.csproj" />
   </ItemGroup>
 
   <ItemGroup>

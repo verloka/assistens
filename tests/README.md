@@ -193,8 +193,9 @@ restart Dashboard test closes the host, opens a fresh host against the same real
 temporary SQLite file and checks actual XAML history/status/events/result. The
 coordinator serializes staged revisions, commits them, then publishes snapshots;
 query locks never cover database I/O. Every persisted progress update advances
-RunVersion. Finished history is loaded without enqueuing execution; incomplete-run
-recovery remains PA-021. No provider or native GUI work is configured.
+RunVersion. History loads without replaying started attempts; PA-021's startup
+recovery restores only known-safe unstarted local tasks. No provider or native GUI
+work is configured.
 
 `dotnet test --filter PersistenceConversationTests` stores/reopens neutral ordered
 messages and immutable provider-session checkpoints. Provider/model/schema must
@@ -203,3 +204,17 @@ neutral history remains available. Duplicate message sequence/external IDs and
 cross-conversation run links are rejected. This is storage scaffolding only:
 no real provider session restore, channel follow-up or automatic action replay.
 Callers must exclude credentials from session payloads.
+
+`dotnet test --filter PersistenceRecoveryTests` includes a real test-process kill:
+the fixture commits a synthetic write request, writes one line in its own temporary
+effect file, then waits without acknowledging. After termination, recovery marks
+Interrupted, preserves pending evidence and never invokes that attempt again; the
+effect remains one line. All started nonterminal states, repeat recovery, safe local
+queue restore and unknown-tool blocking are covered. This is not a live MCP or
+SendInput unknown-outcome E2E; those drivers/policy are later tasks.
+
+The history startup service owns an exclusive `.lock` file beside the database.
+The OS releases its handle on process exit/crash. A second host with the same DB
+fails startup before recovery can touch a live run. DashboardTests checks this and
+the actual Interrupted status/review warning with Resume disabled. Unstarted fake
+tasks with no allowed tools can restart once; other model/tool sets await review.

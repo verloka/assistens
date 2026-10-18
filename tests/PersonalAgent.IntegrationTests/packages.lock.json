@@ -291,6 +291,13 @@
           "PersonalAgent.Core": "[1.0.0, )"
         }
       },
+      "personalagent.recoverytestprocess": {
+        "type": "Project",
+        "dependencies": {
+          "PersonalAgent.Core": "[1.0.0, )",
+          "PersonalAgent.Persistence": "[1.0.0, )"
+        }
+      },
       "Microsoft.Agents.AI": {
         "type": "CentralTransitive",
         "requested": "[1.25.0, )",
