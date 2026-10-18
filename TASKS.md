@@ -382,7 +382,9 @@ Raw physical coordinates, source capture geometry, DPI metadata, content type.
 
 Сопоставление LLM image pixels и physical desktop coordinates.
 
-**Dependencies:** PA-026
+**Dependencies:** PA-025
+
+Execution-order exception: continue coordinate development from implemented capture contracts while PA-026 remains blocked on unavailable two-display hardware. PA-026 acceptance is retained as an explicit PA-125 release dependency; no hardware result is inferred.
 
 **Acceptance:**
 - [ ] Unit tests на 100/125/150% scaling и отрицательные bounds.
@@ -1776,7 +1778,7 @@ Check prompt injection, corporate data egress policy, no lock/UAC bypass, cost c
 
 README setup, auth expectations, incident recovery, limitations, changelog, release tag candidate.
 
-**Dependencies:** PA-124
+**Dependencies:** PA-124, PA-026
 
 **Acceptance:**
 - [ ] All 22 MVP DoD checks pass and release candidate is reproducible.

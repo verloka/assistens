@@ -676,7 +676,7 @@
       "title": "Реализовать DPI/resize coordinate transforms",
       "description": "Сопоставление LLM image pixels и physical desktop coordinates.",
       "depends_on": [
-        "PA-026"
+        "PA-025"
       ],
       "acceptance": [
         "Unit tests на 100/125/150% scaling и отрицательные bounds."
@@ -2847,7 +2847,8 @@
       "title": "Release documentation, known limitations, versioned MVP gate",
       "description": "README setup, auth expectations, incident recovery, limitations, changelog, release tag candidate.",
       "depends_on": [
-        "PA-124"
+        "PA-124",
+        "PA-026"
       ],
       "acceptance": [
         "All 22 MVP DoD checks pass and release candidate is reproducible."
