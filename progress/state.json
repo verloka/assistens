@@ -550,14 +550,15 @@
                                        "attempts":  1
                                    },
                         "PA-051":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T18:40:54.5590237+00:00",
+                                       "completed_at":  "2026-10-18T18:43:54.8103577+00:00",
                                        "evidence":  [
-
+                                                        "ModelCapabilityPolicy and profile-bound MafAgentRuntime reject missing tools/vision or mismatched profile before provider access; tools-only path preserves nonvision use. Explicit TestConnection uses declaration-only nonce function and synthetic PNG, verifies actual response shape/arguments without tool execution/screen capture. ModelCapabilityTests covers 15 cases. FDD-001 scoped PASS, full Draft/live scenarios untested.",
+                                                        "Verification: Targeted ModelCapability|OpenAiModelProvider|MafAgentRuntime44passed before extra compatible-desktop case; final scripts/verify.ps1 locked restore/build0warnings/errors,88unit+324integration+3localfake-flow passed(415)."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-052":  {
                                        "status":  "pending",
@@ -1300,6 +1301,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-050",
-    "updated_at":  "2026-10-18T18:40:28.9053346+00:00"
+    "last_task_id":  "PA-051",
+    "updated_at":  "2026-10-18T18:43:54.8198723+00:00"
 }

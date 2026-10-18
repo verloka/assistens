@@ -11,6 +11,21 @@ public sealed class MafAgentRuntime(
     Func<AgentRequest, CancellationToken, ValueTask<IChatClient>> createClient,
     Func<Guid, CancellationToken, Task> waitAtBoundary) : IAgentRuntime
 {
+    // The trusted composition root determines desktop requirements from the actual allowed tool descriptors.
+    public MafAgentRuntime(IModelProvider provider, ModelProfile profile, bool requiresDesktop,
+        Func<Guid, CancellationToken, Task> waitAtBoundary)
+        : this((request, ct) => OpenProfileAsync(provider, profile, requiresDesktop, request, ct), waitAtBoundary) { }
+
+    private static async ValueTask<IChatClient> OpenProfileAsync(IModelProvider provider, ModelProfile profile,
+        bool requiresDesktop, AgentRequest request, CancellationToken ct)
+    {
+        if (request.ModelProfileId != profile.Id)
+            throw new ModelProviderException("ModelProfileMismatch", "The run does not match the configured model profile.");
+        ModelCapabilityPolicy.DemandAgentSupport(profile, requiresDesktop);
+        // Transfer the SDK client to this execution's existing owned-client lifecycle.
+        return (await provider.OpenAsync(profile, ct).ConfigureAwait(false)).Client;
+    }
+
     public async Task<AgentRunResult> ExecuteAsync(AgentRequest request, IProgress<AgentEvent> progress, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

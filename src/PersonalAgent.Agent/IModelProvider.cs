@@ -18,7 +18,7 @@ public sealed class ModelConnection(IChatClient client, ModelProfile profile) : 
     public void Dispose() => Client.Dispose();
 }
 
-public sealed record ModelConnectionTest(bool Connected, string? ErrorCode, string Message);
+public sealed record ModelConnectionTest(bool Connected, string? ErrorCode, string Message, ModelCapabilities? VerifiedCapabilities = null);
 public sealed class ModelProviderException(string code, string message) : Exception(message)
 {
     public string Code { get; } = code;

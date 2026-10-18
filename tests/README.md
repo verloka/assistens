@@ -44,9 +44,16 @@ It uses the official OpenAI 2.13.0 SDK through Microsoft.Extensions.AI.OpenAI
 10.10.0, an in-process HTTP handler, real MAF/host/SQLite and actual Windows DPAPI
 with synthetic keys. It verifies model/auth test, cancellation, no automatic retry,
 sanitized HTTP errors and absence of the synthetic key in SDK events, result/history
-and plaintext secret files. No live account or capability probe is claimed.
+and plaintext secret files. No live account check is claimed.
 The provider uses the stable chat bridge; see [official SDK](https://developers.openai.com/api/docs/libraries)
 and [SDK configuration](https://github.com/openai/openai-dotnet#advanced-usage).
+
+PA-051: `--filter ModelCapability` checks profile-bound runtime preflight and
+Test Connection capability probes with scripted HTTP. Function calling is required
+for agent use; desktop work additionally requires images, while tools-only work
+does not. Explicit Test Connection probes enabled capabilities using a declaration
+and synthetic in-memory PNG, without executing tools/capturing the desktop. Live
+model capabilities remain unverified; configured flags never come from model names.
 
 `dotnet test tests/PersonalAgent.IntegrationTests --filter MafAgentRuntime --no-restore`
 checks the real MAF streaming/session pipeline with a local scripted IChatClient,

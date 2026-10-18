@@ -59,12 +59,18 @@ public sealed partial class OpenAiModelProvider(ISecretStore secrets, HttpClient
 
     public async Task<ModelConnectionTest> TestConnectionAsync(ModelProfile profile, CancellationToken cancellationToken)
     {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
         try
         {
-            using var connection = await OpenAsync(profile, cancellationToken).ConfigureAwait(false);
-            return new(true, null, "Provider authentication and model availability confirmed; capabilities have not been probed.");
+            using var connection = await OpenAsync(profile, linked.Token).ConfigureAwait(false);
+            var capabilities = await ModelCapabilityProbe.VerifyAsync(connection.Client, profile, linked.Token).ConfigureAwait(false);
+            return new(true, null, "Provider/model access confirmed; only explicitly enabled capabilities were probed.", capabilities);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        catch (OperationCanceledException) { return new(false, "ProviderTimedOut", "The model connection test timed out."); }
         catch (ModelProviderException exception) { return new(false, exception.Code, exception.Message); }
+        catch (Exception) { return new(false, "CapabilityProbeFailed", "The configured capability test failed; no action was executed or retried."); }
     }
 
     private void Validate(ModelProfile profile)

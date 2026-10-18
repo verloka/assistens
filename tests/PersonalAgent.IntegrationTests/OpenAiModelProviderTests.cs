@@ -131,8 +131,8 @@ public sealed class OpenAiModelProviderTests
             .ConfigureServices(services =>
             {
                 services.AddSingleton<IModelProvider>(provider);
-                services.AddSingleton<IAgentRuntime>(services => new MafAgentRuntime(async (_, ct) =>
-                    (await services.GetRequiredService<IModelProvider>().OpenAsync(Profile, ct)).Client,
+                services.AddSingleton<IAgentRuntime>(services => new MafAgentRuntime(
+                    services.GetRequiredService<IModelProvider>(), Profile with { Capabilities = new(SupportsToolCalling: true) }, requiresDesktop: false,
                     services.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync));
             }).Build();
         await host.StartAsync();
