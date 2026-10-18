@@ -7,4 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="../PersonalAgent.Core/PersonalAgent.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" />
+  </ItemGroup>
 </Project>

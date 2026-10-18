@@ -36,14 +36,15 @@
                                        "attempts":  1
                                    },
                         "PA-004":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T07:58:39.6958528+00:00",
+                                       "completed_at":  "2026-10-18T08:01:58.4028395+00:00",
                                        "evidence":  [
-
+                                                        "Directory.Packages.props central stable pins; Directory.Build.props and all ten packages.lock.json files; SDK references isolated to Agent/Mcp/App; docs/decisions/0001..0003 document verified dependency baseline and planned Windows/secret boundaries. SdkCompatibilityTests loads agent/session and stdio/HTTP types together. Runtime provider/transport behavior deferred explicitly.",
+                                                        "Verification: dotnet restore: passed; dotnet restore --locked-mode: passed; dotnet build --no-restore: 0 warnings/errors; dotnet test --no-build: 1 architecture + 7 integration passed; git diff --cached --check passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-005":  {
                                        "status":  "pending",
@@ -1256,6 +1257,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-003",
-    "updated_at":  "2026-10-18T07:58:36.4605985+00:00"
+    "last_task_id":  "PA-004",
+    "updated_at":  "2026-10-18T08:01:58.4155076+00:00"
 }
