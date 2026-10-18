@@ -74,3 +74,9 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 - FDD develop/verify: inspected lifecycle FDD-001 and reverse consumers FDD-003/FDD-007 plus pause/approval/delivery contracts FDD-002/FDD-005/FDD-006. Actual diff preserves terminal outcomes and separates pause from cancel. Domain scope PASS; no actual tool cancellation, durable store or native GUI gate claimed. Business scenarios remain NOT TESTED; all Drafts preserved.
 - PA-008 manual result arrived during PA-010: capture 850x700, DPI 120, one monitor, origin 0,0; exactly one x; WM_HOTKEY observed. Process session 41222 exited 0; no WindowsSmoke process remains. Reconcile PA-008 next without a second in_progress task.
 - Unresolved: none for PA-010. Next: record PA-008 completion, then PA-011.
+
+## 2026-10-18 13:37:12 +03:00 | PA-008 | done (manual blocker resolved)
+- Launched existing WindowsSmoke at user's explicit request, dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build (session 41222). User operated button and shortcut, reporting: Capture OK 850x700, DPI=120, monitors=1, virtual origin=(0,0); SendInput observed OK one x; WM_HOTKEY observed OK with no input from handler.
+- Checks: session 41222 exited 0 after user closed window; Get-Process PersonalAgent.WindowsSmoke found none. Exact fixture had build 0 warnings/errors; current full suite 24 unit + 14 integration passed. This is a limited attended spike, not business E2E or a full hardware matrix. No second GUI run was injected.
+- Single-task tracker policy preserved: finished PA-010 before unblocking/starting/completing PA-008. Updated ADR with actual evidence and unknown OS/elevation; tests/README.md records limitations. FDD-002 S1-S4 still NOT TESTED as complete production flows; all statuses remain Draft.
+- Unresolved: none for PA-008 spike. Production lease, input cleanup stress, mixed DPI, multi-monitor, UAC/lock and remote sessions remain future verification. Next: PA-011.

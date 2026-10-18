@@ -80,14 +80,15 @@
                                        "attempts":  1
                                    },
                         "PA-008":  {
-                                       "status":  "blocked",
-                                       "started_at":  "2026-10-18T10:30:43.3459605+00:00",
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:36:48.8122303+00:00",
+                                       "completed_at":  "2026-10-18T10:36:49.3286455+00:00",
                                        "evidence":  [
-
+                                                        "4cebc11 attended WindowsSmoke launched at user request; user observed Capture OK 850x700 DPI=120 monitors=1 origin=(0,0), SendInput observed OK one x, WM_HOTKEY observed OK. dotnet run session 41222 exited 0, no fixture process remains. tests/README.md records UIPI/DPI/monitor limits. No production lease or hardware matrix claim.",
+                                                        "Verification: Actual user-operated screenshot/input/hotkey smoke passed on one monitor at 125 percent scale; process closed exit 0. Previously built exact fixture 0 warnings/errors and full suite 24 unit + 14 integration passed. Mixed DPI/multi-monitor/lock/UAC not tested."
                                                     ],
-                                       "note":  "Attended fixture tests/PersonalAgent.WindowsSmoke builds; capture/SendInput/hotkey must be run by user in foreground dedicated unlocked Windows session. No observed GUI result yet. Manual instructions in tests/README.md. Automated suite does not launch input.",
-                                       "attempts":  1
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
                                    },
                         "PA-009":  {
                                        "status":  "done",
@@ -1262,6 +1263,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-010",
-    "updated_at":  "2026-10-18T10:36:47.4216948+00:00"
+    "last_task_id":  "PA-008",
+    "updated_at":  "2026-10-18T10:36:49.3401626+00:00"
 }
