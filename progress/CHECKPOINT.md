@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-001
-- Current task: none
-- Modified files: PersonalAgent.sln; global.json; src/ (seven projects); tests/ (three projects, ArchitectureTests); scripts/taskctl.ps1; progress/state.json; progress/LOG.md; progress/CHECKPOINT.md
-- Verified build/test: dotnet build --no-restore (Windows, 0 warnings/errors); dotnet test tests/PersonalAgent.UnitTests --filter ArchitectureTests --no-build (1 passed); taskctl doctor (125 tasks valid).
-- Runtime blockers / waiting on user: none for PA-001; application window lifecycle not yet implemented or manually tested.
-- Decisions: .NET SDK 10.0.401; Core has no module references, adapters reference Core, App composes all modules. PowerShell 5.1 tracker source uses ASCII punctuation. All FDD flows remain Draft; scaffold has no business behavior.
-- Next instruction: run taskctl.ps1 next; inspect any in_progress task first. Next eligible task is PA-002.
+- Last completed task: PA-001 (c1f75bb)
+- Current task: none; PA-002 is blocked awaiting required manual WPF smoke. Implementation is preserved; do not recreate it.
+- Modified files: src/PersonalAgent.App/App.xaml, App.xaml.cs, MainWindow.xaml, PersonalAgent.App.csproj, Hosting/{AppHost,DesktopHost,LifecycleLoggingService}.cs; tests/PersonalAgent.IntegrationTests/{PersonalAgent.IntegrationTests.csproj,DesktopHostTests.cs}; progress/state.json, LOG.md, CHECKPOINT.md.
+- Verified build/test: dotnet build --no-restore (Windows, 0 warnings/errors); dotnet test tests/PersonalAgent.IntegrationTests --filter DesktopHostTests --no-restore (4 passed); dotnet test --no-build (1 architecture + 4 lifecycle tests passed; E2ETests has no tests). git diff --cached --check passed. Actual WPF window was not launched/observed in this session.
+- Runtime blockers / waiting on user: PA-002 manual smoke required by TASKS.md. No desktop-control tools are available; Windows/.NET 10 SDK and desktop runtime ARE installed. Run `dotnet run --project src/PersonalAgent.App`; confirm empty Personal Agent window opens, close with X, verify successful process exit and no remaining PersonalAgent.App process. Record actual result before completing task. No other pending task has satisfied dependencies.
+- Decisions: .NET SDK 10.0.401; Hosting 10.0.0; Generic Host and UI lifecycle stay in App, Core remains independent. All FDD flows remain Draft, business scenarios untested; host lifecycle does not implement task execution/recovery. Existing README/.gitignore edits and untracked planning/FDD assets predate this session and were left unchanged.
+- Next instruction: run taskctl.ps1 doctor and next; inspect any in_progress task first. When manual smoke succeeds, use taskctl.ps1 unblock -Id PA-002, then start -Id PA-002, review existing implementation and record real evidence with done. Continue PA-003 only after PA-002 is done. Otherwise retain the concrete blocker.

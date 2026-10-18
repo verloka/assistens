@@ -14,14 +14,14 @@
                                        "attempts":  1
                                    },
                         "PA-002":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T07:48:05.4740939+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Implementation and automated host tests complete. Required manual WPF smoke (TASKS.md PA-002) not executed: this session has no desktop-control tools. User must run dotnet run --project src/PersonalAgent.App and confirm window opens and closes with successful process exit; then unblock/resume PA-002. No independent pending task has satisfied dependencies.",
+                                       "attempts":  1
                                    },
                         "PA-003":  {
                                        "status":  "pending",
@@ -1254,6 +1254,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-001",
-    "updated_at":  "2026-10-18T07:47:44.9101245+00:00"
+    "last_task_id":  "PA-002",
+    "updated_at":  "2026-10-18T07:53:03.3090969+00:00"
 }
