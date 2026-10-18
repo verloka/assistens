@@ -37,6 +37,15 @@ never promote them to Active without explicit approval. Keep live/manual provide
 device and corporate checks separate from fake/local evidence. The ten MVP E2E cases
 and MVP release gate remain unverified until their own backlog tasks are completed.
 
+## MAF runtime adapter (PA-049)
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter MafAgentRuntime --no-restore`
+checks the real MAF streaming/session pipeline with a local scripted IChatClient,
+including actual AppHost/SQLite DI, cancellation, pause, duration, incomplete
+responses, sanitized failures, session isolation and assistant-only output.
+No network, paid credentials, native input or tool execution is involved.
+The default App runtime remains fake; provider configuration follows in PA-050.
+
 ## MAF tool and approval diagnostic (PA-006)
 
 ```powershell

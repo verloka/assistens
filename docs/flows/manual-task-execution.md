@@ -44,6 +44,7 @@ Status: Draft
 - S3: Given a completed run with a failed delivery attempt, when delivery retries later, then the task remains `Completed`. [untested]
 
 ## Implementation References
+- PA-049: `src/PersonalAgent.Agent/MafAgentRuntime.cs` implements the pinned MAF streaming adapter behind IAgentRuntime, with one owned client/new SDK session per execution. `tests/PersonalAgent.IntegrationTests/MafAgentRuntimeTests.cs` verifies public assistant output, sanitized errors, cancellation/duration/pause boundaries, incomplete-response rejection, isolated sessions, usage and actual host/SQLite DI integration. Unconfigured tools/approvals fail closed without invocation or retry; default App remains fake. These scripted-provider checks cover parts of S1/S2, not live provider/tool/notification outcomes; complete S1-S3 and dependencies FDD-002/004/005/006/007 remain Draft/untested.
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §§5–9, 11, 13; backlog PR-02, PR-07, PR-12.
 - Domain foundation (PA-009/PA-010): `src/PersonalAgent.Core/Domain/TaskModels.cs` and `TaskRunStateMachine.cs`; `tests/PersonalAgent.UnitTests/DomainSerializationTests.cs` and `TaskRunStateMachineTests.cs` cover neutral JSON contracts, legal/illegal state changes, terminal immutability, pause boundaries and stale versions. Transitions return snapshots; callers must still implement atomic storage and actual cancellation/tool gates. Interrupted ends the attempt and cannot automatically resume. These unit checks do not complete S1-S3; all remain `[untested]`.
 

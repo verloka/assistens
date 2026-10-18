@@ -528,14 +528,15 @@
                                        "attempts":  1
                                    },
                         "PA-049":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T15:55:39.7876654+00:00",
+                                       "completed_at":  "2026-10-18T18:33:50.6417014+00:00",
                                        "evidence":  [
-
+                                                        "MafAgentRuntime.cs implements pinned SDK streaming/session lifecycle behind IAgentRuntime; 14 MafAgentRuntimeTests cases including real AppHost/SQLite DI, public output, sanitized errors, cancellation/pause/timeout/session isolation, fail-closed tools and partial statuses. FDD-001 S1/S2 scoped PASS; reverse FDD-002/003/004/005/006/007 preserved, full Draft scenarios NOT TESTED; no live provider.",
+                                                        "Verification: Targeted MafAgentRuntime|MafToolApproval|FakeAgentRuntime|TaskRunner|PersistenceRuntime 41 passed; scripts/verify.ps1 locked restore/build 0 warnings/errors, 88 unit + 293 integration + 3 local fake-flow passed (384)."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-050":  {
                                        "status":  "pending",
@@ -1298,6 +1299,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-048",
-    "updated_at":  "2026-10-18T15:55:36.8200287+00:00"
+    "last_task_id":  "PA-049",
+    "updated_at":  "2026-10-18T18:33:50.6512234+00:00"
 }
