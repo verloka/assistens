@@ -426,3 +426,18 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+
+**/bin/
+**/obj/
+.vs/
+.idea/
+*.user
+*.suo
+logs/
+artifacts/screenshots/
+*.secret
+.env
+# TRACKING DATA MUST REMAIN VERSIONED: tasks.json, progress/state.json, progress/LOG.md, progress/CHECKPOINT.md
+progress/*.bak
+progress/*.tmp

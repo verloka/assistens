@@ -1,0 +1,2867 @@
+{
+  "schema_version": 1,
+  "plan_reference": "docs/DEVELOPMENT_PLAN_v1.1.md",
+  "task_count": 125,
+  "phases": [
+    {
+      "id": "PR-01",
+      "number": 1,
+      "name": "WPF Host, solution, initial architecture",
+      "tasks": 8
+    },
+    {
+      "id": "PR-02",
+      "number": 2,
+      "name": "Domain, task runner, fake agent",
+      "tasks": 8
+    },
+    {
+      "id": "PR-03",
+      "number": 3,
+      "name": "SQLite persistence and recovery",
+      "tasks": 7
+    },
+    {
+      "id": "PR-04",
+      "number": 4,
+      "name": "Screenshots and coordinate handling",
+      "tasks": 7
+    },
+    {
+      "id": "PR-05",
+      "number": 5,
+      "name": "Win32 input tools and cleanup",
+      "tasks": 8
+    },
+    {
+      "id": "PR-06",
+      "number": 6,
+      "name": "Desktop lease, pause and user takeover",
+      "tasks": 10
+    },
+    {
+      "id": "PR-07",
+      "number": 7,
+      "name": "OpenAI agent and first GUI flow",
+      "tasks": 11
+    },
+    {
+      "id": "PR-08",
+      "number": 8,
+      "name": "Anthropic and model provider switching",
+      "tasks": 6
+    },
+    {
+      "id": "PR-09",
+      "number": 9,
+      "name": "MCP lifecycle, discovery and hybrid tools",
+      "tasks": 10
+    },
+    {
+      "id": "PR-10",
+      "number": 10,
+      "name": "Security policies and human approvals",
+      "tasks": 8
+    },
+    {
+      "id": "PR-11",
+      "number": 11,
+      "name": "Scheduling and idle-aware desktop access",
+      "tasks": 9
+    },
+    {
+      "id": "PR-12",
+      "number": 12,
+      "name": "Channels, Telegram and reliable notifications",
+      "tasks": 10
+    },
+    {
+      "id": "PR-13",
+      "number": 13,
+      "name": "Conversations and follow-up context",
+      "tasks": 6
+    },
+    {
+      "id": "PR-14",
+      "number": 14,
+      "name": "Automatic activity pause and resilience",
+      "tasks": 7
+    },
+    {
+      "id": "PR-15",
+      "number": 15,
+      "name": "Security hardening, packaging and release verification",
+      "tasks": 10
+    }
+  ],
+  "tasks": [
+    {
+      "id": "PA-001",
+      "phase": 1,
+      "phase_name": "WPF Host, solution, initial architecture",
+      "sequence": 1,
+      "title": "Создать solution и структуру modular monolith",
+      "description": "Создать .NET 10 solution, WPF App, Core, Agent, Computer, MCP, Telegram, Persistence и три тестовых проекта.",
+      "depends_on": [],
+      "acceptance": [
+        "dotnet build проходит на Windows; референсы модулей не цикличны."
+      ],
+      "verification": [
+        "dotnet build"
+      ],
+      "source_sections": [
+        "3.1",
+        "3.2",
+        "16 Phase 0"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-002",
+      "phase": 1,
+      "phase_name": "WPF Host, solution, initial architecture",
+      "sequence": 2,
+      "title": "Настроить Generic Host и жизненный цикл WPF",
+      "description": "DI, app startup/shutdown, CancellationToken graceful shutdown, ILogger, ошибки загрузки.",
+      "depends_on": [
+        "PA-001"
+      ],
+      "acceptance": [
+        "Приложение открывается и корректно закрывается; HostedService стартует и останавливается."
+      ],
+      "verification": [
+        "dotnet build; ручной smoke test"
+      ],
+      "source_sections": [
+        "2",
+        "12.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-003",
+      "phase": 1,
+      "phase_name": "WPF Host, solution, initial architecture",
+      "sequence": 3,
+      "title": "Добавить минимальный экран health/status",
+      "description": "Окно показывает статус host и зарегистрированных компонентов без реального LLM.",
+      "depends_on": [
+        "PA-002"
+      ],
+      "acceptance": [
+        "Есть рабочий Windows UI с health indicator; не блокируется при длительной fake-операции."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "12.1",
+        "16 Phase 0"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-004",
+      "phase": 1,
+      "phase_name": "WPF Host, solution, initial architecture",
+      "sequence": 4,
+      "title": "Зафиксировать NuGet-версии и начальные ADR",
+      "description": "Проверить конкретные пакеты MAF, Microsoft.Extensions.AI, MCP SDK; закрепить версии и подготовить ADR.",
+      "depends_on": [
+        "PA-003"
+      ],
+      "acceptance": [
+        "Файл versions / central package management и ADR содержат проверенные версии и причины выбора."
+      ],
+      "verification": [
+        "dotnet restore + dotnet build"
+      ],
+      "source_sections": [
+        "2",
+        "16 Phase 0",
+        "20"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-005",
+      "phase": 1,
+      "phase_name": "WPF Host, solution, initial architecture",
+      "sequence": 5,
+      "title": "Создать каркас тестов и общие команды проверки",
+      "description": "Unit/Integration/E2E проекты, базовые mocks/fakes, minimal build+test README.",
+      "depends_on": [
+        "PA-004"
+      ],
+      "acceptance": [
+        "Тесты запускаются одной командой и есть минимум один passing smoke/unit test."
+      ],
+      "verification": [
+        "dotnet test"
+      ],
+      "source_sections": [
+        "17",
+        "20"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-006",
+      "phase": 1,
+      "phase_name": "WPF Host, solution, initial architecture",
+      "sequence": 6,
+      "title": "Проверить prototype MAF tool calling и approval/resume",
+      "description": "Вынести отдельный диагностический spike: fake tool, агент, approval handshake, отметить ограничения SDK.",
+      "depends_on": [
+        "PA-005"
+      ],
+      "acceptance": [
+        "Есть воспроизводимый smoke или документированный внешний блокер; не проектировать поверх вымышленного API."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7",
+        "16 Phase 0"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-007",
+      "phase": 1,
+      "phase_name": "WPF Host, solution, initial architecture",
+      "sequence": 7,
+      "title": "Проверить prototype MCP stdio и HTTP",
+      "description": "Поднять test MCP server, проверить list tools и вызов; зафиксировать поддержку транспорта SDK.",
+      "depends_on": [
+        "PA-006"
+      ],
+      "acceptance": [
+        "Подтверждено фактическое поведение stdio и Streamable HTTP либо указан независимый тестовый blocker."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "8",
+        "16 Phase 0"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-008",
+      "phase": 1,
+      "phase_name": "WPF Host, solution, initial architecture",
+      "sequence": 8,
+      "title": "Проверить prototype Windows capture, SendInput и hotkey",
+      "description": "Простой Windows smoke без LLM: screenshot, ввод в безопасное тестовое окно, регистрация hotkey.",
+      "depends_on": [
+        "PA-007"
+      ],
+      "acceptance": [
+        "Не нарушает пользовательский ввод; записаны ограничения прав, DPI, нескольких мониторов."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5",
+        "6",
+        "16 Phase 0"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-009",
+      "phase": 2,
+      "phase_name": "Domain, task runner, fake agent",
+      "sequence": 9,
+      "title": "Определить доменные модели TaskDefinition/TaskRun/Conversation/RunEvent",
+      "description": "IDs, timestamps, origin, status, summary, links без UI/SDK типов.",
+      "depends_on": [
+        "PA-005"
+      ],
+      "acceptance": [
+        "Доменные типы изолированы в Core; сериализация не зависит от SDK."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "4",
+        "9.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-010",
+      "phase": 2,
+      "phase_name": "Domain, task runner, fake agent",
+      "sequence": 10,
+      "title": "Реализовать state machine TaskRun",
+      "description": "Валидные переходы Started/Queued/Running/Paused/Blocked/Cancelled/Failed/Completed; запрет назад из terminal.",
+      "depends_on": [
+        "PA-009"
+      ],
+      "acceptance": [
+        "Unit tests проверяют допустимые и запрещённые переходы."
+      ],
+      "verification": [
+        "dotnet test --filter TaskRun"
+      ],
+      "source_sections": [
+        "9.2",
+        "9.3"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-011",
+      "phase": 2,
+      "phase_name": "Domain, task runner, fake agent",
+      "sequence": 11,
+      "title": "Контракты IAgentRuntime, AgentRequest/Result/Events",
+      "description": "Независимые от MAF интерфейсы и typed progress; cancellation.",
+      "depends_on": [
+        "PA-010"
+      ],
+      "acceptance": [
+        "Fake и production adapters могут реализовать одинаковый контракт."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "4.1",
+        "7.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-012",
+      "phase": 2,
+      "phase_name": "Domain, task runner, fake agent",
+      "sequence": 12,
+      "title": "Создать FakeAgentRuntime с контролируемыми шагами",
+      "description": "Заданный deterministic script, progress, cancellation, pause points.",
+      "depends_on": [
+        "PA-011"
+      ],
+      "acceptance": [
+        "Ручная задача без API проходит путь Start→progress→Complete."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "16 Phase 1",
+        "17.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-013",
+      "phase": 2,
+      "phase_name": "Domain, task runner, fake agent",
+      "sequence": 13,
+      "title": "Application commands: Submit, Cancel, Pause, Resume",
+      "description": "Единые команды из Desktop и будущих каналов, валидные transitions, idempotency.",
+      "depends_on": [
+        "PA-012"
+      ],
+      "acceptance": [
+        "Повторные команды безопасны; Cancel не может случайно стать Resume."
+      ],
+      "verification": [
+        "dotnet test --filter Commands"
+      ],
+      "source_sections": [
+        "4.4",
+        "9.5"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-014",
+      "phase": 2,
+      "phase_name": "Domain, task runner, fake agent",
+      "sequence": 14,
+      "title": "Task queue и TaskRunner над fake agent",
+      "description": "Один источник истины о Run; lifecycle/stop/timeouts; ручной запуск.",
+      "depends_on": [
+        "PA-013"
+      ],
+      "acceptance": [
+        "Несколько быстрых Submit не дают двух исполнений одного Run."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "9.3",
+        "9.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-015",
+      "phase": 2,
+      "phase_name": "Domain, task runner, fake agent",
+      "sequence": 15,
+      "title": "Подключить live progress к Dashboard",
+      "description": "ViewModel вызывает application commands и отображает RunEvent без бизнес-логики.",
+      "depends_on": [
+        "PA-014"
+      ],
+      "acceptance": [
+        "Статусы и шаги видны в UI; приложение отзывчиво."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "12.3",
+        "16 Phase 1"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-016",
+      "phase": 2,
+      "phase_name": "Domain, task runner, fake agent",
+      "sequence": 16,
+      "title": "Тесты state transitions, concurrent commands, fake flow",
+      "description": "Покрыть duplicate submit, cancel during execution, pause/resume, failures.",
+      "depends_on": [
+        "PA-015"
+      ],
+      "acceptance": [
+        "Зелёные unit tests и детерминированный E2E fake-flow."
+      ],
+      "verification": [
+        "dotnet test"
+      ],
+      "source_sections": [
+        "17.1",
+        "16 Phase 1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-017",
+      "phase": 3,
+      "phase_name": "SQLite persistence and recovery",
+      "sequence": 17,
+      "title": "Определить EF Core schema Run/Events/Conversations",
+      "description": "DbContext + migrations, FK, indexes, UTC dates, schema version.",
+      "depends_on": [
+        "PA-014"
+      ],
+      "acceptance": [
+        "На пустой БД миграции успешно создают таблицы; повторное применение безопасно."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "13.1",
+        "13.3"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-018",
+      "phase": 3,
+      "phase_name": "SQLite persistence and recovery",
+      "sequence": 18,
+      "title": "Реализовать repositories и atomic state updates",
+      "description": "Сохранение runs и events с атомарными переходами; optimistic concurrency для Run.",
+      "depends_on": [
+        "PA-017"
+      ],
+      "acceptance": [
+        "Повторные/конкурентные переходы не создают неконсистентное состояние."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "9.3",
+        "13.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-019",
+      "phase": 3,
+      "phase_name": "SQLite persistence and recovery",
+      "sequence": 19,
+      "title": "Persist progress и итоговые результаты",
+      "description": "Записывать RunEvents, timestamps, errors, summary, ссылки и metadata.",
+      "depends_on": [
+        "PA-018"
+      ],
+      "acceptance": [
+        "После restart видна полная история fake task."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "13.1",
+        "15.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-020",
+      "phase": 3,
+      "phase_name": "SQLite persistence and recovery",
+      "sequence": 20,
+      "title": "Создать session/conversation persistence scaffolding",
+      "description": "Models для AgentSessions, messages, migration без зависимости от конкретной модели.",
+      "depends_on": [
+        "PA-019"
+      ],
+      "acceptance": [
+        "Историю можно сохранить и восстановить; session metadata версионируется."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7.4",
+        "13.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-021",
+      "phase": 3,
+      "phase_name": "SQLite persistence and recovery",
+      "sequence": 21,
+      "title": "Реализовать recovery для interrupted Runs",
+      "description": "При старте незаконченный Run получает Interrupted; внешние writes не переигрываются.",
+      "depends_on": [
+        "PA-020"
+      ],
+      "acceptance": [
+        "Crash simulation: нет нового SendInput/MCP write, в UI понятный статус."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "9.6",
+        "18 E2E-08"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-022",
+      "phase": 3,
+      "phase_name": "SQLite persistence and recovery",
+      "sequence": 22,
+      "title": "Добавить защиту от duplicate command и occurrence IDs",
+      "description": "Персистентные уникальные ключи идемпотентности будущих scheduler/Telegram triggers.",
+      "depends_on": [
+        "PA-021"
+      ],
+      "acceptance": [
+        "Два вызова с одним external key создают не более одного Run."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "9.4",
+        "10",
+        "13"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-023",
+      "phase": 3,
+      "phase_name": "SQLite persistence and recovery",
+      "sequence": 23,
+      "title": "Integration tests SQLite migrations, crash/restart, idempotency",
+      "description": "Тестовая временная DB; migrate/close/reopen, competing updates и recovery.",
+      "depends_on": [
+        "PA-022"
+      ],
+      "acceptance": [
+        "Детерминированный интеграционный набор без внешнего LLM."
+      ],
+      "verification": [
+        "dotnet test --filter Persistence"
+      ],
+      "source_sections": [
+        "17.2",
+        "16 Phase 1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-024",
+      "phase": 4,
+      "phase_name": "Screenshots and coordinate handling",
+      "sequence": 24,
+      "title": "Определить ScreenCapture, ScreenBounds, ScreenPoint, ScreenshotOptions",
+      "description": "Raw physical coordinates, source capture geometry, DPI metadata, content type.",
+      "depends_on": [
+        "PA-005"
+      ],
+      "acceptance": [
+        "Контракты не зависят от WPF ViewModels; negative X/Y допустимы."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "4.6",
+        "5.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-025",
+      "phase": 4,
+      "phase_name": "Screenshots and coordinate handling",
+      "sequence": 25,
+      "title": "Реализовать Windows capture для основного монитора",
+      "description": "Получение bitmap/image bytes + dimensions, lock-screen error.",
+      "depends_on": [
+        "PA-024"
+      ],
+      "acceptance": [
+        "Кадр фактически соответствует разрешённому экрану; не пишет screenshot в обычный лог."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-026",
+      "phase": 4,
+      "phase_name": "Screenshots and coordinate handling",
+      "sequence": 26,
+      "title": "Добавить virtual desktop и multi-monitor capture",
+      "description": "Поддержка нескольких мониторов и отрицательных координат.",
+      "depends_on": [
+        "PA-025"
+      ],
+      "acceptance": [
+        "Виртуальные bounds воспроизводятся корректно на двух дисплеях."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5.1",
+        "17.3"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-027",
+      "phase": 4,
+      "phase_name": "Screenshots and coordinate handling",
+      "sequence": 27,
+      "title": "Реализовать DPI/resize coordinate transforms",
+      "description": "Сопоставление LLM image pixels и physical desktop coordinates.",
+      "depends_on": [
+        "PA-026"
+      ],
+      "acceptance": [
+        "Unit tests на 100/125/150% scaling и отрицательные bounds."
+      ],
+      "verification": [
+        "dotnet test --filter Coordinates"
+      ],
+      "source_sections": [
+        "5.1",
+        "17.3"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-028",
+      "phase": 4,
+      "phase_name": "Screenshots and coordinate handling",
+      "sequence": 28,
+      "title": "Оптимизировать image serialization для LLM",
+      "description": "PNG/JPEG/resize, неизменная мета-геометрия, конфиг limits без потери координат.",
+      "depends_on": [
+        "PA-027"
+      ],
+      "acceptance": [
+        "LLM adapter может получить корректный image payload; размер ограничен."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5.1",
+        "7"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-029",
+      "phase": 4,
+      "phase_name": "Screenshots and coordinate handling",
+      "sequence": 29,
+      "title": "Создать FakeComputerController и тестовый screenshot fixture",
+      "description": "Базовые подмены и артефакты для отказоустойчивых тестов.",
+      "depends_on": [
+        "PA-028"
+      ],
+      "acceptance": [
+        "Тесты GUI tool results не требуют экрана Windows."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "17.1",
+        "16 Phase 2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-030",
+      "phase": 4,
+      "phase_name": "Screenshots and coordinate handling",
+      "sequence": 30,
+      "title": "Visual capture smoke test на Windows",
+      "description": "Проверить DPI, различные мониторы и перемещение окна; оформить чеклист.",
+      "depends_on": [
+        "PA-029"
+      ],
+      "acceptance": [
+        "Описаны результаты; реальные ошибки с DPI устранены."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "17.3",
+        "16 Phase 2"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-031",
+      "phase": 5,
+      "phase_name": "Win32 input tools and cleanup",
+      "sequence": 31,
+      "title": "Реализовать низкоуровневый SendInput wrapper",
+      "description": "P/Invoke thin adapter, structured errors, input serialization, no elevation.",
+      "depends_on": [
+        "PA-029"
+      ],
+      "acceptance": [
+        "Input посылается только в unlocked authorized session, ошибки безопасны."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-032",
+      "phase": 5,
+      "phase_name": "Win32 input tools and cleanup",
+      "sequence": 32,
+      "title": "Click tool: coordinate validation и mouse buttons",
+      "description": "Position, left/right/middle press/release; bounds проверяются.",
+      "depends_on": [
+        "PA-031"
+      ],
+      "acceptance": [
+        "Click в тестовом окне корректен; out-of-bounds отвергается до SendInput."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-033",
+      "phase": 5,
+      "phase_name": "Win32 input tools and cleanup",
+      "sequence": 33,
+      "title": "Scroll tool: anchor point, direction и amount",
+      "description": "Поддержка направления, step count, upper bounds.",
+      "depends_on": [
+        "PA-032"
+      ],
+      "acceptance": [
+        "Прокрутка в тестовом окне и граничные аргументы покрыты тестами."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5.3"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-034",
+      "phase": 5,
+      "phase_name": "Win32 input tools and cleanup",
+      "sequence": 34,
+      "title": "Type tool: Unicode, multiline и batched input",
+      "description": "Печатать без clipboard по умолчанию, разделять длинный ввод на короткие chunks.",
+      "depends_on": [
+        "PA-033"
+      ],
+      "acceptance": [
+        "В тестовом окне вводятся Unicode/спецсимволы; возможна остановка между chunks."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5.4",
+        "6.12"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-035",
+      "phase": 5,
+      "phase_name": "Win32 input tools and cleanup",
+      "sequence": 35,
+      "title": "PressKey tool: chords and modifier lifetime",
+      "description": "Ctrl/Alt/Shift, release all held modifiers in finally.",
+      "depends_on": [
+        "PA-034"
+      ],
+      "acceptance": [
+        "Ошибки/Cancel не оставляют зажатыми Ctrl, Alt или Shift."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5.5",
+        "6.12"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-036",
+      "phase": 5,
+      "phase_name": "Win32 input tools and cleanup",
+      "sequence": 36,
+      "title": "Input safety: cleanup, atomic sections, cancellation boundaries",
+      "description": "Короткие critical sections, mouse up on interruption, unified fail-safe cleanup.",
+      "depends_on": [
+        "PA-035"
+      ],
+      "acceptance": [
+        "После injected failure нет удержанных кнопок и новых операций."
+      ],
+      "verification": [
+        "dotnet test --filter InputSafety"
+      ],
+      "source_sections": [
+        "6.3",
+        "6.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-037",
+      "phase": 5,
+      "phase_name": "Win32 input tools and cleanup",
+      "sequence": 37,
+      "title": "Комплексный fake/real input diagnostic harness",
+      "description": "Тестовое окно с кнопками и текстом; не кликать по рабочим приложениям при тестах.",
+      "depends_on": [
+        "PA-036"
+      ],
+      "acceptance": [
+        "Есть повторяемый сценарий Click/Scroll/Type/PressKey."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "17.2",
+        "17.3"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-038",
+      "phase": 5,
+      "phase_name": "Win32 input tools and cleanup",
+      "sequence": 38,
+      "title": "Win32 input unit/integration regression tests",
+      "description": "Bounds, special keys, cleanup on exception, cancel midway, privilege error.",
+      "depends_on": [
+        "PA-037"
+      ],
+      "acceptance": [
+        "Зелёный набор на Windows test session."
+      ],
+      "verification": [
+        "dotnet test --filter Computer"
+      ],
+      "source_sections": [
+        "17.1",
+        "17.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-039",
+      "phase": 6,
+      "phase_name": "Desktop lease, pause and user takeover",
+      "sequence": 39,
+      "title": "DesktopAccessCoordinator: lease ownership and generation",
+      "description": "One GUI owner, monotonic generation, Acquire/Release API, no stale grants.",
+      "depends_on": [
+        "PA-036",
+        "PA-014"
+      ],
+      "acceptance": [
+        "Второй Run не получает GUI lease одновременно; stale generation отвергается."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "4.7",
+        "6.8"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-040",
+      "phase": 6,
+      "phase_name": "Desktop lease, pause and user takeover",
+      "sequence": 40,
+      "title": "Gate перед каждым Computer tool и atomic input",
+      "description": "Проверка generation непосредственно перед действием, sync with PauseRequested.",
+      "depends_on": [
+        "PA-039"
+      ],
+      "acceptance": [
+        "GUI tool с устаревшим токеном доступа не исполняется."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.4",
+        "9.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-041",
+      "phase": 6,
+      "phase_name": "Desktop lease, pause and user takeover",
+      "sequence": 41,
+      "title": "Разделить Pause GUI / Pause Task / Cancel / Skip",
+      "description": "Конкретная pause scope semantics и отдельное desktop state.",
+      "depends_on": [
+        "PA-040"
+      ],
+      "acceptance": [
+        "GUI-only может выполнять разрешённые MCP-read шаги; Entire Run ничего нового не запускает."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.1",
+        "6.8"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-042",
+      "phase": 6,
+      "phase_name": "Desktop lease, pause and user takeover",
+      "sequence": 42,
+      "title": "Глобальная горячая клавиша Take Control",
+      "description": "RegisterHotKey, конфликт/ошибка регистрации, отзывчивость даже при свернутом окне.",
+      "depends_on": [
+        "PA-041"
+      ],
+      "acceptance": [
+        "Горячая клавиша работает вне фокуса WPF и запрещает новые GUI actions без LLM."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.2",
+        "6.3"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-043",
+      "phase": 6,
+      "phase_name": "Desktop lease, pause and user takeover",
+      "sequence": 43,
+      "title": "Tray и маленькое окно Pause/Resume/Cancel",
+      "description": "UI command dispatcher без прямого Win32 управления из ViewModel.",
+      "depends_on": [
+        "PA-042"
+      ],
+      "acceptance": [
+        "Take Control доступен при закрытом главном окне; статус Paused видим."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.2",
+        "12.2"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-044",
+      "phase": 6,
+      "phase_name": "Desktop lease, pause and user takeover",
+      "sequence": 44,
+      "title": "Safe Pause: release input, revoke lease and persist checkpoint",
+      "description": "Порядок PauseRequested → gate → release input → revoke lease → state persisted.",
+      "depends_on": [
+        "PA-043"
+      ],
+      "acceptance": [
+        "Нет активной мыши/клавиатуры, когда UI показывает «Управление твоё»."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.4",
+        "6.5"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-045",
+      "phase": 6,
+      "phase_name": "Desktop lease, pause and user takeover",
+      "sequence": 45,
+      "title": "Safe Resume: fresh screenshot before new coordinate action",
+      "description": "Re-acquire lease, invalidate screenshot/tool args, confirm current UI before action.",
+      "depends_on": [
+        "PA-044"
+      ],
+      "acceptance": [
+        "После пользовательского переключения окон агент не делает старый клик."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.6"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-046",
+      "phase": 6,
+      "phase_name": "Desktop lease, pause and user takeover",
+      "sequence": 46,
+      "title": "Поведение при GUI-запросе из другого Run",
+      "description": "Очередь ожидающих GUI, graceful cancellation while awaiting; no focus stealing.",
+      "depends_on": [
+        "PA-045"
+      ],
+      "acceptance": [
+        "Во время Pause первого Run второй не получит GUI без разрешённой политики."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.8",
+        "9.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-047",
+      "phase": 6,
+      "phase_name": "Desktop lease, pause and user takeover",
+      "sequence": 47,
+      "title": "Unit tests pause/resume/race and lease invalidation",
+      "description": "Рассинхронизация потоков, stale calls, repeated pause/cancel, no auto-resume.",
+      "depends_on": [
+        "PA-046"
+      ],
+      "acceptance": [
+        "Детерминированный конкурентный тест; не нужен реальный экран."
+      ],
+      "verification": [
+        "dotnet test --filter DesktopAccess"
+      ],
+      "source_sections": [
+        "6.12",
+        "17.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-048",
+      "phase": 6,
+      "phase_name": "Desktop lease, pause and user takeover",
+      "sequence": 48,
+      "title": "Windows takeover acceptance: click/type/hotkey/resume",
+      "description": "Прогнать сценарии 20 кликов, прерывание Unicode Type, сочетания клавиш.",
+      "depends_on": [
+        "PA-047"
+      ],
+      "acceptance": [
+        "E2E-03: новые GUI-операции остановлены, модификаторы отпущены, свежий снимок при Resume."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.12",
+        "18 E2E-03"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-049",
+      "phase": 7,
+      "phase_name": "OpenAI agent and first GUI flow",
+      "sequence": 49,
+      "title": "MAF production adapter: agent lifecycle and session run",
+      "description": "Инициализировать Agent Framework, run/stream events, map errors/partial statuses.",
+      "depends_on": [
+        "PA-006",
+        "PA-047",
+        "PA-022"
+      ],
+      "acceptance": [
+        "Fake/real runtime соответствуют общему IAgentRuntime; DI integration работает."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7.1",
+        "4.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-050",
+      "phase": 7,
+      "phase_name": "OpenAI agent and first GUI flow",
+      "sequence": 50,
+      "title": "OpenAI IModelProvider и secured profile",
+      "description": "Создание клиента, ключ через secret reference, fail-fast при недоступном provider.",
+      "depends_on": [
+        "PA-049"
+      ],
+      "acceptance": [
+        "Test connection работает; ключ не попадает в logs или DB plain text."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "4.2",
+        "7.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-051",
+      "phase": 7,
+      "phase_name": "OpenAI agent and first GUI flow",
+      "sequence": 51,
+      "title": "Model capability validation: vision and function calling",
+      "description": "Проверка возможностей выбранной модели до GUI-run; MCP-only path отдельно.",
+      "depends_on": [
+        "PA-050"
+      ],
+      "acceptance": [
+        "Несовместимая модель блокирует GUI-run с ясным объяснением."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7.2",
+        "19"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-052",
+      "phase": 7,
+      "phase_name": "OpenAI agent and first GUI flow",
+      "sequence": 52,
+      "title": "ToolRegistry и adapter IAgentTool → MAF function tools",
+      "description": "Stable schema, result mapping text+image, validation, source identity.",
+      "depends_on": [
+        "PA-051"
+      ],
+      "acceptance": [
+        "Модель вызывает fake tool по схеме, результат проходит единый adapter."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "4.3",
+        "7.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-053",
+      "phase": 7,
+      "phase_name": "OpenAI agent and first GUI flow",
+      "sequence": 53,
+      "title": "Подключить пять Computer Use tools к LLM",
+      "description": "Screenshot, Click, Scroll, Type, PressKey со строгими input schemas и desktop gate.",
+      "depends_on": [
+        "PA-052"
+      ],
+      "acceptance": [
+        "Fake invocation и реальный ComputerController исполняют одинаковый tool contract."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5",
+        "7.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-054",
+      "phase": 7,
+      "phase_name": "OpenAI agent and first GUI flow",
+      "sequence": 54,
+      "title": "Image content round-trip и обновление screenshots",
+      "description": "Передача изображения с metadata, последующий screenshot после GUI-step.",
+      "depends_on": [
+        "PA-053"
+      ],
+      "acceptance": [
+        "Модель получает визуальные данные после действия; нет stale coordinates."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5.6",
+        "7"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-055",
+      "phase": 7,
+      "phase_name": "OpenAI agent and first GUI flow",
+      "sequence": 55,
+      "title": "System prompts и tool-selection policy",
+      "description": "Версионированные инструкции; MCP preference, untrusted content, safe stop.",
+      "depends_on": [
+        "PA-054"
+      ],
+      "acceptance": [
+        "Prompt files отслеживаются git; агент не принимает сообщения Teams как новые system instructions."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7.3",
+        "14.3"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-056",
+      "phase": 7,
+      "phase_name": "OpenAI agent and first GUI flow",
+      "sequence": 56,
+      "title": "Agent limits: steps, duration, retries, cancellation",
+      "description": "Max tool calls, timeouts, repeated action detection; graceful error result.",
+      "depends_on": [
+        "PA-055"
+      ],
+      "acceptance": [
+        "Loop прекращается при лимите или Cancel без дальнейших GUI-команд."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "5.7",
+        "7.1",
+        "14.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-057",
+      "phase": 7,
+      "phase_name": "OpenAI agent and first GUI flow",
+      "sequence": 57,
+      "title": "Structured final result and token/cost usage",
+      "description": "Status, Summary, Sources, Warnings, Usage; display in UI + persist.",
+      "depends_on": [
+        "PA-056"
+      ],
+      "acceptance": [
+        "TaskRun завершает статусом с источниками/предупреждениями и статистикой."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "4.1",
+        "7.1",
+        "15.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-058",
+      "phase": 7,
+      "phase_name": "OpenAI agent and first GUI flow",
+      "sequence": 58,
+      "title": "Contract tests: fake model with deterministic tool sequence",
+      "description": "Имитация MAF provider: correct tool calls, malformed args, timeout, pause.",
+      "depends_on": [
+        "PA-057"
+      ],
+      "acceptance": [
+        "Automated integration tests без платного API."
+      ],
+      "verification": [
+        "dotnet test --filter Agent"
+      ],
+      "source_sections": [
+        "17.2",
+        "17.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-059",
+      "phase": 7,
+      "phase_name": "OpenAI agent and first GUI flow",
+      "sequence": 59,
+      "title": "Live OpenAI GUI E2E read-only flow",
+      "description": "Модель читает заголовок тестового окна и возвращает подтверждённый итог.",
+      "depends_on": [
+        "PA-058"
+      ],
+      "acceptance": [
+        "E2E-01: полный поток LLM→computer tools→result→history, с hotkey takeover."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "18 E2E-01",
+        "16 Phase 3"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-060",
+      "phase": 8,
+      "phase_name": "Anthropic and model provider switching",
+      "sequence": 60,
+      "title": "Anthropic provider: runtime and model creation",
+      "description": "Использовать SDK совместимый с зафиксированным MAF; учесть отличия tool/vision.",
+      "depends_on": [
+        "PA-058"
+      ],
+      "acceptance": [
+        "Claude-profile запускается через тот же IAgentRuntime контракт."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7.2",
+        "16 Phase 3"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-061",
+      "phase": 8,
+      "phase_name": "Anthropic and model provider switching",
+      "sequence": 61,
+      "title": "Vision/tool capability mapping для Claude",
+      "description": "Images, tools, usage, failure semantics, model IDs.",
+      "depends_on": [
+        "PA-060"
+      ],
+      "acceptance": [
+        "Wrong capability блокирует запуск; real image/tool flow поддержан."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-062",
+      "phase": 8,
+      "phase_name": "Anthropic and model provider switching",
+      "sequence": 62,
+      "title": "UI профилей моделей и переключения provider",
+      "description": "Create/update/select profile, test connection, protected keys.",
+      "depends_on": [
+        "PA-061"
+      ],
+      "acceptance": [
+        "Пользователь выбирает OpenAI или Anthropic для следующего Run."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "12",
+        "7.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-063",
+      "phase": 8,
+      "phase_name": "Anthropic and model provider switching",
+      "sequence": 63,
+      "title": "Neutral conversation handoff on provider switch",
+      "description": "Не переносить чужой serialized session; summary + messages, session recreation.",
+      "depends_on": [
+        "PA-062"
+      ],
+      "acceptance": [
+        "Новый Run на другой модели не использует provider-specific session internals."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7.4",
+        "18 E2E-10"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-064",
+      "phase": 8,
+      "phase_name": "Anthropic and model provider switching",
+      "sequence": 64,
+      "title": "Cross-provider adapter contract tests",
+      "description": "Общая матрица tool call, image input, cancellation, limits, metadata mapping.",
+      "depends_on": [
+        "PA-063"
+      ],
+      "acceptance": [
+        "Тесты OpenAI и Claude используют одинаковые assertions."
+      ],
+      "verification": [
+        "dotnet test --filter Providers"
+      ],
+      "source_sections": [
+        "17.4",
+        "18 E2E-10"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-065",
+      "phase": 8,
+      "phase_name": "Anthropic and model provider switching",
+      "sequence": 65,
+      "title": "Live Claude read-only E2E and provider switch",
+      "description": "Проверить на доступной модели Claude, затем switch to OpenAI с сохранённым контекстом.",
+      "depends_on": [
+        "PA-064"
+      ],
+      "acceptance": [
+        "E2E-10 проведён или статус Blocked с конкретной причиной доступа."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "18 E2E-10"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-066",
+      "phase": 9,
+      "phase_name": "MCP lifecycle, discovery and hybrid tools",
+      "sequence": 66,
+      "title": "MCP connection config and SDK provider abstraction",
+      "description": "McpConnectionId, transport, metadata, allowed tools, scoped credentials.",
+      "depends_on": [
+        "PA-058"
+      ],
+      "acceptance": [
+        "Новый сервер добавляется настройкой без изменения Core."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "8.1",
+        "8.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-067",
+      "phase": 9,
+      "phase_name": "MCP lifecycle, discovery and hybrid tools",
+      "sequence": 67,
+      "title": "Подключение stdio MCP с безопасным процессом",
+      "description": "Command/args allowlisted user config; process lifecycle, stderr logs redacted.",
+      "depends_on": [
+        "PA-066"
+      ],
+      "acceptance": [
+        "Тестовый local MCP server отвечает и корректно закрывается."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "8.1",
+        "8.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-068",
+      "phase": 9,
+      "phase_name": "MCP lifecycle, discovery and hybrid tools",
+      "sequence": 68,
+      "title": "Подключение Streamable HTTP MCP",
+      "description": "HTTP transport, abort, reconnect, structured errors и timeout.",
+      "depends_on": [
+        "PA-067"
+      ],
+      "acceptance": [
+        "Тестовый remote MCP server обслуживает list tools и call tools."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "8.1",
+        "8.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-069",
+      "phase": 9,
+      "phase_name": "MCP lifecycle, discovery and hybrid tools",
+      "sequence": 69,
+      "title": "Dynamic tool discovery и input schema mapping",
+      "description": "List tools, stable IDs namespace per connection, version/new tool detection.",
+      "depends_on": [
+        "PA-068"
+      ],
+      "acceptance": [
+        "MCP tools доступны через ToolRegistry; новые не получают auto approval."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "8.4",
+        "14.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-070",
+      "phase": 9,
+      "phase_name": "MCP lifecycle, discovery and hybrid tools",
+      "sequence": 70,
+      "title": "MCP tool execution through common permissions",
+      "description": "Tool adapters + risk metadata + cancellation; consistent errors and result mapping.",
+      "depends_on": [
+        "PA-069"
+      ],
+      "acceptance": [
+        "MCP tools исполняются через те же политики, что и GUI tools."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "4.3",
+        "8.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-071",
+      "phase": 9,
+      "phase_name": "MCP lifecycle, discovery and hybrid tools",
+      "sequence": 71,
+      "title": "Connection lifecycle, timeout, reconnect, disable/remove",
+      "description": "Не оставлять orphan processes; auto reconnect bounded; disconnect invalidates tool availability.",
+      "depends_on": [
+        "PA-070"
+      ],
+      "acceptance": [
+        "Временно недоступный сервер не падает всё приложение."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "8.2",
+        "16 Phase 4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-072",
+      "phase": 9,
+      "phase_name": "MCP lifecycle, discovery and hybrid tools",
+      "sequence": 72,
+      "title": "MCP connections UI, test button, tool allowlist",
+      "description": "Добавление stdio/HTTP, тест соединения, список discovered tools.",
+      "depends_on": [
+        "PA-071"
+      ],
+      "acceptance": [
+        "Можно добавить новый совместимый сервер без пересборки приложения."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "12.1",
+        "16 Phase 4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-073",
+      "phase": 9,
+      "phase_name": "MCP lifecycle, discovery and hybrid tools",
+      "sequence": 73,
+      "title": "MCP integration tests with local test servers",
+      "description": "Auth errors, malformed tool responses, cancellation, reconnect, new unsafe tool.",
+      "depends_on": [
+        "PA-072"
+      ],
+      "acceptance": [
+        "Детерминированная suite без Jira/ADO account."
+      ],
+      "verification": [
+        "dotnet test --filter Mcp"
+      ],
+      "source_sections": [
+        "17.2",
+        "17.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-074",
+      "phase": 9,
+      "phase_name": "MCP lifecycle, discovery and hybrid tools",
+      "sequence": 74,
+      "title": "Hybrid MCP + GUI deterministic E2E",
+      "description": "Fake Jira + GUI fixture: один Run вызывает оба источника и проверяет desktop lease.",
+      "depends_on": [
+        "PA-073"
+      ],
+      "acceptance": [
+        "E2E-02, E2E-05 проходят без рабочих аккаунтов."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "18 E2E-02",
+        "18 E2E-05"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-075",
+      "phase": 9,
+      "phase_name": "MCP lifecycle, discovery and hybrid tools",
+      "sequence": 75,
+      "title": "Live Jira/Azure DevOps connection smoke",
+      "description": "При разрешённых корпоративных правах проверить чтение тикета/задачи, без write.",
+      "depends_on": [
+        "PA-074"
+      ],
+      "acceptance": [
+        "Реальные ссылки на source появляются в результате; если доступа нет — Blocked с инструкцией."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "8.3",
+        "16 Phase 4"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-076",
+      "phase": 10,
+      "phase_name": "Security policies and human approvals",
+      "sequence": 76,
+      "title": "Policy model: read-only, write, destructive, external data",
+      "description": "Risk levels and access contexts, default deny for unknown write tool.",
+      "depends_on": [
+        "PA-071",
+        "PA-074",
+        "PA-058"
+      ],
+      "acceptance": [
+        "Непривилегированные actions не могут использовать более высокий уровень разрешений."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "14.1",
+        "14.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-077",
+      "phase": 10,
+      "phase_name": "Security policies and human approvals",
+      "sequence": 77,
+      "title": "Tool permission rules per run and per connection",
+      "description": "Allow/deny policy, no newly discovered tool default rights; inheritance safe.",
+      "depends_on": [
+        "PA-076"
+      ],
+      "acceptance": [
+        "Неизвестный MCP write отказывается исполняться без разрешений."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "8.4",
+        "14.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-078",
+      "phase": 10,
+      "phase_name": "Security policies and human approvals",
+      "sequence": 78,
+      "title": "Approval state and durable pending actions",
+      "description": "ApprovalRequests tied to exact ToolCallId/payload/run/user/expiry.",
+      "depends_on": [
+        "PA-077"
+      ],
+      "acceptance": [
+        "Повторный Approve другого tool или stale request не подходит."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "14.2",
+        "13.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-079",
+      "phase": 10,
+      "phase_name": "Security policies and human approvals",
+      "sequence": 79,
+      "title": "Human-in-the-loop pause and explicit resume",
+      "description": "Approval requested before side effect, desktop lease released while waiting.",
+      "depends_on": [
+        "PA-078"
+      ],
+      "acceptance": [
+        "No write before approval; Reject returns controlled tool denial."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7.1",
+        "14.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-080",
+      "phase": 10,
+      "phase_name": "Security policies and human approvals",
+      "sequence": 80,
+      "title": "App WPF approval dialog and UI controls",
+      "description": "Show what action will do, target, data destination; Approve/Deny.",
+      "depends_on": [
+        "PA-079"
+      ],
+      "acceptance": [
+        "User clearly sees action and can decline; no modal UI blocking entire app."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "12",
+        "14.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-081",
+      "phase": 10,
+      "phase_name": "Security policies and human approvals",
+      "sequence": 81,
+      "title": "Non-idempotent calls: ToolCall ID and OutcomeUnknown",
+      "description": "Track dispatched writes and ack boundaries; no blind replay after crash.",
+      "depends_on": [
+        "PA-080"
+      ],
+      "acceptance": [
+        "E2E-08: unknown result surfaced, not executed twice."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "9.6",
+        "18 E2E-08"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-082",
+      "phase": 10,
+      "phase_name": "Security policies and human approvals",
+      "sequence": 82,
+      "title": "Prompt injection data boundaries / destination restrictions",
+      "description": "Data from emails, tools and screenshots does not override system or allowlists.",
+      "depends_on": [
+        "PA-081"
+      ],
+      "acceptance": [
+        "Adversarial tool result cannot raise permissions or send secrets via a new channel."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "14.3"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-083",
+      "phase": 10,
+      "phase_name": "Security policies and human approvals",
+      "sequence": 83,
+      "title": "Policy tests with both Computer Use and MCP",
+      "description": "Risk classification, approve/reject/expire, unknown write, cancellation race.",
+      "depends_on": [
+        "PA-082"
+      ],
+      "acceptance": [
+        "Permission policy tested identically across tool sources."
+      ],
+      "verification": [
+        "dotnet test --filter Policy"
+      ],
+      "source_sections": [
+        "17.1",
+        "18 E2E-07"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-084",
+      "phase": 11,
+      "phase_name": "Scheduling and idle-aware desktop access",
+      "sequence": 84,
+      "title": "Schedule entity and recurrence parser",
+      "description": "Once/interval/daily/weekdays, chosen timezone; display NextRunAtUtc.",
+      "depends_on": [
+        "PA-083",
+        "PA-047"
+      ],
+      "acceptance": [
+        "Невалидные расписания не сохраняются; следующий запуск детерминирован."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "10.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-085",
+      "phase": 11,
+      "phase_name": "Scheduling and idle-aware desktop access",
+      "sequence": 85,
+      "title": "Background scheduler and persistent occurrence identity",
+      "description": "Hosted service; unique ScheduleId+ScheduledOccurrenceUtc, atomic create.",
+      "depends_on": [
+        "PA-084"
+      ],
+      "acceptance": [
+        "Двойной wake/restart создаёт один TaskRun на occurrence."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "10",
+        "9.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-086",
+      "phase": 11,
+      "phase_name": "Scheduling and idle-aware desktop access",
+      "sequence": 86,
+      "title": "Timezone/DST and misfire policies",
+      "description": "Skip/RunOnce/CatchUp; UTC storage + local scheduling.",
+      "depends_on": [
+        "PA-085"
+      ],
+      "acceptance": [
+        "Тесты на Europe/Kyiv DST и многократные пропущенные интервалы."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "10.2",
+        "17.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-087",
+      "phase": 11,
+      "phase_name": "Scheduling and idle-aware desktop access",
+      "sequence": 87,
+      "title": "UI create/edit/enable/disable scheduled tasks",
+      "description": "Schedule editor; show future triggers and run history.",
+      "depends_on": [
+        "PA-086"
+      ],
+      "acceptance": [
+        "Может быть создана 10-минутная проверка и отключена без удаления."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "12.1",
+        "10"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-088",
+      "phase": 11,
+      "phase_name": "Scheduling and idle-aware desktop access",
+      "sequence": 88,
+      "title": "15-second countdown before scheduled GUI use",
+      "description": "Start Now/Skip Once/Defer/Disable controls; warning displays task.",
+      "depends_on": [
+        "PA-087"
+      ],
+      "acceptance": [
+        "No GUI action before selected policy permits."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.9",
+        "10.3"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-089",
+      "phase": 11,
+      "phase_name": "Scheduling and idle-aware desktop access",
+      "sequence": 89,
+      "title": "GetLastInputInfo pre-run idle check",
+      "description": "StartWhenIdle default; keep system idle separate from agent activity.",
+      "depends_on": [
+        "PA-088"
+      ],
+      "acceptance": [
+        "При пользовательской активности scheduled GUI Run не забирает фокус."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.9",
+        "6.7"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-090",
+      "phase": 11,
+      "phase_name": "Scheduling and idle-aware desktop access",
+      "sequence": 90,
+      "title": "First GUI call gate during initially MCP-only run",
+      "description": "Scheduled MCP run calls GUI later: acquire lease and warning/idle policy.",
+      "depends_on": [
+        "PA-089"
+      ],
+      "acceptance": [
+        "E2E-05: нет скрытого click after MCP reads."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.10",
+        "18 E2E-05"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-091",
+      "phase": 11,
+      "phase_name": "Scheduling and idle-aware desktop access",
+      "sequence": 91,
+      "title": "Defer TTL and occurrence coalescing",
+      "description": "Pending GUI with max wait; merge repeated checks and prevent notification spam.",
+      "depends_on": [
+        "PA-090"
+      ],
+      "acceptance": [
+        "Пропущенные 10-минутные интервалы не копятся в десятки runs."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.11",
+        "10.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-092",
+      "phase": 11,
+      "phase_name": "Scheduling and idle-aware desktop access",
+      "sequence": 92,
+      "title": "Schedule tests: restarts, concurrency, DST, idle",
+      "description": "Fake clock tests and integration tests with DB; one real 10-min smoke optional.",
+      "depends_on": [
+        "PA-091"
+      ],
+      "acceptance": [
+        "Идемпотентные runs и E2E-04 verified."
+      ],
+      "verification": [
+        "dotnet test --filter Scheduler"
+      ],
+      "source_sections": [
+        "17",
+        "18 E2E-04"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-093",
+      "phase": 12,
+      "phase_name": "Channels, Telegram and reliable notifications",
+      "sequence": 93,
+      "title": "Introduce channel-agnostic inbound/outbound contracts",
+      "description": "IInboundChannel / IOutboundChannel, messages/actions, routes.",
+      "depends_on": [
+        "PA-083",
+        "PA-022"
+      ],
+      "acceptance": [
+        "Fake Telegram and fake second channel use same application commands."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "4.5",
+        "11.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-094",
+      "phase": 12,
+      "phase_name": "Channels, Telegram and reliable notifications",
+      "sequence": 94,
+      "title": "Single-user identity and channel ownership bindings",
+      "description": "Allowlist allowed external sender/chat IDs, pending pairing.",
+      "depends_on": [
+        "PA-093"
+      ],
+      "acceptance": [
+        "Unauthorized senders cannot start/cancel/approve run."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "11.1",
+        "14.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-095",
+      "phase": 12,
+      "phase_name": "Channels, Telegram and reliable notifications",
+      "sequence": 95,
+      "title": "Telegram long-polling receiver and update dedup",
+      "description": "getUpdates, external update ids, safe offset updates, bounded retries.",
+      "depends_on": [
+        "PA-094"
+      ],
+      "acceptance": [
+        "Repeated Telegram update accepted once; no public webhook needed."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "11.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-096",
+      "phase": 12,
+      "phase_name": "Channels, Telegram and reliable notifications",
+      "sequence": 96,
+      "title": "Telegram natural-language task routing + system commands",
+      "description": "/status,/tasks,/cancel,/pause,/resume routed without LLM for control.",
+      "depends_on": [
+        "PA-095"
+      ],
+      "acceptance": [
+        "Commands from authorized user work independently of AI."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "11.1",
+        "4.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-097",
+      "phase": 12,
+      "phase_name": "Channels, Telegram and reliable notifications",
+      "sequence": 97,
+      "title": "Telegram outgoing summaries, errors, statuses, buttons",
+      "description": "Formatting, message chunks, inline callbacks with unguessable approved scope.",
+      "depends_on": [
+        "PA-096"
+      ],
+      "acceptance": [
+        "Bot returns run summary and can request per-action confirmation."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "11.1",
+        "11.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-098",
+      "phase": 12,
+      "phase_name": "Channels, Telegram and reliable notifications",
+      "sequence": 98,
+      "title": "Notification outbox, bounded retries and independent delivery state",
+      "description": "Persist attempt status, schedule retries, terminal run not failed by Telegram outage.",
+      "depends_on": [
+        "PA-097"
+      ],
+      "acceptance": [
+        "Network outage: complete Run saved, notification delivered once after recovery."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "11.2",
+        "13.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-099",
+      "phase": 12,
+      "phase_name": "Channels, Telegram and reliable notifications",
+      "sequence": 99,
+      "title": "Telegram approvals/cancel/pause authorization and dedup",
+      "description": "Callbacks scoped to actor/run/action/expiry; duplicates safe.",
+      "depends_on": [
+        "PA-098"
+      ],
+      "acceptance": [
+        "Unauthorized callback rejected; approved action fired once."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "11.1",
+        "14.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-100",
+      "phase": 12,
+      "phase_name": "Channels, Telegram and reliable notifications",
+      "sequence": 100,
+      "title": "Desktop outbound notifications via same abstraction",
+      "description": "Toast/tray and outgoing messages share same contract with Telegram.",
+      "depends_on": [
+        "PA-099"
+      ],
+      "acceptance": [
+        "One Run can route notifications to configured multiple destinations."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "11.2",
+        "12.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-101",
+      "phase": 12,
+      "phase_name": "Channels, Telegram and reliable notifications",
+      "sequence": 101,
+      "title": "Channel configuration WPF and Test Connection",
+      "description": "Pair bot, configure allowed identity and outgoing events; protect tokens.",
+      "depends_on": [
+        "PA-100"
+      ],
+      "acceptance": [
+        "Wizard saves settings securely, Test Connection reports useful error."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "11",
+        "12.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-102",
+      "phase": 12,
+      "phase_name": "Channels, Telegram and reliable notifications",
+      "sequence": 102,
+      "title": "Telegram HTTP fake integration and second-channel compatibility tests",
+      "description": "Verify polling offset, retries, allowlist, buttons, fake Discord adapter.",
+      "depends_on": [
+        "PA-101"
+      ],
+      "acceptance": [
+        "E2E-09: second channel added without Core, Computer or Agent modifications."
+      ],
+      "verification": [
+        "dotnet test --filter Channels"
+      ],
+      "source_sections": [
+        "17.4",
+        "18 E2E-09"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-103",
+      "phase": 13,
+      "phase_name": "Conversations and follow-up context",
+      "sequence": 103,
+      "title": "Conversation lifecycle and origin-independent correlation",
+      "description": "Route reply-to message to Conversation; persist external identifiers.",
+      "depends_on": [
+        "PA-102",
+        "PA-064"
+      ],
+      "acceptance": [
+        "Desktop and Telegram messages can share a conversation safely."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7.4",
+        "11.1"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-104",
+      "phase": 13,
+      "phase_name": "Conversations and follow-up context",
+      "sequence": 104,
+      "title": "Persist conversation messages with source references",
+      "description": "Roles, link to RunId, sources, timestamps, errors; secrets filtered.",
+      "depends_on": [
+        "PA-103"
+      ],
+      "acceptance": [
+        "Restart does not discard previous summaries and follow-up context."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "13.1",
+        "7.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-105",
+      "phase": 13,
+      "phase_name": "Conversations and follow-up context",
+      "sequence": 105,
+      "title": "Agent sessions persistence with provider-specific serialization",
+      "description": "Store session version and provider; restore only compatible session.",
+      "depends_on": [
+        "PA-104"
+      ],
+      "acceptance": [
+        "Old session loads on same provider; incompatible provider uses fallback."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7.4",
+        "13.3"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-106",
+      "phase": 13,
+      "phase_name": "Conversations and follow-up context",
+      "sequence": 106,
+      "title": "Neutral handoff and compact context summary",
+      "description": "Avoid infinite history; preserve source links and decision context.",
+      "depends_on": [
+        "PA-105"
+      ],
+      "acceptance": [
+        "Subsequent follow-up uses correct issue without replaying old tool writes."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "7.4",
+        "19"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-107",
+      "phase": 13,
+      "phase_name": "Conversations and follow-up context",
+      "sequence": 107,
+      "title": "Telegram follow-up routing and fresh source lookup",
+      "description": "Reply to prior bot message or follow-up in active thread; ask for specifics if unclear.",
+      "depends_on": [
+        "PA-106"
+      ],
+      "acceptance": [
+        "E2E-06: user gets details of previous Teams/Jira finding."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "11.1",
+        "18 E2E-06"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-108",
+      "phase": 13,
+      "phase_name": "Conversations and follow-up context",
+      "sequence": 108,
+      "title": "Session/restart and cross-channel conversation regression tests",
+      "description": "Fake LLM responds across two runs, restart, provider switch.",
+      "depends_on": [
+        "PA-107"
+      ],
+      "acceptance": [
+        "Follow-up is stable after restart; no duplicate writes."
+      ],
+      "verification": [
+        "dotnet test --filter Conversation"
+      ],
+      "source_sections": [
+        "17",
+        "18 E2E-06"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-109",
+      "phase": 14,
+      "phase_name": "Automatic activity pause and resilience",
+      "sequence": 109,
+      "title": "Prototype physical input observation (Windows)",
+      "description": "GetLastInputInfo + relevant low-level hooks; document limitations distinguishing injected events.",
+      "depends_on": [
+        "PA-092",
+        "PA-047"
+      ],
+      "acceptance": [
+        "Known limitations documented; no excessive resource use idle."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.7",
+        "16 Phase 7"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-110",
+      "phase": 14,
+      "phase_name": "Automatic activity pause and resilience",
+      "sequence": 110,
+      "title": "Attribute own injected input vs physical user input",
+      "description": "Tag SendInput injection when possible; robust heuristics and fail-safe uncertain case.",
+      "depends_on": [
+        "PA-109"
+      ],
+      "acceptance": [
+        "Own input does not self-trigger auto-pause; human input can trigger."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.7"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-111",
+      "phase": 14,
+      "phase_name": "Automatic activity pause and resilience",
+      "sequence": 111,
+      "title": "Auto-pause on human activity in active GUI Run",
+      "description": "Gate closes without LLM, no automatic GUI resume; transition reason AutoPause.",
+      "depends_on": [
+        "PA-110"
+      ],
+      "acceptance": [
+        "User gets mouse promptly; no other injected steps until Resume."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.7",
+        "6.12"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-112",
+      "phase": 14,
+      "phase_name": "Automatic activity pause and resilience",
+      "sequence": 112,
+      "title": "Pause during in-flight LLM and MCP request",
+      "description": "No new GUI action after user pause regardless of queued tool result; side effects controlled.",
+      "depends_on": [
+        "PA-111"
+      ],
+      "acceptance": [
+        "Race test: delayed model tool call cannot run after lease revoke."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.3",
+        "6.4",
+        "7.5"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-113",
+      "phase": 14,
+      "phase_name": "Automatic activity pause and resilience",
+      "sequence": 113,
+      "title": "Handle lock/unlock, sleep/wake, monitor layout changes",
+      "description": "Graceful Blocked/Paused state, invalidate coordinates, manual safe resume.",
+      "depends_on": [
+        "PA-112"
+      ],
+      "acceptance": [
+        "No blind click on unlock, resolution or window change."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "6.6",
+        "16 Phase 7"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-114",
+      "phase": 14,
+      "phase_name": "Automatic activity pause and resilience",
+      "sequence": 114,
+      "title": "Stress & race test suite for GUI takeover",
+      "description": "Many click/type, cancelled midway, overlapping runs, forced exceptions.",
+      "depends_on": [
+        "PA-113"
+      ],
+      "acceptance": [
+        "Repeated stress runs preserve invariants: no stale lease and no held modifiers."
+      ],
+      "verification": [
+        "dotnet test --filter Takeover"
+      ],
+      "source_sections": [
+        "6.12",
+        "17.3"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-115",
+      "phase": 14,
+      "phase_name": "Automatic activity pause and resilience",
+      "sequence": 115,
+      "title": "Real Windows user-takeover regression checklist",
+      "description": "Hotkey, tray, window switching, long type, scheduled run while active.",
+      "depends_on": [
+        "PA-114"
+      ],
+      "acceptance": [
+        "E2E-03/04/05 under real desktop passed or concrete blocker noted."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "18 E2E-03",
+        "18 E2E-04",
+        "18 E2E-05"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-116",
+      "phase": 15,
+      "phase_name": "Security hardening, packaging and release verification",
+      "sequence": 116,
+      "title": "Protect secrets using Windows credential storage / DPAPI",
+      "description": "Local protected storage for model keys, Telegram and MCP credentials; no plain json keys.",
+      "depends_on": [
+        "PA-114",
+        "PA-108",
+        "PA-074"
+      ],
+      "acceptance": [
+        "Keys survive restart for current owner; are not exported in settings backups."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "13.2",
+        "14.4"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-117",
+      "phase": 15,
+      "phase_name": "Security hardening, packaging and release verification",
+      "sequence": 117,
+      "title": "Redact sensitive logs and screenshots/data retention",
+      "description": "No screenshot bytes/private text by default; configurable expiry and cleanup.",
+      "depends_on": [
+        "PA-116"
+      ],
+      "acceptance": [
+        "Standard logs contain no credentials, message bodies or screenshots."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "14.3",
+        "15.3"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-118",
+      "phase": 15,
+      "phase_name": "Security hardening, packaging and release verification",
+      "sequence": 118,
+      "title": "Structured logging, metrics, Run diagnostics screen",
+      "description": "RunId, ToolCallId, lease gen, usage, failures; UI displays actionable problems.",
+      "depends_on": [
+        "PA-117"
+      ],
+      "acceptance": [
+        "Failures and pause causes diagnosed without secret exposure."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "15.1",
+        "15.2"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-119",
+      "phase": 15,
+      "phase_name": "Security hardening, packaging and release verification",
+      "sequence": 119,
+      "title": "First-run wizard and connectivity diagnostics",
+      "description": "Choose model, validate vision/tools, optional MCP and Telegram onboarding.",
+      "depends_on": [
+        "PA-118"
+      ],
+      "acceptance": [
+        "Fresh Windows profile can run read-only first task from wizard."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "12",
+        "16 Phase 8"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-120",
+      "phase": 15,
+      "phase_name": "Security hardening, packaging and release verification",
+      "sequence": 120,
+      "title": "Settings export/import, migration/backup plan",
+      "description": "Export only non-secret configuration; validate schema version, backup DB before migrations.",
+      "depends_on": [
+        "PA-119"
+      ],
+      "acceptance": [
+        "Upgrade does not lose history; export contains no secrets."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "13.3",
+        "16 Phase 8"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-121",
+      "phase": 15,
+      "phase_name": "Security hardening, packaging and release verification",
+      "sequence": 121,
+      "title": "Self-contained Windows publish and optional autostart",
+      "description": "Build release artifact, tray exit behavior, optional login startup with user consent.",
+      "depends_on": [
+        "PA-120"
+      ],
+      "acceptance": [
+        "Runs on clean Windows without preinstalled .NET; autostart opt-in."
+      ],
+      "verification": [
+        "dotnet publish -c Release"
+      ],
+      "source_sections": [
+        "2",
+        "16 Phase 8"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-122",
+      "phase": 15,
+      "phase_name": "Security hardening, packaging and release verification",
+      "sequence": 122,
+      "title": "Provider, MCP, channel and tools contract regression matrix",
+      "description": "Shared behavior for cancellation, errors, image/text, policy, DI extension without changing Core.",
+      "depends_on": [
+        "PA-121"
+      ],
+      "acceptance": [
+        "Fake second channel & fake provider pass; no contract regression."
+      ],
+      "verification": [
+        "dotnet test"
+      ],
+      "source_sections": [
+        "17.4",
+        "18 E2E-09",
+        "18 E2E-10"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-123",
+      "phase": 15,
+      "phase_name": "Security hardening, packaging and release verification",
+      "sequence": 123,
+      "title": "Run all ten E2E acceptance scenarios",
+      "description": "Document test results E2E-01..E2E-10 incl. approval and unknown outcomes.",
+      "depends_on": [
+        "PA-122"
+      ],
+      "acceptance": [
+        "All ten scenarios documented with passed evidence; external access gating explicit."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "18",
+        "22"
+      ],
+      "requires_user_or_environment": true
+    },
+    {
+      "id": "PA-124",
+      "phase": 15,
+      "phase_name": "Security hardening, packaging and release verification",
+      "sequence": 124,
+      "title": "Final privacy/security/operational review",
+      "description": "Check prompt injection, corporate data egress policy, no lock/UAC bypass, cost caps, no blind retries.",
+      "depends_on": [
+        "PA-123",
+        "PA-059",
+        "PA-065",
+        "PA-075",
+        "PA-115"
+      ],
+      "acceptance": [
+        "Documented review checklist passes; risky defaults disabled."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "14",
+        "19",
+        "21",
+        "22"
+      ],
+      "requires_user_or_environment": false
+    },
+    {
+      "id": "PA-125",
+      "phase": 15,
+      "phase_name": "Security hardening, packaging and release verification",
+      "sequence": 125,
+      "title": "Release documentation, known limitations, versioned MVP gate",
+      "description": "README setup, auth expectations, incident recovery, limitations, changelog, release tag candidate.",
+      "depends_on": [
+        "PA-124"
+      ],
+      "acceptance": [
+        "All 22 MVP DoD checks pass and release candidate is reproducible."
+      ],
+      "verification": [
+        "Проверить критерии вручную либо через подходящий автоматический тест; зафиксировать вывод и команду/свидетельство."
+      ],
+      "source_sections": [
+        "20",
+        "22",
+        "23",
+        "24"
+      ],
+      "requires_user_or_environment": true
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Flow Develop"
+  short_description: "Change code while preserving flow contracts"
