@@ -14,14 +14,15 @@
                                        "attempts":  1
                                    },
                         "PA-002":  {
-                                       "status":  "blocked",
-                                       "started_at":  "2026-10-18T07:48:05.4740939+00:00",
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T07:54:57.4029347+00:00",
+                                       "completed_at":  "2026-10-18T07:54:59.2491646+00:00",
                                        "evidence":  [
-
+                                                        "e9c1777; App/Hosting Generic Host DI and lifecycle. User observed the blank WPF window and confirmed closing it. dotnet run --project src/PersonalAgent.App --no-build session 29485 logged HostStarting 1000, Application started, Application is shutting down, HostStopping 1001; process exit code 0.",
+                                                        "Verification: Manual WPF smoke passed with user observation plus actual process logs/exit. Previous validated unchanged code: dotnet build --no-restore 0 warnings/errors; dotnet test --no-build 1 architecture + 4 lifecycle tests passed."
                                                     ],
-                                       "note":  "Implementation and automated host tests complete. Required manual WPF smoke (TASKS.md PA-002) not executed: this session has no desktop-control tools. User must run dotnet run --project src/PersonalAgent.App and confirm window opens and closes with successful process exit; then unblock/resume PA-002. No independent pending task has satisfied dependencies.",
-                                       "attempts":  1
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
                                    },
                         "PA-003":  {
                                        "status":  "pending",
@@ -1255,5 +1256,5 @@
                                    }
                     },
     "last_task_id":  "PA-002",
-    "updated_at":  "2026-10-18T07:53:03.3090969+00:00"
+    "updated_at":  "2026-10-18T07:54:59.2651972+00:00"
 }

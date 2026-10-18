@@ -18,3 +18,8 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 - Blocker: TASKS.md PA-002 explicitly requires manual smoke; no desktop-control tools are available in this session. Requested user check after implementation was ready; no result has been received. This is a verification blocker, not missing Windows/.NET runtime. Code and automated checks are preserved.
 - Manual check: from repository root run dotnet run --project src/PersonalAgent.App; confirm the empty Personal Agent window opens, close it with X, verify the command returns without error and no PersonalAgent.App process remains.
 - Next: after successful manual evidence, unblock PA-002, start/resume it, then complete with the actual user-observed result. Tracker has no other ready task; no dependency was bypassed. PA-001 committed as c1f75bb.
+
+## 2026-10-18 10:54:59 +03:00 | PA-002 | done (manual blocker resolved)
+- User requested launch; ran dotnet run --project src/PersonalAgent.App --no-build. User observed the empty desktop window and then confirmed closing it.
+- Checks: actual process session 29485 logged HostStarting 1000, Application started, Application is shutting down and HostStopping 1001; exited 0. Previously verified unchanged code build (0 warnings/errors), 1 architecture test and 4 host integration tests remain the automated evidence. Manual startup/shutdown smoke is now passed; no additional E2E claim.
+- Unblocked, resumed and completed PA-002 with user observation and actual process output. No code changes or unresolved PA-002 issues. Next: PA-003 health/status screen.
