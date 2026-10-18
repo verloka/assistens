@@ -61,6 +61,8 @@ Status: Draft
 
 - Scroll foundation (PA-033): `WindowsMouseInput.ScrollAsync` uses the existing authorized physical-anchor preparation for Up/Down/Left/Right and 1-10 ticks per call. `tests/PersonalAgent.IntegrationTests/ComputerScrollTests.cs` checks signed deltas, bounds/limits, stale/revoked/locked context, cancellation and no retry after partial native insertion. The attended WindowsSmoke SCROLL action measures actual native wheel messages, anchor and test-area offset changes; on 2026-10-18 the user returned Down/Up/Left/Right OK, one matching event each, deltas +/-240, offsets 400 to 464/336 on the correct axis at physical (718,629); diagnostic exited 0. Full S1-S4 remain `[untested]`, with no production tool/lease exposure.
 
+- Text-input foundation (PA-034, attended acceptance pending): internal `WindowsKeyboardInput` validates complete UTF-16/control data and the 4096-unit limit before effects, normalizes line endings, and sends balanced Unicode/Enter pairs in at most 16-unit chunks without splitting surrogates. `WindowsInputSender` holds its shared input lock across the text operation and rechecks cancellation/authorization/session/generation before each chunk. `tests/PersonalAgent.IntegrationTests/ComputerTypeTests.cs` verifies Unicode, multiline, surrogate boundaries, limits, no interleaving and stopping further chunks on cancel/revocation/native failure. WindowsSmoke TYPE TEXT/CANCEL compares actual field content, including a deterministic first-chunk cancellation fixture. No real typing observation yet; full S1-S4 and production takeover remain `[untested]`.
+
 ## Unknowns
 - Concrete Windows APIs, pause latency and live race results must be established in the implementation.
 

@@ -34,6 +34,10 @@ internal sealed class SmokeWindow : Window
     private readonly ScrollViewer scrollTarget = new() { Height = 90, HorizontalScrollBarVisibility = ScrollBarVisibility.Visible,
         VerticalScrollBarVisibility = ScrollBarVisibility.Visible, Background = System.Windows.Media.Brushes.LightGoldenrodYellow };
     private readonly List<(int Message, int Delta, ScreenPoint Point)> observedScroll = [];
+    private readonly Button typeTest = new() { Content = "TYPE TEXT: left-click to enter Unicode, multiline and tab in this window", Margin = new Thickness(0, 8, 0, 8) };
+    private readonly Button typeCancelTest = new() { Content = "TYPE CANCEL: left-click to stop after the first atomic chunk", Margin = new Thickness(0, 0, 0, 8) };
+    private readonly TextBox typeTarget = new() { Height = 85, IsReadOnly = true, AcceptsReturn = true, AcceptsTab = true,
+        HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
     private nint handle;
     private bool registered;
     private bool hotkeyObserved;
@@ -42,11 +46,12 @@ internal sealed class SmokeWindow : Window
     private CancellationTokenSource? primaryCancellation;
     private CancellationTokenSource? clickCancellation;
     private CancellationTokenSource? scrollCancellation;
+    private CancellationTokenSource? typeCancellation;
     private bool typingDiagnostic;
 
     public SmokeWindow()
     {
-        Title = "PersonalAgent attended Windows diagnostic (PA-008/025/026/032/033)";
+        Title = "PersonalAgent attended Windows diagnostic (PA-008/025/026/032/033/034)";
         Width = 680;
         Height = 660;
         ShowActivated = false;
@@ -85,6 +90,11 @@ internal sealed class SmokeWindow : Window
         scrollTarget.Content = scrollContent;
         panel.Children.Add(scrollTarget);
         scrollTest.Click += async (_, _) => await RunScrollAsync();
+        panel.Children.Add(typeTest);
+        panel.Children.Add(typeCancelTest);
+        panel.Children.Add(typeTarget);
+        typeTest.Click += async (_, _) => await RunTypeAsync(false);
+        typeCancelTest.Click += async (_, _) => await RunTypeAsync(true);
         panel.Children.Add(target);
         panel.Children.Add(report);
         panel.Children.Add(preview);
@@ -101,6 +111,7 @@ internal sealed class SmokeWindow : Window
             primaryCancellation?.Cancel();
             clickCancellation?.Cancel();
             scrollCancellation?.Cancel();
+            typeCancellation?.Cancel();
             if (registered) Native.UnregisterHotKey(handle, 1);
             HwndSource.FromHwnd(handle)?.RemoveHook(OnMessage);
         };
@@ -223,6 +234,65 @@ internal sealed class SmokeWindow : Window
         }
         catch (Exception exception) { Write($"SCROLL BLOCKED: {exception.Message}"); }
         finally { scrollCancellation = null; scrollTest.IsEnabled = true; }
+    }
+
+    private async Task RunTypeAsync(bool stopAfterFirst)
+    {
+        if (clickCancellation is not null || primaryCancellation is not null || scrollCancellation is not null || typingDiagnostic) { Write("Wait for the current diagnostic."); return; }
+        typingDiagnostic = true;
+        typeTest.IsEnabled = typeCancelTest.IsEnabled = false;
+        using var cancellation = new CancellationTokenSource();
+        typeCancellation = cancellation;
+        try
+        {
+            RequireForeground();
+            if (Enumerable.Range(1, 254).Any(key => (Native.GetAsyncKeyState(key) & 0x8000) != 0))
+                throw new InvalidOperationException("Release all keys/buttons before typing.");
+            var text = stopAfterFirst ? new string('x', 15) + "🙂tail must not appear" : "Привіт, 世界 🙂\nLine 2: <>& \"quotes\" + =\tend";
+            typeTarget.IsReadOnly = false;
+            typeTarget.Clear();
+            typeTarget.BringIntoView();
+            typeTarget.Focus();
+            if (!typeTarget.IsKeyboardFocused) throw new InvalidOperationException("Diagnostic text field has no keyboard focus.");
+            var generation = Interlocked.Increment(ref primaryGeneration);
+            (bool, long) Authorize() => Dispatcher.Invoke(() =>
+                (IsActive && Native.GetForegroundWindow() == handle && typeTarget.IsKeyboardFocused &&
+                 new[] { 1, 2, 4, 16, 17, 18, 91, 92 }.All(key => (Native.GetAsyncKeyState(key) & 0x8000) == 0), Interlocked.Read(ref primaryGeneration)));
+            var native = new TypeDiagnosticNative(cancellation, stopAfterFirst);
+            var canceled = false;
+            try { await new WindowsKeyboardInput(Authorize, native).TypeAsync(text, generation, cancellation.Token); }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { canceled = true; }
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            var actual = typeTarget.Text.Replace("\r\n", "\n", StringComparison.Ordinal);
+            var expected = stopAfterFirst ? new string('x', 15) : text;
+            var correct = actual == expected && canceled == stopAfterFirst && (!stopAfterFirst || native.Calls == 1);
+            Write($"TYPE {(stopAfterFirst ? "CANCEL" : "TEXT")} {(correct ? "OK" : "FAILED")}; canceled={canceled}; calls={native.Calls}; " +
+                $"actualChars={actual.Length}; expectedChars={expected.Length}; no clipboard/retry/files/uploads.");
+        }
+        catch (Exception exception) { Write($"TYPE BLOCKED: {exception.Message}"); }
+        finally
+        {
+            typeTarget.IsReadOnly = true;
+            typeCancellation = null;
+            typingDiagnostic = false;
+            typeTest.IsEnabled = typeCancelTest.IsEnabled = true;
+        }
+    }
+
+    // Fixture-only deterministic cancellation after a successfully inserted first batch. Native input
+    // still targets only the focused field above; later chunks must be stopped by the real driver token.
+    private sealed class TypeDiagnosticNative(CancellationTokenSource cancellation, bool stopAfterFirst) : IWindowsInputNative
+    {
+        private readonly WindowsInputNative native = new();
+        internal int Calls { get; private set; }
+        public bool IsDesktopAvailable() => native.IsDesktopAvailable();
+        public InputInsertion Send(NativeInput[] inputs)
+        {
+            var result = native.Send(inputs);
+            Calls++;
+            if (stopAfterFirst && Calls == 1 && result.Count == inputs.Length) cancellation.Cancel();
+            return result;
+        }
     }
 
     private async void RunSmoke(object sender, RoutedEventArgs args)

@@ -364,14 +364,14 @@
                                        "attempts":  2
                                    },
                         "PA-034":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T13:31:13.3013511+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Unicode/multiline/tab typing, UTF16 validation,4096-unit limit,16-unit surrogate-safe chunks, shared input lock and per-chunk gate implemented;21 fake-native cases and full verify passed. Actual WindowsSmoke TYPE TEXT OK and TYPE CANCEL OK after first chunk not yet observed. Need user-operated dedicated-field reports; no auto typing or clipboard use.",
+                                       "attempts":  1
                                    },
                         "PA-035":  {
                                        "status":  "pending",
@@ -1284,6 +1284,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-033",
-    "updated_at":  "2026-10-18T13:31:11.9109480+00:00"
+    "last_task_id":  "PA-034",
+    "updated_at":  "2026-10-18T13:35:27.7026440+00:00"
 }

@@ -236,6 +236,39 @@ References: [MOUSEINPUT](https://learn.microsoft.com/en-us/windows/win32/api/win
 [WM_MOUSEWHEEL](https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mousewheel),
 [WM_MOUSEHWHEEL](https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mousehwheel).
 
+## Unicode and batched typing (PA-034)
+
+`WindowsKeyboardInput.TypeAsync` accepts at most 4096 UTF-16 units, validates the
+entire text before effects, rejects malformed surrogates and unsupported controls,
+normalizes CRLF/CR to newline, and sends balanced Enter pairs for newlines. Tabs
+are Unicode text packets, not a VK_TAB focus shortcut. Other text uses Unicode
+packets, never clipboard writes. Atomic chunks contain at most 16 code units
+(32 native events), keeping surrogate pairs together. A shared input lock covers
+all chunks so another driver cannot insert a click/key halfway through text.
+Each chunk rechecks trusted authorization, generation, session and cancellation.
+Already typed text remains after cancellation; there is no rollback or replay.
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter ComputerType` runs
+21 fake-native cases: text/Unicode/tab packets, line endings, surrogate edges,
+limits/empty input, malformed text, default denial, stopping after a full first
+chunk, revocation/lock/stale generation, partial cleanup/fault and no interleaving.
+These tests do not type into Windows or read/change clipboard contents.
+
+Actual typing remains **NOT TESTED**. Activate WindowsSmoke and release all keys.
+Left-click **TYPE TEXT**. The fixture focuses only its own multiline field and
+types a synthetic sample with Cyrillic, CJK, emoji, punctuation, newline and tab.
+Do not touch keyboard/mouse or switch applications until the report. Check the
+field displays the sample and the report says `TYPE TEXT OK`, `canceled=False`,
+with actualChars equal to expectedChars. Then left-click **TYPE CANCEL**: a
+fixture-only native decorator cancels after the first successful chunk, and the
+real driver must stop subsequent chunks. Expected `TYPE CANCEL OK`, canceled=True,
+calls=1, actualChars=15, expectedChars=15, with only fifteen x characters visible
+(no half emoji/tail). Return both report lines and close the window. No clipboard,
+files/uploads, background typing or app focus switching is used. This verifies
+local text/cancellation only, not global hotkey/lease/takeover races or full E2E.
+
+Reference: [Microsoft KEYBDINPUT](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-keybdinput).
+
 ## Screen-independent computer test doubles (PA-029)
 
 PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit

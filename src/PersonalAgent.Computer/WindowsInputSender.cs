@@ -22,15 +22,36 @@ internal sealed class WindowsInputSender
     }
 
     // Prepare geometry-dependent input inside the same serialized, authorized desktop boundary.
-    internal async Task SendAsync(Func<NativeInput[]> prepare, long generation, CancellationToken ct = default)
+    internal Task SendAsync(Func<NativeInput[]> prepare, long generation, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(prepare);
+        return SendSequenceAsync([prepare], generation, ct);
+    }
+
+    internal Task SendBatchesAsync(IReadOnlyList<NativeInput[]> batches, long generation, CancellationToken ct = default)
+    {
+        // Own each batch before waiting. The same global lock covers the entire logical text operation,
+        // while SendCore rechecks permission/session/cancellation at every atomic batch boundary.
+        var owned = batches.Select(batch =>
+        {
+            var copy = batch.ToArray();
+            Validate(copy);
+            return (Func<NativeInput[]>)(() => copy);
+        }).ToArray();
+        return SendSequenceAsync(owned, generation, ct);
+    }
+
+    private async Task SendSequenceAsync(IReadOnlyList<Func<NativeInput[]>> batches, long generation, CancellationToken ct)
+    {
         if (generation < 0) throw new ArgumentOutOfRangeException(nameof(generation));
         ct.ThrowIfCancellationRequested();
         await InputLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            await Task.Run(() => SendCore(prepare, generation, ct), CancellationToken.None).ConfigureAwait(false);
+            await Task.Run(() =>
+            {
+                foreach (var batch in batches) SendCore(batch, generation, ct);
+            }, CancellationToken.None).ConfigureAwait(false);
         }
         finally { InputLock.Release(); }
     }
