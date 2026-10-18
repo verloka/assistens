@@ -43,5 +43,7 @@ Status: Draft
 ## Implementation References
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §§11–13; backlog PR-12, PR-13.
 
+- Neutral history/session foundation (PA-020): `src/PersonalAgent.Core/Domain/ConversationModels.cs`, `src/PersonalAgent.Core/Persistence/IConversationRepository.cs` and `src/PersonalAgent.Persistence/SqliteConversationRepository.cs` store ordered messages and immutable provider/model/schema-tagged session checkpoints. `tests/PersonalAgent.IntegrationTests/PersistenceConversationTests.cs` verifies real SQLite reopen, schema/provider/model mismatch refusal, duplicate message constraints and cross-conversation run validation. This is storage scaffolding, not inbound routing, provider session resume, delivery or complete S1-S4 coverage; all remain `[untested]`.
+
 ## Unknowns
 - Channel-specific rate limiting and external data protection rules require deployment verification.

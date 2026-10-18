@@ -17,6 +17,90 @@ namespace PersonalAgent.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.AgentSessionRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ModelId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProviderId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SchemaVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SerializedState")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("TimestampUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId");
+
+                    b.ToTable("AgentSessions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AgentSessions_SchemaVersion", "SchemaVersion > 0");
+                        });
+                });
+
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ConversationMessageRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ExternalId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("RunId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Sequence")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TimestampUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RunId");
+
+                    b.HasIndex("ConversationId", "ExternalId")
+                        .IsUnique();
+
+                    b.HasIndex("ConversationId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("ConversationMessages", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ConversationMessages_Role", "Role IN ('User','Assistant','Tool')");
+
+                            t.HasCheckConstraint("CK_ConversationMessages_Sequence", "Sequence > 0");
+                        });
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.ConversationRow", b =>
                 {
                     b.Property<Guid>("Id")
@@ -196,6 +280,29 @@ namespace PersonalAgent.Persistence.Migrations
 
                             t.HasCheckConstraint("CK_TaskRuns_Status", "Status IN ('Created','Queued','WaitingForDesktop','WaitingForUser','Running','Pausing','PausedForUser','Paused','WaitingForApproval','Blocked','Completed','Failed','Cancelled','Skipped','Interrupted')");
                         });
+                });
+
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.AgentSessionRow", b =>
+                {
+                    b.HasOne("PersonalAgent.Persistence.Entities.ConversationRow", null)
+                        .WithMany()
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ConversationMessageRow", b =>
+                {
+                    b.HasOne("PersonalAgent.Persistence.Entities.ConversationRow", null)
+                        .WithMany()
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("PersonalAgent.Persistence.Entities.TaskRunRow", null)
+                        .WithMany()
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.RunEventRow", b =>

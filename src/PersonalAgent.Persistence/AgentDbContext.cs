@@ -11,6 +11,8 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<TaskDefinitionRow> TaskDefinitions => Set<TaskDefinitionRow>();
     public DbSet<TaskRunRow> TaskRuns => Set<TaskRunRow>();
     public DbSet<RunEventRow> RunEvents => Set<RunEventRow>();
+    public DbSet<ConversationMessageRow> ConversationMessages => Set<ConversationMessageRow>();
+    public DbSet<AgentSessionRow> AgentSessions => Set<AgentSessionRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -53,5 +55,25 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         events.HasIndex(row => new { row.RunId, row.Sequence }).IsUnique();
         events.Property(row => row.EventType).HasConversion<string>();
         events.Property(row => row.TimestampUtc).HasConversion(utcTicks);
+
+        var messages = model.Entity<ConversationMessageRow>();
+        messages.ToTable("ConversationMessages", table =>
+        {
+            table.HasCheckConstraint("CK_ConversationMessages_Sequence", "Sequence > 0");
+            table.HasCheckConstraint("CK_ConversationMessages_Role", "Role IN ('User','Assistant','Tool')");
+        });
+        messages.HasKey(row => row.Id);
+        messages.HasOne<ConversationRow>().WithMany().HasForeignKey(row => row.ConversationId).OnDelete(DeleteBehavior.Restrict);
+        messages.HasOne<TaskRunRow>().WithMany().HasForeignKey(row => row.RunId).OnDelete(DeleteBehavior.Restrict);
+        messages.HasIndex(row => new { row.ConversationId, row.Sequence }).IsUnique();
+        messages.HasIndex(row => new { row.ConversationId, row.ExternalId }).IsUnique();
+        messages.Property(row => row.Role).HasConversion<string>();
+        messages.Property(row => row.TimestampUtc).HasConversion(utcTicks);
+
+        var sessions = model.Entity<AgentSessionRow>();
+        sessions.ToTable("AgentSessions", table => table.HasCheckConstraint("CK_AgentSessions_SchemaVersion", "SchemaVersion > 0"));
+        sessions.HasKey(row => row.Id);
+        sessions.HasOne<ConversationRow>().WithMany().HasForeignKey(row => row.ConversationId).OnDelete(DeleteBehavior.Restrict);
+        sessions.Property(row => row.TimestampUtc).HasConversion(utcTicks);
     }
 }

@@ -34,6 +34,7 @@ public static class AppHost
             {
                 services.AddSingleton(new SqliteAgentDbContextFactory(historyDatabasePath));
                 services.AddSingleton<IRunRepository>(provider => new SqliteRunRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddSingleton<IConversationRepository>(provider => new SqliteConversationRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddHostedService<RunHistoryService>();
             }
             services.AddHostedService<TaskRunnerService>();

@@ -212,14 +212,15 @@
                                        "attempts":  1
                                    },
                         "PA-020":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T11:14:07.2642026+00:00",
+                                       "completed_at":  "2026-10-18T11:18:04.4027144+00:00",
                                        "evidence":  [
-
+                                                        "SDK-free ConversationMessage/AgentSessionSnapshot and IConversationRepository; SQLite message/session entities, generated second migration, strict provider/model/schema checkpoint read and append-only checkpoint API. PersistenceConversationTests reopens ordered history/session metadata, rejects duplicate messages/sequence and cross-conversation run; production DI registration only, no provider restore or inbound flow claimed. FDD-006 storage scaffold reference; all Drafts retained.",
+                                                        "Verification: PersistenceConversationTests + PersistenceSchemaTests 6 passed; dotnet-ef has-pending-model-changes: none; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 49 integration + 3 local fake-flow passed; diff check passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-021":  {
                                        "status":  "pending",
@@ -1272,6 +1273,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-019",
-    "updated_at":  "2026-10-18T11:14:05.9407833+00:00"
+    "last_task_id":  "PA-020",
+    "updated_at":  "2026-10-18T11:18:04.4122455+00:00"
 }

@@ -195,3 +195,11 @@ coordinator serializes staged revisions, commits them, then publishes snapshots;
 query locks never cover database I/O. Every persisted progress update advances
 RunVersion. Finished history is loaded without enqueuing execution; incomplete-run
 recovery remains PA-021. No provider or native GUI work is configured.
+
+`dotnet test --filter PersistenceConversationTests` stores/reopens neutral ordered
+messages and immutable provider-session checkpoints. Provider/model/schema must
+match before reading opaque state; incompatible state returns no checkpoint while
+neutral history remains available. Duplicate message sequence/external IDs and
+cross-conversation run links are rejected. This is storage scaffolding only:
+no real provider session restore, channel follow-up or automatic action replay.
+Callers must exclude credentials from session payloads.

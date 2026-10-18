@@ -17,7 +17,7 @@ public sealed class PersistenceSchemaTests
         {
             await db.Database.MigrateAsync();
             await db.Database.MigrateAsync();
-            Assert.Single(await db.Database.GetAppliedMigrationsAsync());
+            Assert.Equal(db.Database.GetMigrations(), await db.Database.GetAppliedMigrationsAsync());
             Assert.Empty(await db.Database.GetPendingMigrationsAsync());
             Assert.False(db.Database.HasPendingModelChanges());
             var tables = await db.Database.SqlQueryRaw<string>("SELECT name AS Value FROM sqlite_master WHERE type='table'").ToListAsync();
