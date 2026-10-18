@@ -127,3 +127,13 @@ or production coordinate mapping. Screenshots and field content are never persis
 API references: [SendInput](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput),
 [RegisterHotKey](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey),
 [BitBlt](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt).
+
+## Local fake execution (PA-011/PA-012)
+
+`dotnet test --filter FakeAgentRuntimeTests` runs deterministic scripts through
+the SDK-neutral `IAgentRuntime`, with ordered operation progress, bounded execution,
+cancellation and externally controlled async step boundaries. It uses only the
+`fake` profile and performs no model/tool/network/desktop calls. It can also return
+a scripted failure. `AgentContractTests` covers neutral request/result serialization.
+This is an adapter-level flow; application commands/queue/UI, persistence and
+business end-to-end acceptance are separate backlog work.

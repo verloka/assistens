@@ -47,5 +47,7 @@ Status: Draft
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §§5–9, 11, 13; backlog PR-02, PR-07, PR-12.
 - Domain foundation (PA-009/PA-010): `src/PersonalAgent.Core/Domain/TaskModels.cs` and `TaskRunStateMachine.cs`; `tests/PersonalAgent.UnitTests/DomainSerializationTests.cs` and `TaskRunStateMachineTests.cs` cover neutral JSON contracts, legal/illegal state changes, terminal immutability, pause boundaries and stale versions. Transitions return snapshots; callers must still implement atomic storage and actual cancellation/tool gates. Interrupted ends the attempt and cannot automatically resume. These unit checks do not complete S1-S3; all remain `[untested]`.
 
+- Local fake adapter (PA-011/PA-012): `src/PersonalAgent.Core/Agents/AgentContracts.cs`, `src/PersonalAgent.Agent/FakeAgentRuntime.cs` and `tests/PersonalAgent.IntegrationTests/FakeAgentRuntimeTests.cs` verify ordered Start/progress/Complete, cancellation, controlled step boundaries and limits without credentials. This is not yet a submitted application run, durable outcome or notification, so complete S1-S3 remain `[untested]`.
+
 ## Unknowns
 - Actual types and source/test paths are not yet implemented. Confirm approval and E2E proof as code lands.

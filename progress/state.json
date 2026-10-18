@@ -124,14 +124,15 @@
                                        "attempts":  1
                                    },
                         "PA-012":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:38:28.0074825+00:00",
+                                       "completed_at":  "2026-10-18T10:40:10.0074646+00:00",
                                        "evidence":  [
-
+                                                        "Agent/FakeAgentRuntime implements IAgentRuntime with deterministic copied script, typed progress, cancellation and async step boundaries, step/duration limits, scripted result/failure. Refuses profiles other than fake and has no tools/network/desktop effects. FDD-001 partial implementation reference; full S1-S3 remain untested Drafts.",
+                                                        "Verification: FakeAgentRuntimeTests 6 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 27 unit + 20 integration passed; E2E empty"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-013":  {
                                        "status":  "pending",
@@ -1264,6 +1265,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-011",
-    "updated_at":  "2026-10-18T10:38:26.6989623+00:00"
+    "last_task_id":  "PA-012",
+    "updated_at":  "2026-10-18T10:40:10.0191851+00:00"
 }
