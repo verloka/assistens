@@ -157,14 +157,15 @@
                                        "attempts":  1
                                    },
                         "PA-015":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:48:01.6500272+00:00",
+                                       "completed_at":  "2026-10-18T10:52:00.8273403+00:00",
                                        "evidence":  [
-
+                                                        "DashboardViewModel uses ITaskCommands and ordered coordinator RunEvent stream; actual MainWindow XAML displays local task status/progress/result and binds submit/pause/resume/cancel. Generic Host composes local FakeAgentRuntime and TaskRunnerService. DashboardTests real XAML/STA checks responsive dispatcher, commands/progress, cancel and shutdown. FDD-001/index updated without Draft promotion or complete business scenario claims.",
+                                                        "Verification: DashboardTests 2 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 35 unit + 30 integration passed including health/host regression; E2E empty; git diff --check passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-016":  {
                                        "status":  "pending",
@@ -1267,6 +1268,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-014",
-    "updated_at":  "2026-10-18T10:47:59.8694600+00:00"
+    "last_task_id":  "PA-015",
+    "updated_at":  "2026-10-18T10:52:00.8368521+00:00"
 }

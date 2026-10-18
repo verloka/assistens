@@ -141,3 +141,10 @@ runtime, step-boundary pause/resume and safe interruption on shutdown. Only one
 runner consumes a coordinator. Runtime adapters must cooperate with cancellation
 and call its async step boundary; this is not a native desktop gate. UI, persistence
 and business end-to-end acceptance remain separate backlog work.
+
+`dotnet test --filter DashboardTests` loads actual XAML on STA, runs the host/runner,
+and checks bound submit/pause/resume/cancel, ordered progress/result, dispatcher
+responsiveness and shutdown. It never displays a window or injects desktop input.
+For an attended visual check, run `dotnet run --project src/PersonalAgent.App` and
+use Start local task; only a local fake profile is configured. History currently
+clears when the app closes. This does not validate a paid model or complete FDD-001.

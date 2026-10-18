@@ -20,13 +20,14 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 
 ## Unmapped Entry Points
 
-- Implemented diagnostic entry point: `src/PersonalAgent.App/MainWindow.xaml` shows host status and registered hosted services, with a local asynchronous test operation. It does not submit a business task or call model/computer/MCP/channel tools; no separate business flow is warranted.
+- `src/PersonalAgent.App/MainWindow.xaml` includes host diagnostics and the PA-015 local task Dashboard. Its submit/pause/resume/cancel actions map to FDD-001 (with pause semantics referencing FDD-002); the configured runtime is a local fake with no model/computer/MCP/channel calls. No separate diagnostic flow is warranted.
 - After implementing each milestone, inspect new WPF actions, Telegram commands, scheduled triggers, MCP tools and background workers. Record any entry point not covered by an indexed flow here before closing the task.
 
 ## Coverage Notes
 
 - Areas inspected: product requirements in `docs/DEVELOPMENT_PLAN_v1.1.md`; backlog catalog; preliminary FDD flow contracts; application host and diagnostic health screen. `tests/PersonalAgent.IntegrationTests/HealthScreenTests.cs` covers actual XAML bindings, dispatcher responsiveness and shutdown cancellation; it does not verify the business scenarios below.
-- Areas **not** implemented/verified: task execution, persistence/recovery, desktop automation, model/MCP/channel integrations and business E2E outcomes. PA-002 startup/shutdown alone has a user-observed Windows smoke result in `progress/LOG.md`.
+- Implemented partial task path (PA-009..PA-015): neutral domain/contracts, session-local commands/queue and fake runtime, and Dashboard progress. `tests/PersonalAgent.IntegrationTests/DashboardTests.cs` loads actual XAML and uses the real host/runner on STA without showing windows; it verifies progress, pause/resume/cancel, responsiveness and shutdown. This is not durable/business E2E coverage.
+- Areas **not** implemented/verified: persistence/recovery, production desktop automation, live model/MCP/channel integrations and complete business E2E outcomes. PA-002 startup/shutdown and PA-008 standalone capture/input/hotkey have user-observed Windows smoke results in `progress/LOG.md`; the latter is not production desktop lease/takeover proof.
 - All scenarios are `[untested]` until associated automated/manual tests have actually been implemented and verified.
 - PA-006's `tests/PersonalAgent.IntegrationTests/MafToolApprovalSpikeTests.cs` verifies the SDK-only local function and approval handshake with a scripted model. It does not complete FDD-005 or its reverse consumers FDD-001/FDD-004/FDD-007; their business scenario coverage remains untested.
 - Current Drafts are proposed contracts only. Validate against source code and explicit user approval before changing status to `Active`.

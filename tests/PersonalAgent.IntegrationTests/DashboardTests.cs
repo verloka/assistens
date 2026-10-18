@@ -1,0 +1,156 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using PersonalAgent.Agent;
+using PersonalAgent.App;
+using PersonalAgent.App.ViewModels;
+using PersonalAgent.Core.Agents;
+using PersonalAgent.Core.Application;
+using PersonalAgent.Core.Domain;
+using System.ComponentModel;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Threading;
+
+namespace PersonalAgent.IntegrationTests;
+
+public sealed class DashboardTests
+{
+    [Fact]
+    public Task DashboardUsesCommonCommandsAndShowsLiveProgressWhileDispatcherResponds() => OnWpfThread(async () =>
+    {
+        var entered = Signal();
+        var release = Signal();
+        using var host = AppHost.CreateBuilder([]).ConfigureLogging(log => log.ClearProviders())
+            .ConfigureServices(services => services.AddSingleton<IAgentRuntime>(provider => new FakeAgentRuntime(
+                [new("Observable local step")], async (id, ct) =>
+                {
+                    entered.TrySetResult();
+                    await release.Task.WaitAsync(ct);
+                    await provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync(id, ct);
+                }))).Build();
+        await host.StartAsync();
+        var window = host.Services.GetRequiredService<MainWindow>();
+        try
+        {
+            await Bind(window);
+            var model = host.Services.GetRequiredService<DashboardViewModel>();
+            var submit = (Button)window.FindName("SubmitTaskButton");
+            Assert.Same(model.SubmitCommand, submit.Command);
+            ((TextBox)window.FindName("TaskInstructions")).Text = "Read a local test value";
+            Assert.Equal("Read a local test value", model.Instructions);
+            submit.Command.Execute(null);
+            var execution = model.SubmitCommand.ExecutionTask!;
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.True(model.IsActive);
+            Assert.False(execution.IsCompleted);
+            Assert.False(submit.Command.CanExecute(null));
+            var responsive = false;
+            await window.Dispatcher.InvokeAsync(() => responsive = true, DispatcherPriority.Background);
+            Assert.True(responsive);
+
+            var paused = Until(model, () => model.Status == "Paused");
+            var pause = (Button)window.FindName("PauseTaskButton");
+            Assert.Same(model.PauseCommand, pause.Command);
+            pause.Command.Execute(null);
+            await model.PauseCommand.ExecutionTask!;
+            release.SetResult();
+            await paused;
+            await Dispatcher.Yield(DispatcherPriority.DataBind);
+            Assert.Equal("Paused", ((TextBlock)window.FindName("RunStatusText")).Text);
+            Assert.False(execution.IsCompleted);
+            var id = model.CurrentRun!.Id;
+            var resume = (Button)window.FindName("ResumeTaskButton");
+            Assert.True(resume.Command.CanExecute(null));
+            resume.Command.Execute(null);
+            await model.ResumeCommand.ExecutionTask!;
+            await execution.WaitAsync(TimeSpan.FromSeconds(5));
+            await Dispatcher.Yield(DispatcherPriority.DataBind);
+            Assert.Equal(id, model.CurrentRun.Id);
+            Assert.Equal("Completed", ((TextBlock)window.FindName("RunStatusText")).Text);
+            Assert.Contains("fake", ((TextBlock)window.FindName("RunSummaryText")).Text);
+            Assert.Same(model.Events, ((ListBox)window.FindName("RunEventsList")).ItemsSource);
+            Assert.Contains(model.Events, e => e.Message == "Observable local step");
+            Assert.Equal(Enumerable.Range(1, model.Events.Count).Select(n => (long)n), model.Events.Select(e => e.Sequence));
+            Assert.False(model.IsActive);
+        }
+        finally { release.TrySetResult(); window.Close(); await host.StopAsync(); }
+    });
+
+    [Fact]
+    public Task DashboardCancelAndShutdownDoNotFreezeDispatcherOrResumeTask() => OnWpfThread(async () =>
+    {
+        using var host = AppHost.CreateBuilder([]).ConfigureLogging(log => log.ClearProviders())
+            .ConfigureServices(services => services.AddSingleton<IAgentRuntime>(provider => new FakeAgentRuntime(
+                waitAtBoundary: async (id, ct) =>
+                {
+                    await provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync(id, ct);
+                    await Task.Delay(Timeout.InfiniteTimeSpan, ct);
+                }))).Build();
+        await host.StartAsync();
+        var window = host.Services.GetRequiredService<MainWindow>();
+        try
+        {
+            await Bind(window);
+            var model = host.Services.GetRequiredService<DashboardViewModel>();
+            var running = Until(model, () => model.Status == "Running");
+            model.SubmitCommand.Execute(null);
+            await running;
+            var first = model.SubmitCommand.ExecutionTask!;
+            var cancel = (Button)window.FindName("CancelTaskButton");
+            Assert.Same(model.CancelCommand, cancel.Command);
+            cancel.Command.Execute(null);
+            await model.CancelCommand.ExecutionTask!;
+            await first.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(RunStatus.Cancelled, model.CurrentRun!.Status);
+            Assert.False(model.ResumeCommand.CanExecute(null));
+
+            running = Until(model, () => model.Status == "Running");
+            model.SubmitCommand.Execute(null);
+            await running;
+            var second = model.SubmitCommand.ExecutionTask!;
+            var id = model.CurrentRun!.Id;
+            await host.StopAsync();
+            await second.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(RunStatus.Interrupted, host.Services.GetRequiredService<TaskRunCoordinator>().GetRun(id).Status);
+            Assert.False(model.SubmitCommand.CanExecute(null));
+            await Dispatcher.Yield(DispatcherPriority.Background);
+        }
+        finally { window.Close(); await host.StopAsync(); }
+    });
+
+    private static async Task Until(DashboardViewModel model, Func<bool> predicate)
+    {
+        if (predicate()) return;
+        var signal = Signal();
+        PropertyChangedEventHandler handler = (_, _) => { if (predicate()) signal.TrySetResult(); };
+        model.PropertyChanged += handler;
+        try { if (predicate()) return; await signal.Task.WaitAsync(TimeSpan.FromSeconds(5)); }
+        finally { model.PropertyChanged -= handler; }
+    }
+
+    private static async Task Bind(Window window)
+    {
+        window.Measure(new Size(900, 800)); window.Arrange(new Rect(0, 0, 900, 800)); window.UpdateLayout();
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+    }
+    private static TaskCompletionSource Signal() => new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private static Task OnWpfThread(Func<Task> test)
+    {
+        var completion = Signal();
+        var thread = new Thread(() =>
+        {
+            var dispatcher = Dispatcher.CurrentDispatcher;
+            SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(dispatcher));
+            dispatcher.BeginInvoke(new Action(async () =>
+            {
+                try { await test(); completion.TrySetResult(); }
+                catch (Exception error) { completion.TrySetException(error); }
+                finally { dispatcher.BeginInvokeShutdown(DispatcherPriority.Background); }
+            }));
+            Dispatcher.Run();
+        }) { IsBackground = true };
+        thread.SetApartmentState(ApartmentState.STA); thread.Start();
+        return completion.Task.WaitAsync(TimeSpan.FromSeconds(20));
+    }
+}

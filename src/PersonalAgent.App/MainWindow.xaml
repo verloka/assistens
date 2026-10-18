@@ -5,13 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PersonalAgent.App"
         mc:Ignorable="d"
-        Title="Personal Agent" Height="450" Width="800" ShowActivated="False">
+        Title="Personal Agent" Height="800" Width="900" MinHeight="600" MinWidth="650" ShowActivated="False">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock Text="Personal Agent" FontSize="26" FontWeight="SemiBold" />
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,16">
@@ -33,7 +34,7 @@
             <TextBlock Text="Host: " FontWeight="SemiBold" />
             <TextBlock x:Name="HostStatusText" Text="{Binding HostStatus}" />
         </StackPanel>
-        <GroupBox Grid.Row="2" Header="Registered hosted components" Padding="12" Margin="0,0,0,16">
+        <GroupBox Grid.Row="2" Header="Registered hosted components" Height="90" Padding="12" Margin="0,0,0,16">
             <ListBox x:Name="ComponentsList" ItemsSource="{Binding Components}" BorderThickness="0" />
         </GroupBox>
         <StackPanel Grid.Row="3">
@@ -42,5 +43,28 @@
             <ProgressBar Height="4" Margin="0,12,0,8" IsIndeterminate="{Binding IsBusy}" />
             <TextBlock x:Name="DiagnosticStatusText" Text="{Binding DiagnosticStatus}" TextWrapping="Wrap" />
         </StackPanel>
+        <GroupBox Grid.Row="4" Header="Local task" DataContext="{Binding Dashboard}" Padding="12" Margin="0,16,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                <TextBox x:Name="TaskInstructions" Grid.Row="1" Text="{Binding Instructions, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True" MinHeight="48" TextWrapping="Wrap" />
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8">
+                    <Button x:Name="SubmitTaskButton" Content="Start local task" Command="{Binding SubmitCommand}" Padding="10,5" Margin="0,0,8,0" />
+                    <Button x:Name="PauseTaskButton" Content="Pause task" Command="{Binding PauseCommand}" Padding="10,5" Margin="0,0,8,0" />
+                    <Button x:Name="ResumeTaskButton" Content="Resume" Command="{Binding ResumeCommand}" Padding="10,5" Margin="0,0,8,0" />
+                    <Button x:Name="CancelTaskButton" Content="Cancel" Command="{Binding CancelCommand}" Padding="10,5" />
+                </StackPanel>
+                <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="Status: " FontWeight="SemiBold" />
+                    <TextBlock x:Name="RunStatusText" Text="{Binding Status}" />
+                </StackPanel>
+                <ListBox x:Name="RunEventsList" Grid.Row="4" ItemsSource="{Binding Events}" DisplayMemberPath="Message" />
+                <TextBlock x:Name="RunSummaryText" Grid.Row="5" Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,8,0,0" />
+            </Grid>
+        </GroupBox>
     </Grid>
 </Window>

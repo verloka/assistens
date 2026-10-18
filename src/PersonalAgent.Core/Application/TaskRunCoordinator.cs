@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
+using System.Runtime.CompilerServices;
 
 namespace PersonalAgent.Core.Application;
 
@@ -119,6 +120,24 @@ public sealed class TaskRunCoordinator : ITaskCommands, IDisposable
         lock (sync) return Find(runId).Terminal.Task.WaitAsync(cancellationToken);
     }
 
+    public async IAsyncEnumerable<RunEvent> WatchRunAsync(Guid runId, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var updates = Channel.CreateUnbounded<RunEvent>(new UnboundedChannelOptions { SingleReader = true });
+        lock (sync)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            var entry = Find(runId);
+            foreach (var value in entry.Events) updates.Writer.TryWrite(value);
+            if (TaskRunStateMachine.IsTerminal(entry.Run.Status)) updates.Writer.TryComplete();
+            else entry.Watchers.Add(updates);
+        }
+        try
+        {
+            await foreach (var value in updates.Reader.ReadAllAsync(cancellationToken)) yield return value;
+        }
+        finally { lock (sync) Find(runId).Watchers.Remove(updates); }
+    }
+
     internal ChannelReader<Guid> AttachRunner()
     {
         lock (sync)
@@ -164,8 +183,7 @@ public sealed class TaskRunCoordinator : ITaskCommands, IDisposable
                 AgentEventKind.ToolCompleted => RunEventType.ToolExecuted,
                 AgentEventKind.WaitingForApproval => RunEventType.ApprovalRequested,
                 _ => RunEventType.Progress
-            }, value.Message);
-            entry.Events[^1] = entry.Events[^1] with { ToolId = value.ToolId, ToolCallId = value.ToolCallId };
+            }, value.Message, value.ToolId, value.ToolCallId);
         }
     }
     internal void FinishExecution(Guid runId, AgentRunResult result)
@@ -227,6 +245,8 @@ public sealed class TaskRunCoordinator : ITaskCommands, IDisposable
             disposed = true;
             queue.Writer.TryComplete();
             entries = runs.Values.ToArray();
+            foreach (var entry in entries)
+                foreach (var watcher in entry.Watchers) watcher.Writer.TryComplete();
         }
         foreach (var entry in entries)
         {
@@ -278,17 +298,27 @@ public sealed class TaskRunCoordinator : ITaskCommands, IDisposable
         if (TaskRunStateMachine.IsTerminal(status)) entry.Terminal.TrySetResult(entry.Run);
     }
 
-    private static void AddEvent(Entry entry, RunEventType type, string message) => entry.Events.Add(new RunEvent
+    private static void AddEvent(Entry entry, RunEventType type, string message, string? toolId = null, Guid? toolCallId = null)
     {
-        Id = Guid.NewGuid(), RunId = entry.Run.Id, Sequence = entry.Events.Count + 1,
-        EventType = type, TimestampUtc = DateTimeOffset.UtcNow, Message = message
-    });
+        var value = new RunEvent
+        {
+            Id = Guid.NewGuid(), RunId = entry.Run.Id, Sequence = entry.Events.Count + 1,
+            EventType = type, TimestampUtc = DateTimeOffset.UtcNow, Message = message, ToolId = toolId, ToolCallId = toolCallId
+        };
+        entry.Events.Add(value);
+        foreach (var watcher in entry.Watchers)
+        {
+            watcher.Writer.TryWrite(value);
+            if (TaskRunStateMachine.IsTerminal(entry.Run.Status)) watcher.Writer.TryComplete();
+        }
+    }
 
     private sealed class Entry(TaskRun run, AgentRequest request)
     {
         public TaskRun Run = run;
         public AgentRequest Request { get; } = request;
         public List<RunEvent> Events { get; } = [];
+        public List<Channel<RunEvent>> Watchers { get; } = [];
         public CancellationTokenSource Cancellation { get; } = new();
         public TaskCompletionSource Resume = CompletedSignal();
         public bool Executing = false;

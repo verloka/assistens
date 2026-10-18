@@ -19,8 +19,9 @@ public sealed class HealthViewModel : INotifyPropertyChanged, IDisposable
     private string _diagnosticStatus = "Ready";
 
     public HealthViewModel(IHostApplicationLifetime lifetime, IEnumerable<IHostedService> services,
-        ILogger<HealthViewModel> logger)
+        ILogger<HealthViewModel> logger, DashboardViewModel dashboard)
     {
+        Dashboard = dashboard;
         _logger = logger;
         _started = lifetime.ApplicationStarted;
         _stopping = lifetime.ApplicationStopping;
@@ -32,6 +33,7 @@ public sealed class HealthViewModel : INotifyPropertyChanged, IDisposable
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public IReadOnlyList<string> Components { get; }
+    public DashboardViewModel Dashboard { get; }
     public AsyncCommand RunDiagnosticCommand { get; }
     public string HostStatus => _stopped.IsCancellationRequested ? "Stopped"
         : _stopping.IsCancellationRequested ? "Stopping"

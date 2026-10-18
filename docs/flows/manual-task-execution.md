@@ -49,9 +49,11 @@ Status: Draft
 
 - Local fake adapter (PA-011/PA-012): `src/PersonalAgent.Core/Agents/AgentContracts.cs`, `src/PersonalAgent.Agent/FakeAgentRuntime.cs` and `tests/PersonalAgent.IntegrationTests/FakeAgentRuntimeTests.cs` verify ordered Start/progress/Complete, cancellation, controlled step boundaries and limits without credentials. This is not yet a submitted application run, durable outcome or notification, so complete S1-S3 remain `[untested]`.
 
-- Session-local commands (PA-013): `src/PersonalAgent.Core/Application/TaskCommands.cs`, `TaskRunCoordinator.cs` and `tests/PersonalAgent.UnitTests/TaskCommandsTests.cs` verify idempotent submit/cancel/pause/resume, payload-bound command IDs, optimistic versions and cancellable step boundaries. The coordinator is in-memory, with no runtime consumer, durable store or native GUI driver yet; these checks do not complete S1-S3.
+- Session-local commands (PA-013): `src/PersonalAgent.Core/Application/TaskCommands.cs`, `TaskRunCoordinator.cs` and `tests/PersonalAgent.UnitTests/TaskCommandsTests.cs` verify idempotent submit/cancel/pause/resume, payload-bound command IDs, optimistic versions and cancellable step boundaries. These command-level tests use in-memory state without a runtime consumer, durable store or native GUI driver; they do not complete S1-S3.
 
 - Session-local runner (PA-014): `src/PersonalAgent.Core/Application/TaskRunner.cs` and `tests/PersonalAgent.IntegrationTests/TaskRunnerTests.cs` verify single consumption/execution under duplicate submits, ordered history, cancel vs late success/progress, pause acknowledgement and same-attempt resume, timeouts, sanitized failures and Interrupted on shutdown. No durable storage, external tools, notification delivery or business E2E proof is implied.
 
+- Dashboard (PA-015): `src/PersonalAgent.App/ViewModels/DashboardViewModel.cs`, `Hosting/TaskRunnerService.cs` and `MainWindow.xaml` compose the local fake task path. `tests/PersonalAgent.IntegrationTests/DashboardTests.cs` checks actual XAML commands, ordered progress, pause/resume/cancel, responsive dispatcher and host shutdown without displaying a window. The observable session-local path works; durable storage and notifications required by complete S1-S3 remain `[untested]`.
+
 ## Unknowns
-- Durable storage, notifications and end-to-end UI task submission remain pending. Confirm approval and E2E proof as code lands.
+- Durable storage, notifications and business E2E acceptance remain pending. Confirm approval and proof as code lands.
