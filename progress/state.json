@@ -561,14 +561,15 @@
                                        "attempts":  1
                                    },
                         "PA-052":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T18:44:12.1982865+00:00",
+                                       "completed_at":  "2026-10-18T18:50:06.5650290+00:00",
                                        "evidence":  [
-
+                                                        "Neutral ToolContracts and ToolRegistry bind only explicit IDs, validate self-contained Draft202012 JSON Schema, preserve source/status/text/data/image with measured duration, recheck classified boundary/trusted policy per sequential call and refuse duplicate call IDs. Actual MAF invokes local fake by schema and receives unified result. Sensitive/nonlocal/unknown tools default deny; production runtime exposure remains closed until053. FDD scoped PASS, full business scenarios untested.",
+                                                        "Verification: ToolRegistry targeted17passed; final scripts/verify.ps1 includes18registry tests and locked restore/build0warnings/errors,88unit+342integration+3localfake-flow passed(433)."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-053":  {
                                        "status":  "pending",
@@ -1301,6 +1302,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-051",
-    "updated_at":  "2026-10-18T18:43:54.8198723+00:00"
+    "last_task_id":  "PA-052",
+    "updated_at":  "2026-10-18T18:50:06.5747207+00:00"
 }

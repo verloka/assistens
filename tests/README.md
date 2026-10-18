@@ -64,6 +64,14 @@ The default App runtime remains fake; provider configuration follows in PA-050.
 
 ## MAF tool and approval diagnostic (PA-006)
 
+PA-052: `--filter ToolRegistry` tests the neutral IAgentTool to MAF AIFunction
+adapter with real SDK dispatch and an in-process fake tool. Coverage includes
+explicit allowlists, JSON Schema 2020-12 argument validation, source identity,
+text/data/image mapping, default-denied risks/sources, policy after pause, call-ID
+replay refusal, cancellation and sequential execution. Schemas use
+[JsonSchema.Net](https://docs.json-everything.net/schema/basics/) 9.4.1 with external
+references/fetch disabled. Production runtime tools are not enabled by this slice.
+
 ```powershell
 dotnet test --filter MafToolApprovalSpikeTests
 ```
