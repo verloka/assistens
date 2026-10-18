@@ -321,14 +321,14 @@
                                        "attempts":  1
                                    },
                         "PA-030":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T13:06:59.0180020+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Attended visual matrix in tests/README.md: only prior 1920x1080 DPI120 PRIMARY result observed. Two-display/mixed-DPI/window-move and 100/150 percent observations unavailable; user has no second monitor per checkpoint. No capture or settings change performed. Resume with actual attended matrix evidence.",
+                                       "attempts":  1
                                    },
                         "PA-031":  {
                                        "status":  "pending",
@@ -1281,6 +1281,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-029",
-    "updated_at":  "2026-10-18T13:06:30.0035857+00:00"
+    "last_task_id":  "PA-030",
+    "updated_at":  "2026-10-18T13:06:59.9893284+00:00"
 }

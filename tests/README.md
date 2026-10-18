@@ -129,6 +129,27 @@ API references: [SendInput](https://learn.microsoft.com/en-us/windows/win32/api/
 [RegisterHotKey](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey),
 [BitBlt](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt).
 
+## Visual capture smoke matrix (PA-030)
+
+Reuse the attended PRIMARY/VIRTUAL/SECONDARY fixture and checklist above; do not
+create a second capture implementation. Capture occurs only on the user's button
+press. Before each check keep the blue bar visible and avoid private content.
+
+| Setup/check | Actual result |
+| --- | --- |
+| One display, 125% scaling, PRIMARY preview | User reported PRIMARY OK on 2026-10-18: PNG/source 1920x1080 at (0,0), DPI120, generation1, 365729 bytes; diagnostic exit0. Recorded under PA-025 in progress/LOG.md. |
+| Two displays, negative origin and different DPI | NOT TESTED: user has no second monitor (PA-026). |
+| Move window between displays; PRIMARY stays primary, SECONDARY blue bar follows window | NOT TESTED: same hardware blocker. |
+| Repeat at 100%/150% scaling; geometry remains physical and preview matches | NOT TESTED: no attended result for changed scaling. |
+
+When hardware is available, run the PA-026 steps for each layout, move the window
+between both displays and repeat PRIMARY/VIRTUAL/SECONDARY. At each scale compare
+PNG dimensions with SourceBounds and SYSTEM virtual bounds, monitor DPI with
+Windows settings, and the visible bar's position. Record actual report lines,
+preview match/mismatch, layout/scale and diagnostic exit. Fix and rerun any actual
+failure before acceptance. Do not change display settings or capture automatically.
+The local fake geometry/codec suites do not fill these manual result cells.
+
 ## Screen-independent computer test doubles (PA-029)
 
 PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit
