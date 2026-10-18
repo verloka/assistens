@@ -240,3 +240,29 @@ upgrades/reapplies all migrations and checks data/append-only triggers and nulla
 legacy submission keys. It also checks conservative/idempotent Created-state
 recovery. Existing schema, repository, runtime, conversation, process-crash and
 idempotency tests are reused; all use temporary databases and no external LLM.
+
+## Primary monitor capture (PA-025)
+
+`dotnet test --filter WindowsScreenCaptureTests` uses a fake native boundary and
+real PNG encode/decode to check default denial, cancellation, desktop availability,
+generation/authorization/geometry changes, metadata and no silent capture retry.
+It does not touch the physical screen or prove lock-screen/hardware behavior.
+
+The native adapter checks active WTS session plus accessible Default input desktop,
+uses scoped PerMonitorV2 physical geometry and a hidden non-activating HWND for
+GetDpiForWindow, then GDI capture with deterministic resource cleanup. App/fixture
+manifests establish PerMonitorV2 before visible windows. No screenshot files,
+image logs, network or clipboard are used; the driver is not exposed to fake tasks.
+Caller authorization defaults to denied and is rechecked with geometry/session
+before returning an encoded frame. Production lease integration remains later work.
+
+Attended check: run `dotnet run --project tests/PersonalAgent.WindowsSmoke`, activate
+the window on the primary display and click **Capture PRIMARY monitor**. This
+separate button types nothing. Verify primary desktop preview (including blue
+CAPTURE CHECK bar), PNG dimensions/source bounds/DPI, and paste the PRIMARY report
+with your observation. Pixels stay in memory and are not uploaded. Close the window.
+Actual primary-screen acceptance stays pending until this observation is recorded.
+
+API references: [GetDpiForWindow](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdpiforwindow),
+[thread DPI context](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setthreaddpiawarenesscontext),
+[OpenInputDesktop](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-openinputdesktop).

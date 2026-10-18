@@ -5,6 +5,8 @@ using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using PersonalAgent.Computer;
+using System.IO;
 
 namespace PersonalAgent.WindowsSmoke;
 
@@ -24,26 +26,62 @@ internal sealed class SmokeWindow : Window
     private nint handle;
     private bool registered;
     private bool hotkeyObserved;
+    private int primaryConsent;
+    private long primaryGeneration;
+    private CancellationTokenSource? primaryCancellation;
 
     public SmokeWindow()
     {
         Title = "PA-008 attended Windows diagnostic";
         Width = 680;
-        Height = 560;
+        Height = 660;
         ShowActivated = false;
         var panel = new StackPanel { Margin = new Thickness(16) };
         panel.Children.Add(new TextBlock
         {
-            Text = "Click the button yourself while this window is foreground. Release all keys. " +
-                   "Only this window is captured, in memory. Then press Ctrl+Shift+F10 yourself to test the hotkey. " +
-                   "Close this window to unregister it. No model, clipboard, focus activation or background input.",
+            Text = "The first button tests this window's crop, one x and the hotkey (PA-008); release all keys first. " +
+                   "The PRIMARY button captures the whole primary screen as a local PNG preview and types nothing (PA-025). " +
+                   "Activate this window and press the desired button yourself. No files, uploads, clipboard or background input. " +
+                   "Ctrl+Shift+F10 applies only after the first button. Close the window when finished.",
             TextWrapping = TextWrapping.Wrap
         });
         panel.Children.Add(run);
+        var primary = new Button { Content = "Capture PRIMARY monitor (PNG preview only; no typing)", Margin = new Thickness(0, 0, 0, 8) };
+        primary.Click += async (_, _) =>
+        {
+            try
+            {
+                RequireForeground();
+                primary.IsEnabled = false;
+                Interlocked.Increment(ref primaryGeneration);
+                Volatile.Write(ref primaryConsent, 1);
+                primaryCancellation = new CancellationTokenSource();
+                var capture = new WindowsScreenCapture(() =>
+                    (Volatile.Read(ref primaryConsent) == 1 && Native.GetForegroundWindow() == handle, Interlocked.Read(ref primaryGeneration)));
+                var frame = await capture.CaptureAsync(new(), primaryCancellation.Token);
+                using var stream = new MemoryStream(frame.ImageBytes, writable: false);
+                var image = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad).Frames[0];
+                image.Freeze();
+                preview.Source = image;
+                Write($"PRIMARY OK; PNG {frame.ImageWidth}x{frame.ImageHeight}; source={frame.SourceBounds}; " +
+                      $"DPI={frame.Monitors[0].DpiX}; monitors={Native.GetSystemMetrics(80)}; generation={frame.DesktopGeneration}; bytes={frame.ImageBytes.Length}. Preview must match primary desktop. Nothing saved/uploaded.");
+            }
+            catch (ScreenCaptureException exception) { Write($"PRIMARY BLOCKED: {exception.Code}; {exception.Message}"); }
+            catch (OperationCanceledException) { Write("PRIMARY cancelled."); }
+            catch (Exception exception) { Write($"PRIMARY failed: {exception.Message}"); }
+            finally
+            {
+                Volatile.Write(ref primaryConsent, 0);
+                primaryCancellation?.Dispose(); primaryCancellation = null;
+                primary.IsEnabled = true;
+            }
+        };
+        panel.Children.Add(primary);
+        panel.Children.Add(new TextBlock { Text = "CAPTURE CHECK: this blue bar should appear in primary preview", Background = System.Windows.Media.Brushes.DodgerBlue, Margin = new Thickness(0, 0, 0, 8) });
         panel.Children.Add(target);
         panel.Children.Add(report);
         panel.Children.Add(preview);
-        Content = panel;
+        Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         run.Click += RunSmoke;
         SourceInitialized += (_, _) =>
         {
@@ -52,6 +90,8 @@ internal sealed class SmokeWindow : Window
         };
         Closed += (_, _) =>
         {
+            Volatile.Write(ref primaryConsent, 0);
+            primaryCancellation?.Cancel();
             if (registered) Native.UnregisterHotKey(handle, 1);
             HwndSource.FromHwnd(handle)?.RemoveHook(OnMessage);
         };
@@ -142,31 +182,7 @@ internal static class Native
     internal static BitmapSource CaptureWindow(nint hwnd)
     {
         if (!GetWindowRect(hwnd, out var rect)) throw new Win32Exception(Marshal.GetLastWin32Error());
-        var width = rect.Right - rect.Left;
-        var height = rect.Bottom - rect.Top;
-        var screen = GetDC(0);
-        if (screen == 0) throw new Win32Exception(Marshal.GetLastWin32Error());
-        nint memory = 0, bitmap = 0, previous = 0;
-        try
-        {
-            memory = CreateCompatibleDC(screen);
-            bitmap = CreateCompatibleBitmap(screen, width, height);
-            if (memory == 0 || bitmap == 0) throw new Win32Exception(Marshal.GetLastWin32Error());
-            previous = SelectObject(memory, bitmap);
-            if (previous == 0 || previous == -1) throw new Win32Exception(Marshal.GetLastWin32Error());
-            if (!BitBlt(memory, 0, 0, width, height, screen, rect.Left, rect.Top, 0x00CC0020))
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-            var image = Imaging.CreateBitmapSourceFromHBitmap(bitmap, 0, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-            image.Freeze();
-            return image;
-        }
-        finally
-        {
-            if (previous != 0 && previous != -1) SelectObject(memory, previous);
-            if (bitmap != 0) DeleteObject(bitmap);
-            if (memory != 0) DeleteDC(memory);
-            ReleaseDC(0, screen);
-        }
+        return GdiScreenCapture.Capture(new(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top));
     }
 
     [DllImport("user32.dll")] internal static extern nint GetForegroundWindow();
@@ -177,12 +193,4 @@ internal static class Native
     [DllImport("user32.dll")] internal static extern uint GetDpiForWindow(nint hwnd);
     [DllImport("user32.dll")] internal static extern int GetSystemMetrics(int index);
     [DllImport("user32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool GetWindowRect(nint hwnd, out Rect rect);
-    [DllImport("user32.dll")] private static extern nint GetDC(nint hwnd);
-    [DllImport("user32.dll")] private static extern int ReleaseDC(nint hwnd, nint dc);
-    [DllImport("gdi32.dll", SetLastError = true)] private static extern nint CreateCompatibleDC(nint dc);
-    [DllImport("gdi32.dll", SetLastError = true)] private static extern nint CreateCompatibleBitmap(nint dc, int width, int height);
-    [DllImport("gdi32.dll", SetLastError = true)] private static extern nint SelectObject(nint dc, nint obj);
-    [DllImport("gdi32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool BitBlt(nint target, int x, int y, int width, int height, nint source, int sourceX, int sourceY, uint operation);
-    [DllImport("gdi32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool DeleteObject(nint obj);
-    [DllImport("gdi32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool DeleteDC(nint dc);
 }

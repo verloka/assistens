@@ -8,4 +8,7 @@
     <IsTestProject>false</IsTestProject>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/PersonalAgent.Computer/PersonalAgent.Computer.csproj" />
+  </ItemGroup>
 </Project>

@@ -1,8 +1,8 @@
 # Agent checkpoint
 - Last completed task: PA-024
-- Current task: none
-- Modified files: Core/Computer/ScreenContracts.cs, UnitTests/ScreenContractTests.cs, FDD-002 reference, progress state/log/checkpoint.
-- Verified build/test: ScreenContractTests 3 passed; scripts/verify.ps1 locked restore/build passed (0 warnings/errors), 40 unit + 71 integration + 3 local fake-flow passed including Core isolation.
-- Runtime blockers / waiting on user: none for contracts. PA-008 observed one monitor at DPI120; primary/multi-monitor production capture still needs its own evidence.
-- Decisions: physical coordinates and original source geometry stay separate from encoded image pixels; per-monitor DPI and generation metadata; no image decode/capture/lease implementation claimed. All FDD flows Draft.
-- Next instruction: taskctl.ps1 next; inspect any in_progress task first. Expected PA-025.
+- Current task: none; PA-025 blocked awaiting attended PRIMARY capture result
+- Modified files: Computer capture driver/native shared GDI helper/friend-test access and Windows TFM, App manifest, WindowsSmoke PRIMARY preview/project reference, integration capture tests, README/FDD reference and progress state/log/checkpoint.
+- Verified build/test: WindowsScreenCaptureTests 8 passed (fake native + real PNG codec); scripts/verify.ps1 locked restore/build passed (0 warnings/errors), 40 unit + 79 integration + 3 local fake-flow passed; final WindowsSmoke build 0 warnings/errors.
+- Runtime blockers / waiting on user: PA-025 PRIMARY screen/metadata observation; fixture launched session37925. User must click PRIMARY, verify actual desktop/blue bar, paste PRIMARY report and close. No assistant-triggered screenshot, pixel persistence/upload or live lock proof.
+- Decisions: deny by default and recheck context; active/default desktop only, thread/process PerMonitorV2, in-memory PNG; capture adapter not exposed to agent. Full desktop lease/lock/UAC flows not verified. All FDD flows Draft.
+- Next instruction: taskctl.ps1 next; inspect any in_progress task first. Select independent ready work while PA-025 blocked; reconcile user result after current iteration.

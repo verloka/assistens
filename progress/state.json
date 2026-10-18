@@ -267,14 +267,14 @@
                                        "attempts":  1
                                    },
                         "PA-025":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T11:41:07.2809289+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Primary Windows capture code and 8 fake-native/real-PNG tests pass; full suite 40 unit + 79 integration + 3 fake-flow. Attended PRIMARY preview launched session 37925; awaiting user observed pixel/metadata match and exit. No live hardware/lock result claimed; tests/README.md has steps.",
+                                       "attempts":  1
                                    },
                         "PA-026":  {
                                        "status":  "pending",
@@ -1277,6 +1277,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-024",
-    "updated_at":  "2026-10-18T11:41:06.0242700+00:00"
+    "last_task_id":  "PA-025",
+    "updated_at":  "2026-10-18T11:50:36.2198130+00:00"
 }
