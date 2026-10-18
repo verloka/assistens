@@ -118,8 +118,9 @@ internal sealed class SmokeWindow : Window
         }
     }
 
-    private void RunSmoke(object sender, RoutedEventArgs args)
+    private async void RunSmoke(object sender, RoutedEventArgs args)
     {
+        run.IsEnabled = false;
         try
         {
             RequireForeground();
@@ -140,21 +141,17 @@ internal sealed class SmokeWindow : Window
             RequireForeground();
             if (!target.IsKeyboardFocused) throw new InvalidOperationException("Test field has no focus; nothing injected.");
             // Exactly one short atomic Unicode pair, with no modifiers or focus-changing keys.
-            var pair = new[] { Native.Key('x', false), Native.Key('x', true) };
-            var inserted = Native.SendInput(2, pair, Marshal.SizeOf<Native.Input>());
-            if (inserted != 2)
-            {
-                // Never retry the character. Complete only our own key-up after a partial insertion.
-                if (inserted == 1) Native.SendInput(1, [Native.Key('x', true)], Marshal.SizeOf<Native.Input>());
-                throw new InvalidOperationException($"SendInput inserted {inserted}/2 events; no retry. UIPI may block input.");
-            }
-            run.IsEnabled = false;
-            Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
+            // The authorization callback uses Dispatcher-bound state; invoke the atomic sender off UI
+            // with a trusted callback that marshals only the brief policy check back to this window.
+            var inputSender = new WindowsInputSender(() => Dispatcher.Invoke(() =>
+                (IsActive && Native.GetForegroundWindow() == handle && target.IsKeyboardFocused, 0L)));
+            await inputSender.SendAsync([NativeInput.Unicode('x', false), NativeInput.Unicode('x', true)], 0);
+            await Dispatcher.InvokeAsync(new Action(() =>
             {
                 target.IsReadOnly = true;
                 Write(target.Text == "x" ? "SendInput observed OK: one x in test field." : "SendInput observation FAILED; do not claim passed.");
                 Write(hotkeyObserved ? "Hotkey already observed." : "Now press Ctrl+Shift+F10 manually, then close the window.");
-            }));
+            }), DispatcherPriority.ApplicationIdle);
         }
         catch (Exception exception)
         {
@@ -185,20 +182,7 @@ internal sealed class SmokeWindow : Window
 
 internal static class Native
 {
-    [StructLayout(LayoutKind.Sequential)] internal struct Input { internal uint Type; internal InputUnion Data; }
-    [StructLayout(LayoutKind.Explicit)] internal struct InputUnion
-    {
-        [FieldOffset(0)] internal KeyboardInput Keyboard;
-        [FieldOffset(0)] internal MouseInput Mouse;
-    }
-    [StructLayout(LayoutKind.Sequential)] internal struct KeyboardInput { internal ushort VirtualKey, Scan; internal uint Flags, Time; internal nuint Extra; }
-    [StructLayout(LayoutKind.Sequential)] internal struct MouseInput { internal int X, Y; internal uint Data, Flags, Time; internal nuint Extra; }
     [StructLayout(LayoutKind.Sequential)] private struct Rect { internal int Left, Top, Right, Bottom; }
-
-    internal static Input Key(char value, bool up) => new()
-    {
-        Type = 1, Data = new InputUnion { Keyboard = new KeyboardInput { Scan = value, Flags = 0x4u | (up ? 0x2u : 0) } }
-    };
 
     internal static BitmapSource CaptureWindow(nint hwnd)
     {
@@ -208,7 +192,6 @@ internal static class Native
 
     [DllImport("user32.dll")] internal static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] internal static extern short GetAsyncKeyState(int key);
-    [DllImport("user32.dll", SetLastError = true)] internal static extern uint SendInput(uint count, Input[] inputs, int size);
     [DllImport("user32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] internal static extern bool RegisterHotKey(nint hwnd, int id, uint modifiers, uint key);
     [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] internal static extern bool UnregisterHotKey(nint hwnd, int id);
     [DllImport("user32.dll")] internal static extern uint GetDpiForWindow(nint hwnd);

@@ -150,6 +150,27 @@ preview match/mismatch, layout/scale and diagnostic exit. Fix and rerun any actu
 failure before acceptance. Do not change display settings or capture automatically.
 The local fake geometry/codec suites do not fill these manual result cells.
 
+## Atomic SendInput boundary (PA-031)
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter ComputerInputSender`
+uses a fake native boundary: no keystroke/click reaches Windows. It checks INPUT
+ABI size/offset, default denial, stale/revoked authorization, locked desktop,
+pre-cancellation, malformed/unbalanced batches, cancellation during atomic send,
+global serialization across sender instances, partial/unknown outcomes and
+key/button release failures. Input arrays are copied before waiting, batches are
+limited to 64 events, and the sender faults after any incomplete/unknown send.
+No press is retried; a cleanup attempt contains only release events. If the
+desktop becomes unavailable, cleanup is reported unsuccessful without input.
+
+The attended PA-008 fixture now reuses this internal sender; its old observed
+result predates this change. Build/fake-native tests do not prove the revised
+real input path, UIPI/elevation mismatch or live lock/takeover races. Those need
+an attended test in the fixture. The driver is not registered as an agent tool
+and does not implement the later production DesktopLease or PauseGate.
+The native API does not reliably identify UIPI as the reason for zero insertion;
+NativeError is diagnostic only, and successful insertion is not UI outcome proof.
+Reference: [Microsoft SendInput contract](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput).
+
 ## Screen-independent computer test doubles (PA-029)
 
 PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit

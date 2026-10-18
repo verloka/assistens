@@ -331,14 +331,15 @@
                                        "attempts":  1
                                    },
                         "PA-031":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:07:00.7642602+00:00",
+                                       "completed_at":  "2026-10-18T13:11:39.6539263+00:00",
                                        "evidence":  [
-
+                                                        "Internal WindowsInputSender/WindowsInputNative, bounded balanced atomic batches, default-denied trusted authorization + generation and active Default desktop; process-wide serialization; structured insertion/native/cleanup diagnostics; release-only cleanup and fault latch, no replay/elevation. Existing attended fixture reuses primitive; FDD-002 partial S1/S3/S4 reviewed; full business flow/live path not claimed.",
+                                                        "Verification: ComputerInputSenderTests: initial targeted 17 passed; final scripts/verify.ps1 locked restore/build 0 warnings/errors, 60 unit + 130 integration (18 input cases) + 3 local fake-flow passed; git diff --check and doctor passed. No real input performed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-032":  {
                                        "status":  "pending",
@@ -1281,6 +1282,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-030",
-    "updated_at":  "2026-10-18T13:06:59.9893284+00:00"
+    "last_task_id":  "PA-031",
+    "updated_at":  "2026-10-18T13:11:39.6640023+00:00"
 }

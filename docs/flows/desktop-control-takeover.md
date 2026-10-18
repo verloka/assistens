@@ -55,6 +55,8 @@ Status: Draft
 
 - Test driver foundation (PA-029): neutral `IComputerController` covers the five planned driver operations. `tests/TestDoubles/FakeComputerController.cs` consumes exact scripted calls/results/errors without OS input or retries; `ScreenshotFixture.cs` contains only a synthetic PNG. `tests/PersonalAgent.UnitTests/FakeComputerTests.cs` executes on net10.0 with no Windows graphics dependency; `tests/PersonalAgent.IntegrationTests/FakeComputerPayloadTests.cs` checks the same fixture through actual codecs and SDK content without capturing a screen. Scripted generation/error cases are foundations, not production lease/pause/recovery proof; full S1-S4 remain `[untested]`.
 
+- Atomic input primitive (PA-031): internal `WindowsInputSender` and `WindowsInputNative` share a process-local input lock, require a trusted authorization/generation callback and active Default desktop, and send only bounded balanced batches. Partial/unknown results never replay presses; cleanup releases only the batch's possible held inputs, and the sender refuses later input after native failure. `tests/PersonalAgent.IntegrationTests/ComputerInputSenderTests.cs` checks native ABI and fake-native denial, cancellation, concurrency, partial insertion and cleanup failures. WindowsSmoke reuses this sender only after its attended gesture. The revised native path has not been manually rerun; production lease/takeover, real UIPI/lock races and full S1-S4 remain `[untested]`.
+
 ## Unknowns
 - Concrete Windows APIs, pause latency and live race results must be established in the implementation.
 
