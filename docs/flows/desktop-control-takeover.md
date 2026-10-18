@@ -45,5 +45,7 @@ Status: Draft
 ## Implementation References
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §§6, 9–10; backlog PR-04, PR-05, PR-06, PR-14.
 
+- Capture contract foundation (PA-024): `src/PersonalAgent.Core/Computer/ScreenContracts.cs` defines physical points/bounds, source geometry independent of resized image dimensions, per-monitor DPI and capture time/generation. `tests/PersonalAgent.UnitTests/ScreenContractTests.cs` checks negative origins, mixed-DPI metadata, overflow-safe half-open bounds, selection validation and neutral serialization. It does not decode image bytes, capture a desktop or implement lease/pause/resume; complete S1-S4 remain `[untested]`.
+
 ## Unknowns
 - Concrete Windows APIs, pause latency and live race results must be established in the implementation.

@@ -256,14 +256,15 @@
                                        "attempts":  1
                                    },
                         "PA-024":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T11:38:00.4386866+00:00",
+                                       "completed_at":  "2026-10-18T11:41:06.0132725+00:00",
                                        "evidence":  [
-
+                                                        "Core Computer/ScreenContracts.cs SDK/UI-free ScreenPoint/ScreenBounds/ScreenCapture/ScreenshotOptions plus per-monitor DPI metadata: physical negative origins, source vs image geometry, time/generation, bounded coordinate validation and unambiguous capture selection. ScreenContractTests verify DTOs/serialization, not image decode or hardware. FDD-002 and consumers inspected; complete scenarios untested Drafts.",
+                                                        "Verification: ScreenContractTests 3 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 40 unit + 71 integration + 3 local fake-flow passed; architecture/Core isolation regression passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-025":  {
                                        "status":  "pending",
@@ -1276,6 +1277,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-023",
-    "updated_at":  "2026-10-18T11:37:59.1878267+00:00"
+    "last_task_id":  "PA-024",
+    "updated_at":  "2026-10-18T11:41:06.0242700+00:00"
 }
