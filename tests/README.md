@@ -191,8 +191,12 @@ Paste those report lines and close the window. If BLOCKED/FAILED occurs, record
 it without retrying automatically. No files/uploads, external-app clicks or
 automatic diagnostic launches are performed. The pointer is not moved back.
 
-Actual PA-032 click results: **NOT TESTED**. The revised native path and real
-pixel positioning require this attended observation. Native checks cannot
+Actual PA-032 click results: user returned **Left/Right/Middle OK** on 2026-10-18,
+`observed=2` each at physical (479,474), generations 1-3; additional Left/Middle
+checks also OK, and diagnostic exited 0. Launch CLICK with the left mouse button;
+the selection chooses the button injected into TEST TARGET. The target records
+matching down/up events without opening a menu or performing a middle-click action.
+Native checks cannot
 atomically reserve the foreground desktop; use only this dedicated window and
 keep the session stable during the check. Production lease/pause/approval policy
 and full business scenarios remain later tasks.
