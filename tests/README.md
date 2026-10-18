@@ -261,7 +261,11 @@ the window on the primary display and click **Capture PRIMARY monitor**. This
 separate button types nothing. Verify primary desktop preview (including blue
 CAPTURE CHECK bar), PNG dimensions/source bounds/DPI, and paste the PRIMARY report
 with your observation. Pixels stay in memory and are not uploaded. Close the window.
-Actual primary-screen acceptance stays pending until this observation is recorded.
+Attended result recorded on 2026-10-18: user returned PRIMARY OK, PNG 1920x1080,
+source (0,0,1920,1080), DPI 120, one monitor, generation 1, 365729 bytes in response
+to this preview check. Diagnostic process subsequently exited 0. This verifies
+the primary capture check on that setup; two-monitor and live lock/UAC checks
+remain unverified.
 
 API references: [GetDpiForWindow](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdpiforwindow),
 [thread DPI context](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setthreaddpiawarenesscontext),

@@ -267,14 +267,15 @@
                                        "attempts":  1
                                    },
                         "PA-025":  {
-                                       "status":  "blocked",
-                                       "started_at":  "2026-10-18T11:41:07.2809289+00:00",
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T11:55:17.8911405+00:00",
+                                       "completed_at":  "2026-10-18T11:55:18.3882940+00:00",
                                        "evidence":  [
-
+                                                        "abbc530: authorized primary capture, PNG preview and native failure checks; user PRIMARY OK 1920x1080 source=(0,0,1920,1080) DPI120 monitors1 generation1 bytes365729; attended process session37925 exited 0; no files/uploads.",
+                                                        "Verification: Previous unchanged-code scripts/verify.ps1: locked restore/build 0 warnings/errors; 40 unit + 79 integration + 3 local fake-flow passed. WindowsScreenCaptureTests 8 passed. User attended PRIMARY result received; full FDD-002 S1-S4 remain untested."
                                                     ],
-                                       "note":  "Primary Windows capture code and 8 fake-native/real-PNG tests pass; full suite 40 unit + 79 integration + 3 fake-flow. Attended PRIMARY preview launched session 37925; awaiting user observed pixel/metadata match and exit. No live hardware/lock result claimed; tests/README.md has steps.",
-                                       "attempts":  1
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
                                    },
                         "PA-026":  {
                                        "status":  "pending",
@@ -1278,5 +1279,5 @@
                                    }
                     },
     "last_task_id":  "PA-025",
-    "updated_at":  "2026-10-18T11:50:36.2198130+00:00"
+    "updated_at":  "2026-10-18T11:55:18.3973118+00:00"
 }

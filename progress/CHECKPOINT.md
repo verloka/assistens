@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-024; PA-001..PA-024 all done
-- Current task: none; PA-025 blocked awaiting attended PRIMARY capture result. No ready/in_progress or independent ready task remains.
-- Modified files: all authorized code/tests/tracker committed through abbc530; final handoff updates only LOG.md/CHECKPOINT.md.
-- Verified build/test: WindowsScreenCaptureTests 8 passed (fake native + actual PNG codec); final scripts/verify.ps1 locked restore/build passed (0 warnings/errors), 40 unit + 79 integration + 3 local fake-flow passed. Final WindowsSmoke build passed. Doctor validates 125 tasks; report/independent query find no ready work.
-- Runtime blockers / waiting on user: PA-025 actual primary-screen preview/metadata acceptance. WindowsSmoke launched session37925, process49528 running. User must activate window, click Capture PRIMARY monitor, verify desktop/blue CAPTURE CHECK bar, paste PRIMARY OK/error and close. No assistant-triggered screenshot, files/uploads or live lock/UAC result.
-- Decisions: authorization defaults denied and context rechecked; active Default desktop only, PerMonitorV2 and in-memory PNG; driver unregistered as agent tool. All FDD flows Draft; full MVP E2E remains unverified. PA-008 earlier attended crop/input/hotkey passed at DPI120 with one monitor; not a substitute for PA-025/PA-026 evidence.
-- Next instruction: on user reply run doctor/next and inspect any in_progress task first. Currently unblock/start PA-025, assess actual PRIMARY observation and process exit, fix if needed, then complete with real evidence. Run next; never bypass dependencies or assume two-monitor hardware.
+- Last completed task: PA-025; PA-001..PA-025 done
+- Current task: none; PA-026 is next ready task
+- Modified files: PA-025 tracker, LOG/checkpoint, attended evidence in tests/README.md and FDD-002 references; implementation previously committed in abbc530.
+- Verified build/test: unchanged-code scripts/verify.ps1 locked restore/build passed (0 warnings/errors), 40 unit + 79 integration + 3 local fake-flow; 8 WindowsScreenCaptureTests. User PRIMARY OK 1920x1080 source=(0,0,1920,1080), DPI120, monitors1, generation1, bytes365729. Diagnostic session37925 exited0; no process remains. Doctor passed.
+- Runtime blockers / waiting on user: none for PA-025; two-display hardware for PA-026 not yet available (observed one monitor).
+- Decisions: no screenshot files/uploads or background capture; all FDD flows remain Draft, full MVP E2E unverified. Primary result accepted only for reported setup, no lock/UAC/multi-monitor success inferred.
+- Next instruction: run taskctl.ps1 next; inspect any in_progress task first, otherwise start PA-026. Implement supported capture areas and test negative geometry; block actual two-display acceptance if hardware unavailable, then select independent ready task.
