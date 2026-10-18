@@ -362,3 +362,7 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 ## 2026-10-18 17:58:47 +03:00 | PA-042 | waiting; requested diagnostic relaunched
 - Per explicit user request launched dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build in exec80557; process/window checked. User alone must ARM, minimize via title-bar minus, activate IDE and press CtrlShiftF10, then restore and return report. No assistant-triggered registration/input/capture. PA-037/038 done; PA-042 still blocked until minimizedTrue actual report, PA-026/030 hardware unchanged.
 - Checks: existing binary verified by just-completed full333test suite/build0warnings/errors at2e5d9f7. No new code/test changes or invented hotkey result.
+
+## 2026-10-18 18:02:12 +03:00 | PA-042 | done (actual minimized global hotkey)
+- User returned TAKE CONTROL OK; outsideFocus=True; minimized=True; gateClosed=True; fakeActions=146->146. Exec80557 exited0. Prior minimizedFalse report retained as incomplete first attempt. Actual RegisterHotKey callback reached real Core gate while minimized/outside focus, no model/native input/capture generated.
+- Checks: actual fixture result meets task criterion; unchanged3ccbf95 implementation already covered by hotkey6 tests, delayed-SQLite callback test and final2e5d9f7 verify333passed/build0warnings/errors. FDD verify scoped FDD-002 gate/hotkey PASS; fullS1-S4/native-input safe pause/resume remain untested/Draft and PA-044/048 are not substituted. PA-026/030 hardware gates unchanged. Next PA-043.

@@ -409,7 +409,7 @@ registered by these tests; owned hidden HWNDs are the only native window resourc
 
 The first actual outside-focus report had outsideFocus=True, gateClosed=True and
 fakeActions=96->96, but minimized=False, so minimized-window acceptance remains
-**NOT TESTED**. KEY Ctrl+A (PA-037) passed; to repeat only this gate, left-click
+**NOT TESTED**. KEY Ctrl+A (PA-037) also passed; to repeat only this gate, left-click
 **ARM TAKE CONTROL**. The shortcut is only
 registered after this explicit gesture. Minimize the window yourself, activate
 another application and press Ctrl+Shift+F10, then restore WindowsSmoke and copy

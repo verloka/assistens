@@ -452,14 +452,15 @@
                                        "attempts":  1
                                    },
                         "PA-042":  {
-                                       "status":  "blocked",
-                                       "started_at":  "2026-10-18T14:06:00.4978085+00:00",
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T15:01:45.0834959+00:00",
+                                       "completed_at":  "2026-10-18T15:01:45.6512175+00:00",
                                        "evidence":  [
-
+                                                        "User actual WindowsSmoke report TAKE CONTROL OK outsideFocus=True minimized=True gateClosed=True fakeActions=146-\u003e146. Exec80557 exited0. Real message-only HWND/RegisterHotKey callback synchronously closes Core gate; App pause persistence tested separately; full native input takeover/resume remains PA-048.",
+                                                        "Verification: Actual attended minimized/outside-focus hotkey PASS. Unchanged hotkey code3ccbf95 and final verify333tests/build0warnings/errors at2e5d9f7. No repeated native input/capture triggered."
                                                     ],
-                                       "note":  "Implemented message-only HWND/no-repeat configurable TakeControl hotkey, conflict/disposal handling, real App startup service and synchronous global Core gate before async run pause. Fake registration/message and delayed-SQLite callback tests pass; full333tests build0warnings/errors. Actual minimized/outside-focus Ctrl+Shift+F10 observation not yet run. WindowsSmoke ARM needs TAKE CONTROL OK outsideFocusTrue,minimizedTrue,gateClosedTrue,stable fakeActions. No native input/capture in ARM.",
-                                       "attempts":  1
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
                                    },
                         "PA-043":  {
                                        "status":  "pending",
@@ -1292,6 +1293,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-038",
-    "updated_at":  "2026-10-18T14:58:26.1565325+00:00"
+    "last_task_id":  "PA-042",
+    "updated_at":  "2026-10-18T15:01:45.6642904+00:00"
 }

@@ -1,9 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-038 (existing regression audited and passed); PA-037 accepted actual KEY26/26 modifier release at c9c52d1.
-- Current task: none; no ready task until blocked dependencies verified.
-- Modified files: state, README regression evidence, LOG/checkpoint only; no source/test duplication.
-- Verified build/test: dotnet test --filter Computer --no-restore4unit+116integration; InputSafety|DesktopAccessDriver19passed; scripts/verify.ps1 locked restore/build0warnings/errors,76unit+254integration+3localfake-flow passed. Prior WindowsSmoke exec89941 exited0. Diff/doctor before commit.
-- Runtime blockers / waiting on user: PA-042 first hotkey outsideFocusTrue/gateClosedTrue/fake96->96, but minimizedFalse. Needs ARM, title-bar minimize, activate IDE, CtrlShiftF10,restore/report minimizedTrue. PA-026/030 unavailable multi-display hardware.
-- Decisions: no live UIPI/locked desktop/full E2E claim; all flows remain Draft/full scenarios untested. No task catalog/dependency change. User explicitly requested relaunch with short instructions.
-- Next instruction: doctor/next; relaunch WindowsSmoke --no-build for attended hotkey only. No registration/input/capture until user gesture. Reconcile PA-042 with real minimized report, then PA-043; otherwise manual blocker remains.
-- Diagnostic launch: requested WindowsSmoke running in exec80557, window checked. Await user ARM/minimize/outside-focus hotkey report and close. Hotkey not registered until ARM; no automated input/capture.
+- Last completed task: PA-042 (actual minimized/outside-focus TAKE CONTROL OK, gateClosedTrue,146->146)
+- Current task: none; next PA-043 tray/mini-window
+- Modified files: state, README/FDD/index evidence, LOG/checkpoint; source unchanged.
+- Verified build/test: actual user hotkey report PASS; exec80557 exited0. Latest unchanged code full verify333tests/build0warnings/errors at2e5d9f7. Diff/doctor before commit.
+- Runtime blockers / waiting on user: PA-026/030 multiple-display hardware; no remaining PA-042 manual blocker.
+- Decisions: actual Core gate callback proven with fake atomic counter, no physical input/capture/model. Full FDD/E2E-03 still untested and Draft. No catalog/dependency changes.
+- Next instruction: doctor/next; start PA-043. Inspect actual Dashboard/commands/App lifetime and use FDD-002 plus reverse FDD-001/003/007 before minimal tray/UI integration. No automatic GUI admission.
