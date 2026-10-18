@@ -572,14 +572,15 @@
                                        "attempts":  1
                                    },
                         "PA-053":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T18:50:13.5139183+00:00",
+                                       "completed_at":  "2026-10-18T18:57:25.2333446+00:00",
                                        "evidence":  [
-
+                                                        "ComputerToolSession binds five strict run-scoped tools over IObservedComputerController/current opaque lease; image-coordinate mapping, observation ID and trusted later-model-response evaluation required. MafAgentRuntime manually dispatches only allowlisted declarations through registry with sequential boundaries, no hidden invocation/retry; descriptor-inferred vision, source/status/limits maintained. ComputerToolTests proves same SDK contract for fake and actual WindowsComputerController with fake native, all five operations, stale resume and cancellation. FDD scoped PASS; actual native/paid E2E not claimed.",
+                                                        "Verification: Targeted ComputerTool|MafAgentRuntime|ModelCapability|ToolRegistry|ComputerResume|SafeResume|SafePause82passed; final scripts/verify.ps1 locked restore/build0warnings/errors,88unit+357integration+3localfake-flow passed(448)."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-054":  {
                                        "status":  "pending",
@@ -1302,6 +1303,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-052",
-    "updated_at":  "2026-10-18T18:50:06.5747207+00:00"
+    "last_task_id":  "PA-053",
+    "updated_at":  "2026-10-18T18:57:25.2435036+00:00"
 }

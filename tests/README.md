@@ -39,6 +39,14 @@ and MVP release gate remain unverified until their own backlog tasks are complet
 
 ## MAF runtime adapter (PA-049)
 
+PA-053: `--filter ComputerTool` exercises all five strict computer tool schemas
+through real MAF streaming/manual registry dispatch with both a fake controller
+and the real WindowsComputerController over fake native interfaces. It checks
+encoded-image coordinate mapping, opaque observation IDs, trusted reevaluation,
+stale resume refusal, profile capability inference, default deny and cancellation
+before a following model/tool request. No actual desktop input/capture occurs.
+ComputerToolSession is an explicit disposable run scope; App still defaults fake.
+
 PA-050 adds `dotnet test tests/PersonalAgent.IntegrationTests --filter OpenAiModelProvider --no-restore`.
 It uses the official OpenAI 2.13.0 SDK through Microsoft.Extensions.AI.OpenAI
 10.10.0, an in-process HTTP handler, real MAF/host/SQLite and actual Windows DPAPI

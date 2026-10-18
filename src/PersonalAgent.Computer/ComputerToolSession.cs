@@ -1,0 +1,148 @@
+using PersonalAgent.Core.Agents;
+using PersonalAgent.Core.Computer;
+using System.Text.Json;
+
+namespace PersonalAgent.Computer;
+
+// Explicit run scope, owned/disposed by the composition root. Construction never captures or injects input.
+public sealed class ComputerToolSession : IAsyncDisposable
+{
+    private readonly Guid runId;
+    private readonly IDesktopAccessCoordinator access;
+    private readonly Func<DesktopLease, IObservedComputerController> createController;
+    private readonly SemaphoreSlim serial = new(1, 1);
+    private DesktopLease? lease;
+    private IObservedComputerController? controller;
+    private ScreenCapture? frame;
+    private string? observationId;
+    private bool evaluated, disposed;
+    public IReadOnlyList<IAgentTool> Tools { get; }
+
+    public ComputerToolSession(Guid runId, IDesktopAccessCoordinator access,
+        Func<DesktopLease, IObservedComputerController>? createController = null)
+    {
+        this.runId = runId; this.access = access;
+        this.createController = createController ?? (grant => new WindowsComputerController(access, grant));
+        Tools = Array.AsReadOnly(new[] { "screenshot", "click", "scroll", "type", "press_key" }
+            .Select(operation => (IAgentTool)new Tool(this, operation)).ToArray());
+    }
+
+    // Called by trusted runtime only after the model has responded to the delivered frame.
+    public void ConfirmModelObservation()
+    {
+        if (frame is null || evaluated) return;
+        if (lease is null || !access.IsCurrent(lease)) throw new DesktopAccessException("StaleDesktopContext");
+        controller!.ConfirmObservation(frame); evaluated = true;
+    }
+
+    private async Task<ToolResult> ExecuteAsync(string operation, ToolArguments arguments, ToolExecutionContext context, CancellationToken ct)
+    {
+        await serial.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            if (disposed || context.RunId != runId) return Blocked("ComputerRunMismatch");
+            ct.ThrowIfCancellationRequested();
+            var value = arguments.Value;
+            if (operation == "screenshot")
+            {
+                var area = value.TryGetProperty("area", out var areaValue) ? Enum.Parse<ScreenshotArea>(areaValue.GetString()!, true) : ScreenshotArea.PrimaryMonitor;
+                var monitorId = value.TryGetProperty("monitorId", out var monitor) ? monitor.GetString() : null;
+                var options = new ScreenshotOptions(area, monitorId); options.Validate();
+                frame = null; observationId = null; evaluated = false;
+                if (lease is null || !access.IsCurrent(lease))
+                {
+                    lease = await access.WaitAcquireAsync(runId, ct).ConfigureAwait(false);
+                    controller = createController(lease);
+                }
+                frame = await controller!.ScreenshotAsync(options, ct).ConfigureAwait(false);
+                frame.Validate();
+                if (!access.IsCurrent(lease) || frame.DesktopGeneration != lease.Generation) { frame = null; return Blocked("StaleDesktopContext"); }
+                observationId = Guid.NewGuid().ToString("N");
+                return new()
+                {
+                    Status = ToolResultStatus.Success,
+                    Text = "Fresh screenshot; coordinates are encoded image pixel indices.",
+                    StructuredData = JsonSerializer.SerializeToElement(new
+                    {
+                        observationId,
+                        frame.ImageWidth,
+                        frame.ImageHeight,
+                        frame.SourceBounds,
+                        frame.Monitors,
+                        frame.TimestampUtc,
+                        frame.DesktopGeneration
+                    }),
+                    Images = [new(frame.ImageBytes.ToArray(), frame.ContentType)]
+                };
+            }
+            if (lease is null || !access.IsCurrent(lease)) return Blocked("StaleDesktopContext");
+            if (frame is null || value.GetProperty("observationId").GetString() != observationId) return Blocked("FreshScreenshotRequired");
+            if (!evaluated) return Blocked("ScreenReevaluationRequired");
+            if (operation == "click")
+                await controller!.ClickAsync(Point(value), Enum.Parse<MouseButton>(value.GetProperty("button").GetString()!, true), ct).ConfigureAwait(false);
+            else if (operation == "scroll")
+                await controller!.ScrollAsync(Point(value), Enum.Parse<ScrollDirection>(value.GetProperty("direction").GetString()!, true), value.GetProperty("amount").GetInt32(), ct).ConfigureAwait(false);
+            else if (operation == "type") await controller!.TypeAsync(value.GetProperty("text").GetString()!, ct).ConfigureAwait(false);
+            else await controller!.PressKeyAsync(new(value.GetProperty("chord").GetString()!), ct).ConfigureAwait(false);
+            return new() { Status = ToolResultStatus.Success, Text = "GUI action completed; no retry performed." };
+        }
+        catch (ComputerInputException error)
+        {
+            var uncertain = !error.CleanupSucceeded || error.Inserted is null or > 0;
+            return new()
+            {
+                Status = uncertain ? ToolResultStatus.OutcomeUnknown : ToolResultStatus.Blocked,
+                ErrorCode = error.Code,
+                Text = "GUI input stopped; do not repeat the action without checking its actual effect."
+            };
+        }
+        catch (ScreenCaptureException error) { return Blocked(error.Code); }
+        catch (DesktopAccessException error) { return Blocked(error.Code); }
+        catch (ArgumentException) { return Blocked("InvalidComputerArguments"); }
+        finally { serial.Release(); }
+
+        ScreenPoint Point(JsonElement value) => ScreenshotCoordinates.ToDesktop(frame!,
+            new(value.GetProperty("imageX").GetInt32(), value.GetProperty("imageY").GetInt32()), lease!.Generation);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await serial.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            disposed = true; frame = null; observationId = null;
+            if (lease is not null) await access.ReleaseAsync(lease).ConfigureAwait(false);
+        }
+        finally { serial.Release(); }
+    }
+
+    private static ToolResult Blocked(string code) => new()
+    { Status = ToolResultStatus.Blocked, ErrorCode = code, Text = "Computer operation blocked; obtain a fresh screenshot and re-evaluate the current UI before new input." };
+
+    private sealed class Tool(ComputerToolSession owner, string operation) : IAgentTool
+    {
+        public ToolDescriptor Descriptor { get; } = new("computer_" + operation,
+            operation == "screenshot" ? "Capture the authorized desktop in memory. No input is generated." :
+                "Perform one authorized " + operation + " using the current evaluated observation. Image coordinates are zero-based pixels. Never reuse an observation after pause/resume.",
+            Schema(operation), new(ToolSourceKind.Computer, "windows-computer"),
+            operation == "screenshot" ? ToolRiskLevel.ExternalDisclosure : ToolRiskLevel.Write, RequiresDesktop: true, IsReadOnly: operation == "screenshot");
+        public Task<ToolResult> ExecuteAsync(ToolArguments arguments, ToolExecutionContext context, CancellationToken cancellationToken) =>
+            owner.ExecuteAsync(operation, arguments, context, cancellationToken);
+    }
+
+    private static JsonElement Schema(string operation)
+    {
+        const string observation = "\"observationId\":{\"type\":\"string\",\"pattern\":\"^[a-f0-9]{32}$\"}";
+        const string point = ",\"imageX\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":2147483647},\"imageY\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":2147483647}";
+        var (properties, required) = operation switch
+        {
+            "screenshot" => ("\"area\":{\"type\":\"string\",\"enum\":[\"PrimaryMonitor\",\"VirtualDesktop\",\"Monitor\"]},\"monitorId\":{\"type\":\"string\",\"minLength\":1}", ""),
+            "click" => (observation + point + ",\"button\":{\"type\":\"string\",\"enum\":[\"left\",\"right\",\"middle\"]}", "\"observationId\",\"imageX\",\"imageY\",\"button\""),
+            "scroll" => (observation + point + ",\"direction\":{\"type\":\"string\",\"enum\":[\"up\",\"down\",\"left\",\"right\"]},\"amount\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":10}", "\"observationId\",\"imageX\",\"imageY\",\"direction\",\"amount\""),
+            "type" => (observation + ",\"text\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":4096}", "\"observationId\",\"text\""),
+            _ => (observation + ",\"chord\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":64}", "\"observationId\",\"chord\"")
+        };
+        var monitorRules = operation == "screenshot" ? ",\"allOf\":[{\"if\":{\"properties\":{\"area\":{\"const\":\"Monitor\"}},\"required\":[\"area\"]},\"then\":{\"required\":[\"monitorId\"]},\"else\":{\"not\":{\"required\":[\"monitorId\"]}}}]" : "";
+        return JsonDocument.Parse("{\"type\":\"object\",\"properties\":{" + properties + "},\"required\":[" + required + "],\"additionalProperties\":false" + monitorRules + "}").RootElement.Clone();
+    }
+}

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.AI;
+using System.Runtime.CompilerServices;
 
 namespace PersonalAgent.IntegrationTests.Fakes;
 
@@ -19,9 +20,13 @@ internal sealed class ScriptedChatClient(
         return Task.FromResult(_steps.Dequeue()(messages.ToArray(), options));
     }
 
-    public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages,
-        ChatOptions? options = null, CancellationToken cancellationToken = default) =>
-        throw new NotSupportedException("This diagnostic fake covers non-streaming calls only.");
+    public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages,
+        ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var response = await GetResponseAsync(messages, options, cancellationToken);
+        foreach (var update in response.ToChatResponseUpdates())
+        { cancellationToken.ThrowIfCancellationRequested(); yield return update; }
+    }
 
     public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is not null ? null
         : serviceType == typeof(ChatClientMetadata) ? new ChatClientMetadata("scripted-local-test")
