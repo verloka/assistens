@@ -10,6 +10,7 @@ public sealed class WindowsScreenCapture
 {
     private readonly Func<(bool Allowed, long Generation)> authorize;
     private readonly IWindowsCaptureNative native;
+    private readonly Func<IDisposable>? enterAtomic;
 
     public WindowsScreenCapture(Func<(bool Allowed, long Generation)>? authorize = null)
         : this(authorize, new WindowsCaptureNative()) { }
@@ -18,6 +19,11 @@ public sealed class WindowsScreenCapture
         this.authorize = authorize ?? (() => (false, 0));
         this.native = native;
     }
+    public WindowsScreenCapture(IDesktopAccessCoordinator access, DesktopLease lease)
+        : this(access, lease, new WindowsCaptureNative()) { }
+    internal WindowsScreenCapture(IDesktopAccessCoordinator access, DesktopLease lease, IWindowsCaptureNative native)
+        : this(() => (access.IsCurrent(lease), lease.Generation), native)
+    { enterAtomic = () => access.EnterAtomic(lease); }
 
     public Task<ScreenCapture> CaptureAsync(ScreenshotOptions options, CancellationToken cancellationToken = default)
     {
@@ -50,6 +56,7 @@ public sealed class WindowsScreenCapture
             if (!beforeCopy.Allowed) throw Denied();
             if (beforeCopy.Generation != permission.Generation) throw Stale();
             if (!native.IsDesktopAvailable()) throw Unavailable();
+            using var atomic = enterAtomic?.Invoke();
             var bitmap = native.CaptureBitmap(bounds, monitors);
             var capturedAt = DateTimeOffset.UtcNow;
             if (bitmap.PixelWidth != bounds.Width || bitmap.PixelHeight != bounds.Height)
@@ -74,6 +81,7 @@ public sealed class WindowsScreenCapture
         }
         catch (OperationCanceledException) { throw; }
         catch (ScreenCaptureException) { throw; }
+        catch (DesktopAccessException exception) { throw new ScreenCaptureException(exception.Code, "Screen capture grant was revoked.", exception); }
         catch (Exception exception) { throw new ScreenCaptureException("CaptureFailed", "Windows screen capture failed.", exception); }
     }
     private ScreenMonitor[] ReadTopology()

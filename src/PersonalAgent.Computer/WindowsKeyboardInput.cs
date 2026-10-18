@@ -15,7 +15,12 @@ internal sealed class WindowsKeyboardInput
         : this(authorize, new WindowsInputNative()) { }
     internal WindowsKeyboardInput(Func<(bool Allowed, long Generation)>? authorize, IWindowsInputNative native,
         Func<string, bool>? allowChord = null)
-    { sender = new(authorize, native); this.native = native; this.allowChord = allowChord ?? (_ => false); }
+        : this(new WindowsInputSender(authorize, native), native, allowChord) { }
+    internal WindowsKeyboardInput(IDesktopAccessCoordinator access, DesktopLease lease, IWindowsInputNative native,
+        Func<string, bool>? allowChord = null)
+        : this(new WindowsInputSender(access, lease, native), native, allowChord) { }
+    private WindowsKeyboardInput(WindowsInputSender sender, IWindowsInputNative native, Func<string, bool>? allowChord)
+    { this.sender = sender; this.native = native; this.allowChord = allowChord ?? (_ => false); }
 
     internal Task PressKeyAsync(KeyCombination keys, long generation, CancellationToken ct = default)
     {

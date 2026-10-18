@@ -428,14 +428,15 @@
                                        "attempts":  1
                                    },
                         "PA-040":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:55:21.6762251+00:00",
+                                       "completed_at":  "2026-10-18T13:59:16.8832108+00:00",
                                        "evidence":  [
-
+                                                        "Opaque lease EnterAtomic/RevokeAsync gate; release waits for active native work+cleanup and revoked owner remains reserved. Bound capture/mouse/keyboard constructors check lease at native entry; each text chunk separate. Forced preflight-entry races reject both input/capture. FDD-002 scoped gate PASS; production hotkey/task pause still later.",
+                                                        "Verification: Unit DesktopAccess9passed; integration DesktopAccess9passed plus InputSafety10passed. scripts/verify.ps1 locked restore/build0warnings/errors,68unit+246integration+3localfake-flow passed; diff check passed. Fake native/codec only,no physical GUI input."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-041":  {
                                        "status":  "pending",
@@ -1288,6 +1289,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-039",
-    "updated_at":  "2026-10-18T13:55:20.8334772+00:00"
+    "last_task_id":  "PA-040",
+    "updated_at":  "2026-10-18T13:59:16.8949096+00:00"
 }

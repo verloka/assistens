@@ -1,3 +1,5 @@
+using PersonalAgent.Core.Computer;
+
 namespace PersonalAgent.Computer;
 
 // Internal bounded atomic driver primitive; not a tool/DI registration or a substitute for DesktopLease.
@@ -7,11 +9,16 @@ internal sealed class WindowsInputSender
     private readonly Func<(bool Allowed, long Generation)> authorize;
     private readonly IWindowsInputNative native;
     private bool faulted;
+    private readonly Func<IDisposable>? enterAtomic;
 
     internal WindowsInputSender(Func<(bool Allowed, long Generation)>? authorize = null)
         : this(authorize, new WindowsInputNative()) { }
     internal WindowsInputSender(Func<(bool Allowed, long Generation)>? authorize, IWindowsInputNative native)
     { this.authorize = authorize ?? (() => (false, 0)); this.native = native; }
+
+    internal WindowsInputSender(IDesktopAccessCoordinator access, DesktopLease lease, IWindowsInputNative native)
+        : this(() => (access.IsCurrent(lease), lease.Generation), native)
+    { enterAtomic = () => access.EnterAtomic(lease); }
 
     internal Task SendAsync(NativeInput[] inputs, long generation, CancellationToken ct = default)
     {
@@ -75,6 +82,9 @@ internal sealed class WindowsInputSender
         catch (OperationCanceledException) { throw; }
         catch (ComputerInputException) { throw; }
         catch (Exception error) { throw new ComputerInputException("InputPreflightFailed", batch.Length, 0, 0, true, error); }
+        // The lease lock linearizes native entry against revoke; already-entered cleanup finishes
+        // before the coordinator permits release/new ownership. Diagnostic callback-only mode stays local.
+        using var atomic = EnterAtomic();
         InputInsertion result;
         try { result = native.Send(batch); }
         catch (Exception error)
@@ -96,6 +106,12 @@ internal sealed class WindowsInputSender
         var permission = authorize();
         if (!permission.Allowed) throw new ComputerInputException("InputDenied", 0, 0, 0, true);
         if (permission.Generation != generation) throw new ComputerInputException("StaleDesktopContext", 0, 0, 0, true);
+    }
+
+    private IDisposable? EnterAtomic()
+    {
+        try { return enterAtomic?.Invoke(); }
+        catch (DesktopAccessException error) { throw new ComputerInputException(error.Code, 0, 0, 0, true, error); }
     }
 
     private bool Cleanup(NativeInput[] releases)

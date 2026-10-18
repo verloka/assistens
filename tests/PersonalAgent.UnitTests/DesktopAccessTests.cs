@@ -5,6 +5,44 @@ namespace PersonalAgent.UnitTests;
 public sealed class DesktopAccessTests
 {
     [Fact]
+    public async Task RevocationClosesGateSynchronouslyButReleaseWaitsForActiveSection()
+    {
+        var coordinator = new DesktopAccessCoordinator(_ => true);
+        var lease = await coordinator.AcquireAsync(Guid.NewGuid());
+        var atomic = coordinator.EnterAtomic(lease);
+        var pause = coordinator.RevokeAsync(lease);
+        Assert.False(pause.IsCompleted);
+        Assert.False(coordinator.IsCurrent(lease));
+        Assert.Throws<DesktopAccessException>(() => coordinator.EnterAtomic(lease));
+        var release = coordinator.ReleaseAsync(lease);
+        Assert.False(release.IsCompleted);
+        await Assert.ThrowsAsync<DesktopAccessException>(() => coordinator.AcquireAsync(Guid.NewGuid()));
+        atomic.Dispose(); atomic.Dispose(); // Idempotent atomic disposal cannot corrupt the active counter.
+        await pause;
+        Assert.True(await release);
+        var next = await coordinator.AcquireAsync(Guid.NewGuid());
+        Assert.True(next.Generation > lease.Generation);
+        Assert.False(coordinator.IsCurrent(lease));
+    }
+
+    [Fact]
+    public async Task CancelingReleaseWaitKeepsClosedOwnershipUntilExplicitRelease()
+    {
+        var coordinator = new DesktopAccessCoordinator(_ => true);
+        var lease = await coordinator.AcquireAsync(Guid.NewGuid());
+        using var atomic = coordinator.EnterAtomic(lease);
+        using var cts = new CancellationTokenSource();
+        var release = coordinator.ReleaseAsync(lease, cts.Token);
+        cts.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => release);
+        Assert.False(coordinator.IsCurrent(lease));
+        Assert.Equal(lease.RunId, coordinator.Snapshot.OwnerRunId);
+        await Assert.ThrowsAsync<DesktopAccessException>(() => coordinator.AcquireAsync(Guid.NewGuid()));
+        atomic.Dispose();
+        Assert.True(await coordinator.ReleaseAsync(lease));
+    }
+
+    [Fact]
     public async Task AdmissionDefaultsDeniedAndCanceledOrInvalidRequestsNeverCreateGrant()
     {
         var denied = new DesktopAccessCoordinator();

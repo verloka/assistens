@@ -13,7 +13,12 @@ internal sealed class WindowsMouseInput
         : this(authorize, new WindowsInputNative(), () => new WindowsCaptureNative().GetMonitors()) { }
     internal WindowsMouseInput(Func<(bool Allowed, long Generation)>? authorize, IWindowsInputNative native,
         Func<IReadOnlyList<ScreenMonitor>> readMonitors)
-    { sender = new(authorize, native); this.readMonitors = readMonitors; }
+        : this(new WindowsInputSender(authorize, native), readMonitors) { }
+    internal WindowsMouseInput(IDesktopAccessCoordinator access, DesktopLease lease, IWindowsInputNative native,
+        Func<IReadOnlyList<ScreenMonitor>> readMonitors)
+        : this(new WindowsInputSender(access, lease, native), readMonitors) { }
+    private WindowsMouseInput(WindowsInputSender sender, Func<IReadOnlyList<ScreenMonitor>> readMonitors)
+    { this.sender = sender; this.readMonitors = readMonitors; }
 
     internal Task ClickAsync(ScreenCapture context, ScreenPoint point, MouseButton button, CancellationToken ct = default)
     {

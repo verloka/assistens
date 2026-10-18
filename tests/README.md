@@ -341,6 +341,22 @@ does not yet implement idle/countdown, input atomic gates or pause/resume policy
 Generations are local to coordinator lifetime; opaque identity prevents foreign
 grant reuse, and restart recovery still must discard old GUI work.
 
+## Lease-bound native entry gate (PA-040)
+
+Coordinator RevokeAsync closes access before returning; its completion waits for
+already-entered atomic work/cleanup. ReleaseAsync also waits before another owner
+can acquire, and cancellation of that wait leaves ownership safely revoked.
+Computer's lease-bound capture/input constructors enter this gate immediately
+before native effects, after preflight; a revoke in that gap rejects the action.
+Each text chunk enters separately so revocation blocks remaining text. Existing
+callback-only constructors serve the explicit attended diagnostic, not agent tools.
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter DesktopAccess` covers
+nine fake-native gate cases: all four input paths, preflight/entry races for input
+and capture, partial-key cleanup quiescence, inter-chunk revoke and paused frame
+discard. Unit DesktopAccess cases cover token/ownership and cancelled release.
+No native input is sent. This is not live task pause/hotkey/idle/resume acceptance.
+
 ## Screen-independent computer test doubles (PA-029)
 
 PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit

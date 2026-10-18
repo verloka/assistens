@@ -71,6 +71,8 @@ Status: Draft
 
 - Lease ownership foundation (PA-039): Core `DesktopAccessCoordinator`/`IDesktopAccessCoordinator` and opaque `DesktopLease` establish one owner and increasing in-process generations. Trusted admission defaults denied; same-owner acquire is idempotent, another run gets DesktopBusy, and release requires the actual grant object so stale/foreign tokens cannot release a new grant. `tests/PersonalAgent.UnitTests/DesktopAccessTests.cs` covers concurrent owners, turnover and token identity without UI/native dependencies. Atomic driver gates, pause/idle/resume integration and full S1-S4 are not provided by this foundation and remain `[untested]`.
 
+- Lease-bound atomic gate (PA-040): the coordinator closes revocation synchronously and refuses atomic entry by revoked/stale grants, reserving ownership until active sections and their cleanup drain. Bound capture/mouse/keyboard constructors enter the lease gate immediately before native effects; each text chunk enters separately. `DesktopAccessTests.cs` covers quiescent release/cancelled wait and `tests/PersonalAgent.IntegrationTests/DesktopAccessDriverTests.cs` forces revocation between preflight and native entry, during partial cleanup and capture, with no subsequent input/frame return. Diagnostic callback-only constructors remain for the explicit attended fixture; no agent tool is registered. Task pause/hotkey/idle and full S1-S4 remain `[untested]`.
+
 ## Unknowns
 - Concrete Windows APIs, pause latency and live race results must be established in the implementation.
 
