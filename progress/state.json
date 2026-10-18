@@ -278,14 +278,14 @@
                                        "attempts":  2
                                    },
                         "PA-026":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T11:55:49.7280305+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Implementation and 28 fake-native/PNG capture cases complete; scripts/verify.ps1 passed 40 unit + 99 integration + 3 local fake-flow, build 0 warnings/errors. Acceptance explicitly requires two actual displays; attended hardware report is one monitor DPI120. Need user-connected second display in Extend mode, negative X/Y setup, VIRTUAL/SECONDARY preview and source/DISPLAY/SYSTEM bounds observation (tests/README.md). No real two-display or GDI gap-fill success claimed.",
+                                       "attempts":  1
                                    },
                         "PA-027":  {
                                        "status":  "pending",
@@ -1278,6 +1278,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-025",
-    "updated_at":  "2026-10-18T11:55:18.3973118+00:00"
+    "last_task_id":  "PA-026",
+    "updated_at":  "2026-10-18T12:00:39.0277255+00:00"
 }

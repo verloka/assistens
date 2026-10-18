@@ -6,6 +6,7 @@ using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using PersonalAgent.Computer;
+using PersonalAgent.Core.Computer;
 using System.IO;
 
 namespace PersonalAgent.WindowsSmoke;
@@ -32,7 +33,7 @@ internal sealed class SmokeWindow : Window
 
     public SmokeWindow()
     {
-        Title = "PA-008 attended Windows diagnostic";
+        Title = "PersonalAgent attended Windows diagnostic (PA-008/025/026)";
         Width = 680;
         Height = 660;
         ShowActivated = false;
@@ -40,44 +41,22 @@ internal sealed class SmokeWindow : Window
         panel.Children.Add(new TextBlock
         {
             Text = "The first button tests this window's crop, one x and the hotkey (PA-008); release all keys first. " +
-                   "The PRIMARY button captures the whole primary screen as a local PNG preview and types nothing (PA-025). " +
+                   "PRIMARY, VIRTUAL and SECONDARY capture local PNG previews and type nothing (PA-025/026). " +
                    "Activate this window and press the desired button yourself. No files, uploads, clipboard or background input. " +
                    "Ctrl+Shift+F10 applies only after the first button. Close the window when finished.",
             TextWrapping = TextWrapping.Wrap
         });
         panel.Children.Add(run);
         var primary = new Button { Content = "Capture PRIMARY monitor (PNG preview only; no typing)", Margin = new Thickness(0, 0, 0, 8) };
-        primary.Click += async (_, _) =>
-        {
-            try
-            {
-                RequireForeground();
-                primary.IsEnabled = false;
-                Interlocked.Increment(ref primaryGeneration);
-                Volatile.Write(ref primaryConsent, 1);
-                primaryCancellation = new CancellationTokenSource();
-                var capture = new WindowsScreenCapture(() =>
-                    (Volatile.Read(ref primaryConsent) == 1 && Native.GetForegroundWindow() == handle, Interlocked.Read(ref primaryGeneration)));
-                var frame = await capture.CaptureAsync(new(), primaryCancellation.Token);
-                using var stream = new MemoryStream(frame.ImageBytes, writable: false);
-                var image = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad).Frames[0];
-                image.Freeze();
-                preview.Source = image;
-                Write($"PRIMARY OK; PNG {frame.ImageWidth}x{frame.ImageHeight}; source={frame.SourceBounds}; " +
-                      $"DPI={frame.Monitors[0].DpiX}; monitors={Native.GetSystemMetrics(80)}; generation={frame.DesktopGeneration}; bytes={frame.ImageBytes.Length}. Preview must match primary desktop. Nothing saved/uploaded.");
-            }
-            catch (ScreenCaptureException exception) { Write($"PRIMARY BLOCKED: {exception.Code}; {exception.Message}"); }
-            catch (OperationCanceledException) { Write("PRIMARY cancelled."); }
-            catch (Exception exception) { Write($"PRIMARY failed: {exception.Message}"); }
-            finally
-            {
-                Volatile.Write(ref primaryConsent, 0);
-                primaryCancellation?.Dispose(); primaryCancellation = null;
-                primary.IsEnabled = true;
-            }
-        };
+        var virtualDesktop = new Button { Content = "Capture VIRTUAL desktop (all monitors; no typing)", Margin = new Thickness(0, 0, 0, 8) };
+        var secondary = new Button { Content = "Capture SECONDARY monitor (first non-primary; no typing)", Margin = new Thickness(0, 0, 0, 8) };
+        primary.Click += async (_, _) => await CaptureScreenAsync(ScreenshotArea.PrimaryMonitor);
+        virtualDesktop.Click += async (_, _) => await CaptureScreenAsync(ScreenshotArea.VirtualDesktop);
+        secondary.Click += async (_, _) => await CaptureScreenAsync(ScreenshotArea.Monitor);
         panel.Children.Add(primary);
-        panel.Children.Add(new TextBlock { Text = "CAPTURE CHECK: this blue bar should appear in primary preview", Background = System.Windows.Media.Brushes.DodgerBlue, Margin = new Thickness(0, 0, 0, 8) });
+        panel.Children.Add(virtualDesktop);
+        panel.Children.Add(secondary);
+        panel.Children.Add(new TextBlock { Text = "CAPTURE CHECK: this blue bar must appear on the display containing this window", Background = System.Windows.Media.Brushes.DodgerBlue, Margin = new Thickness(0, 0, 0, 8) });
         panel.Children.Add(target);
         panel.Children.Add(report);
         panel.Children.Add(preview);
@@ -95,6 +74,48 @@ internal sealed class SmokeWindow : Window
             if (registered) Native.UnregisterHotKey(handle, 1);
             HwndSource.FromHwnd(handle)?.RemoveHook(OnMessage);
         };
+    }
+
+    private async Task CaptureScreenAsync(ScreenshotArea area)
+    {
+        var label = area switch { ScreenshotArea.PrimaryMonitor => "PRIMARY", ScreenshotArea.VirtualDesktop => "VIRTUAL", _ => "MONITOR" };
+        // A second click must not replace/revoke an in-flight capture's consent or token.
+        if (primaryCancellation is not null) { Write("Capture already in progress; wait for its result."); return; }
+        try
+        {
+            RequireForeground();
+            Interlocked.Increment(ref primaryGeneration);
+            Volatile.Write(ref primaryConsent, 1);
+            primaryCancellation = new CancellationTokenSource();
+            string? monitorId = null;
+            if (area == ScreenshotArea.Monitor)
+            {
+                var native = new WindowsCaptureNative();
+                if (!native.IsDesktopAvailable()) throw new ScreenCaptureException("DesktopUnavailable", "An active Default desktop is required.");
+                monitorId = native.GetMonitors().FirstOrDefault(monitor => !monitor.IsPrimary)?.Id
+                    ?? throw new ScreenCaptureException("MonitorUnavailable", "Connect a second display in Extend mode first.");
+            }
+            var capture = new WindowsScreenCapture(() =>
+                (Volatile.Read(ref primaryConsent) == 1 && Native.GetForegroundWindow() == handle, Interlocked.Read(ref primaryGeneration)));
+            var frame = await capture.CaptureAsync(new(area, monitorId), primaryCancellation.Token);
+            using var stream = new MemoryStream(frame.ImageBytes, writable: false);
+            var image = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad).Frames[0];
+            image.Freeze();
+            preview.Source = image;
+            Write($"{label} OK; PNG {frame.ImageWidth}x{frame.ImageHeight}; source={frame.SourceBounds}; " +
+                  $"DPI={frame.Monitors[0].DpiX}; monitors={Native.GetSystemMetrics(80)}; generation={frame.DesktopGeneration}; bytes={frame.ImageBytes.Length}. Preview must match selected area. Nothing saved/uploaded.");
+            foreach (var monitor in frame.Monitors)
+                Write($"DISPLAY {monitor.Id}; bounds={monitor.Bounds}; DPI={monitor.DpiX}x{monitor.DpiY}; primary={monitor.IsPrimary}.");
+            Write($"SYSTEM virtual=({Native.GetSystemMetrics(76)},{Native.GetSystemMetrics(77)},{Native.GetSystemMetrics(78)},{Native.GetSystemMetrics(79)}). Compare source bounds for VIRTUAL; verify preview yourself.");
+        }
+        catch (ScreenCaptureException exception) { Write($"{label} BLOCKED: {exception.Code}; {exception.Message}"); }
+        catch (OperationCanceledException) { Write($"{label} cancelled."); }
+        catch (Exception exception) { Write($"{label} failed: {exception.Message}"); }
+        finally
+        {
+            Volatile.Write(ref primaryConsent, 0);
+            primaryCancellation?.Dispose(); primaryCancellation = null;
+        }
     }
 
     private void RunSmoke(object sender, RoutedEventArgs args)

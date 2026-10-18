@@ -270,3 +270,49 @@ remain unverified.
 API references: [GetDpiForWindow](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdpiforwindow),
 [thread DPI context](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setthreaddpiawarenesscontext),
 [OpenInputDesktop](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-openinputdesktop).
+
+## Virtual desktop and selected monitor capture (PA-026)
+
+The same adapter now accepts PrimaryMonitor, VirtualDesktop and Monitor + ID.
+It enumerates display rectangles in a scoped PerMonitorV2 context, computes their
+bounding rectangle without clamping negative X/Y, and returns each captured
+monitor's physical geometry/DPI. Gaps between monitors are black-filled before
+copying monitor regions. Missing IDs fail with MonitorUnavailable, without
+falling back to a different display. Any topology/DPI/primary change invalidates
+the frame; enumeration order alone does not. Existing authorization, desktop,
+cancellation and generation checks still apply. No agent tool is registered.
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter WindowsScreenCaptureTests`
+currently runs 28 cases, using fake native displays and the real PNG codec. It
+covers primary/virtual/selected bounds, negative origins, mixed DPI, invalid
+topology/overflow, monitor removal/addition/move/DPI changes, cancellation and
+access denial. It does **not** exercise native two-display pixels or GDI gap fill.
+
+Attended acceptance requires **two actual displays in Extend mode**:
+
+1. Arrange the second display to the left and above the primary in Windows Display
+   Settings, so its X/Y are negative. Use distinct visible content on each display;
+   optionally different scaling. Do not expose private content during the check.
+2. Run `dotnet run --project tests/PersonalAgent.WindowsSmoke`, activate its window
+   on the primary, and click **Capture VIRTUAL desktop** yourself. No screenshot is
+   taken merely by starting the diagnostic.
+3. Verify preview contains both displays at the correct relative offsets and the
+   blue CAPTURE CHECK bar on the correct display. Compare source bounds to SYSTEM
+   virtual=(X,Y,width,height); PNG size must equal width/height. Check the DISPLAY
+   lines against configured monitor geometry and scaling (100%=96, 125%=120,
+   150%=144 DPI). Empty gaps should be black.
+4. Click **Capture SECONDARY monitor**. Verify preview contains only the first
+   non-primary display; source must equal its DISPLAY bounds. Move the diagnostic
+   window to that display and repeat to verify the blue bar there. Also click
+   PRIMARY to check it still selects the primary regardless of window position.
+5. Paste the VIRTUAL/MONITOR/PRIMARY, DISPLAY and SYSTEM lines, describe whether the
+   preview matched, then close the window. Nothing is saved or uploaded by the app.
+
+Hardware result is **pending**: the latest attended report identifies one display
+at DPI120. One-display success or simulated topology cannot satisfy PA-026's
+two-display acceptance. Production lease/takeover and live lock/UAC remain later
+checks; full FDD-002 S1-S4 are untested.
+
+API references: [EnumDisplayMonitors](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaymonitors),
+[virtual screen geometry](https://learn.microsoft.com/en-us/windows/win32/gdi/the-virtual-screen),
+[BitBlt](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt).
