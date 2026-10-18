@@ -190,14 +190,15 @@
                                        "attempts":  1
                                    },
                         "PA-018":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:59:07.8756499+00:00",
+                                       "completed_at":  "2026-10-18T11:02:53.2414387+00:00",
                                        "evidence":  [
-
+                                                        "Core IRunRepository plus Persistence SqliteRunRepository: new run/conversation/request/history, coherent read, immutable identity, state-machine validation, RunVersion CAS, atomic event append, structured result/schema guards. PersistenceRepositoryTests real SQLite checks 8 competing writers one winner, stale repeat, real event PK failure rollback, terminal/input mutation and unknown schema refusal. FDD-007 and lifecycle consumers reviewed; runtime integration remains PA-019.",
+                                                        "Verification: PersistenceRepositoryTests 4 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 36 unit + 38 integration + 3 local fake-flow passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-019":  {
                                        "status":  "pending",
@@ -1270,6 +1271,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-017",
-    "updated_at":  "2026-10-18T10:59:06.4451261+00:00"
+    "last_task_id":  "PA-018",
+    "updated_at":  "2026-10-18T11:02:53.2548535+00:00"
 }

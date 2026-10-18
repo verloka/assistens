@@ -177,3 +177,10 @@ The design-time factory targets an in-memory database. Do not replace migration
 verification with EnsureCreated. References:
 [EF SQLite limitations](https://learn.microsoft.com/en-us/ef/core/providers/sqlite/limitations),
 [EF design-time context](https://learn.microsoft.com/en-us/ef/core/cli/dbcontext-creation).
+
+`dotnet test --filter PersistenceRepositoryTests` checks the SDK-neutral
+`IRunRepository` through real SQLite: CAS plus appended history commits atomically,
+eight competing writers produce one winner, stale/repeated versions fail without
+extra events, and a real event insert failure rolls back the run change. Attempt
+inputs and terminal outcomes cannot be replaced; unknown payload versions are
+rejected. There is no automatic replay or external call. Runtime wiring is PA-019.

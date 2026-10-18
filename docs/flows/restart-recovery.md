@@ -47,5 +47,7 @@ Status: Draft
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §§9, 13; backlog PR-03, PR-10, PR-11, PR-12.
 - Schema foundation (PA-017): `src/PersonalAgent.Persistence/AgentDbContext.cs`, `Entities/RunEntities.cs` and `Migrations/` define versioned run payloads, conversation/task references, UTC ticks, application-managed RunVersion and append-only events. `tests/PersonalAgent.IntegrationTests/PersistenceSchemaTests.cs` applies/reapplies migrations to real temporary SQLite files and verifies reopen/data/constraints. There is no startup recovery or durable runtime integration yet; complete S1-S3 remain `[untested]`.
 
+- Repository foundation (PA-018): `src/PersonalAgent.Core/Persistence/IRunRepository.cs` and `src/PersonalAgent.Persistence/SqliteRunRepository.cs` persist SDK-neutral run/request/result/history; updates use RunVersion compare-and-swap and append events in the same transaction. `tests/PersonalAgent.IntegrationTests/PersistenceRepositoryTests.cs` verifies competing/repeated updates, event-failure rollback, immutable attempt inputs/terminal state and unknown payload version rejection. Runtime/startup recovery remains pending; complete S1-S3 remain `[untested]`.
+
 ## Unknowns
 - Exact recovery database migrations and idempotency key shape will be validated during implementation.
