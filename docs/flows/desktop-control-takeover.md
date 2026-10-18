@@ -65,6 +65,8 @@ Status: Draft
 
 - Chord foundation (PA-035): `WindowsKeyboardInput.PressKeyAsync` canonicalizes Ctrl/Alt/Shift plus a known key, requires an explicit trusted chord allowlist in addition to desktop authorization, and rejects already-held user keys before sending a balanced atomic batch. Extended navigation keys retain their native flag; modifiers release in reverse order. Existing partial/unknown cleanup never repeats presses. `tests/PersonalAgent.IntegrationTests/ComputerPressKeyTests.cs` checks every partial prefix, cancellation/native exception, canonical policy, default denial and user-held-key preservation using fake key state. Actual native chord UI effects/global takeover remain untested; full S1-S4 remain `[untested]`.
 
+- Atomic safety audit (PA-036): the existing shared sender already owns balanced release cleanup, fault latching and serialization. `tests/PersonalAgent.IntegrationTests/InputSafetyTests.cs` adds stateful fake-native cross-method and queued-failure cases for mouse/text/chords: after a partial/unknown effect only release events occur and queued/later operations on that driver cannot start. Cleanup rejection/lock is explicitly reported as unresolved held input rather than successful release. This is primitive-level proof; global production lease/takeover and full S1-S4 remain `[untested]`.
+
 ## Unknowns
 - Concrete Windows APIs, pause latency and live race results must be established in the implementation.
 

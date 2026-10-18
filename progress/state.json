@@ -386,14 +386,15 @@
                                        "attempts":  1
                                    },
                         "PA-036":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:47:35.0214467+00:00",
+                                       "completed_at":  "2026-10-18T13:50:06.6846656+00:00",
                                        "evidence":  [
-
+                                                        "Audited existing shared sender balanced atomic sections,cancel boundaries,release-only cleanup and fault latch; no duplicate implementation. New InputSafetyTests statefully cover partial/unknown mouse/text/chord failure,cross-method refusal and queued failure. Cleanup denial/lock explicitly unknown,never false release. FDD-002 scoped driver audit PASS; full production takeover untested.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter InputSafety --no-restore:10passed; scripts/verify.ps1 locked restore/build0warnings/errors,60unit+237integration+3localfake-flow passed. No native desktop input. git diff --check passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-037":  {
                                        "status":  "pending",
@@ -1286,6 +1287,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-035",
-    "updated_at":  "2026-10-18T13:47:34.2115789+00:00"
+    "last_task_id":  "PA-036",
+    "updated_at":  "2026-10-18T13:50:06.6945794+00:00"
 }

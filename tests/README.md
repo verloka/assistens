@@ -299,6 +299,17 @@ extended keys, parse errors, existing user keys, pre-cancel and stale generation
 No global chord is injected by this suite. Actual native key effects and live
 lock/UIPI/takeover remain for the attended input harness and later lease tasks.
 
+## Atomic input safety audit (PA-036)
+
+`dotnet test tests/PersonalAgent.IntegrationTests --filter InputSafety` runs ten
+stateful fake-native cases covering mouse, text and chords, partial versus unknown
+outcomes, release-only cleanup, cross-method fault refusal and already-queued work
+after a failing send. The same driver instance cannot proceed after native fault.
+When cleanup itself is rejected or desktop locks, failure remains explicit and
+later input still refuses; the test does not falsely assert all physical keys
+were released. Existing cleanup is reused without a second input implementation.
+These cases do not establish cross-run lease policy or real global takeover.
+
 ## Screen-independent computer test doubles (PA-029)
 
 PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit
