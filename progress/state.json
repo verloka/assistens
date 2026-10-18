@@ -539,14 +539,15 @@
                                        "attempts":  1
                                    },
                         "PA-050":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T18:34:07.0452863+00:00",
+                                       "completed_at":  "2026-10-18T18:40:28.8945801+00:00",
                                        "evidence":  [
-
+                                                        "OpenAiModelProvider/IModelProvider and neutral ModelProfile; WindowsDpapiSecretStore uses current-user encryption/opaque refs; host DI keeps fake default. Real OpenAI SDK via scripted HTTP exercises TestConnection and MAF/host/SQLite streaming; no synthetic credential in SDK events, result/history, plaintext files. Fail-fast sanitized auth/model/rate/network errors, cancellation, fixed endpoint, redirects disabled and retry0. FDD scoped PASS; live account/capabilities not claimed.",
+                                                        "Verification: OpenAiModelProvider|MafAgentRuntime|PersistenceRuntime37passed; final scripts/verify.ps1 locked restore/build0warnings/errors,88unit+309integration+3localfake-flow passed(400)."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-051":  {
                                        "status":  "pending",
@@ -1299,6 +1300,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-049",
-    "updated_at":  "2026-10-18T18:33:50.6512234+00:00"
+    "last_task_id":  "PA-050",
+    "updated_at":  "2026-10-18T18:40:28.9053346+00:00"
 }

@@ -6,6 +6,7 @@ using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Application;
 using PersonalAgent.Core.Persistence;
 using PersonalAgent.Core.Computer;
+using PersonalAgent.Core.Security;
 using PersonalAgent.Persistence;
 using System.IO;
 
@@ -28,6 +29,9 @@ public static class AppHost
             services.AddSingleton<ControlWindow>();
             services.AddSingleton<IDesktopAccessCoordinator>(_ => new DesktopAccessCoordinator());
             services.AddSingleton<TaskRunCoordinator>();
+            services.AddSingleton<ISecretStore>(_ => new WindowsDpapiSecretStore(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PersonalAgent", "secrets")));
+            services.AddSingleton<IModelProvider, OpenAiModelProvider>();
             services.AddSingleton<TakeControlHotkeyService>();
             services.AddSingleton<ITaskCommands>(provider => provider.GetRequiredService<TaskRunCoordinator>());
             services.AddSingleton<IAgentRuntime>(provider => new FakeAgentRuntime(

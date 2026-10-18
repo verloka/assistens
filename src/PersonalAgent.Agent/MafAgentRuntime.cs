@@ -82,6 +82,8 @@ public sealed class MafAgentRuntime(
         catch (OperationCanceledException) when (duration.IsCancellationRequested)
         { return Failure("RunTimedOut", "Model execution exceeded its duration limit."); }
         catch (RunPersistenceException) { throw; } // The runner owns durable-history failure handling.
+        catch (ModelProviderException exception)
+        { return Failure(exception.Code, exception.Message, AgentResultStatus.Blocked); }
         catch (Exception)
         {
             return Failure("ModelExecutionFailed", "Model execution failed; no automatic retry was performed.",
