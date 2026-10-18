@@ -1,9 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-042 (ce8957c), actual minimized/outsideFocusTrue/gateClosedTrue/146->146; exec80557 exited0.
-- Current task: none; PA-043 implemented, blocked on real tray/menu observation.
-- Modified files: App startup/lifetime/DI/csproj, MainWindow opt-in/controls, ControlWindow XAML, ControlPanelViewModel, DesktopShell, WindowsTrayIcon, five DesktopShellTests, README/FDD/index, state/LOG/checkpoint.
-- Verified build/test: targeted DesktopShell/Dashboard/HealthScreen/TakeControl/PauseScope20passed. Final scripts/verify.ps1 locked restore/build0warnings/errors,76unit+259integration+3localfake-flow passed (338). Diff/doctor passed. Tests use unshown windows/fake tray, never actual tray/hotkey registration.
-- Runtime blockers / waiting on user: PA-043 needs real App check: enable Keep running in tray when closing, close main X, tray Pause & Take Control, tray Controls shows Paused while main hidden, tray Open restores, tray Exit shuts down. PA-026/030 multi-display hardware unavailable.
-- Decisions: close-to-tray opt-in/session-local; no physical release guarantee before PA-044, no default GUI admission, no hide/open/cancel auto-resume. Full business E2E still untested/all flows Draft. No catalog/dependency edits; no independent ready task after block.
-- Next instruction: doctor/next. Reconcile PA-043 actual report before unblock/start/done, then PA-044. Launch existing real App --no-build for user gestures after commit; record exec/window and wait for actual report/close. Do not automate clicks/screenshots or claim actual tray passed from fake tests.
-- Diagnostic launch: real App running in exec34756; host started and window checked. Await user opt-in close-to-tray, menu TakeControl/Controls Paused, Open and Exit report. Actual tray still not verified. Global hotkey/tray owned until App exits; no automatic desktop input/capture.
+- Last completed task: PA-043; user confirmed tray/mini-window/Paused/Open/Exit; exec34756 exited0.
+- Current task: none; nextPA-044 safe pause
+- Modified files: generated abstract arrow PNG/ICO and asset prompt/readme, build-icon.ps1, shared EXE/window/tray icon resource, accepted tray evidence/FDD/index/README/state/LOG/checkpoint.
+- Verified build/test: DesktopShell|HealthScreen7passed after final asset; ICO16/EXEembedded32 decode success, WPF XAML resource loaded. Latest full verify338passed/build0warnings/errors at18b9285. Diff/doctor before commit.
+- Runtime blockers / waiting on user: PA-026/030 unavailable multi-display hardware only. No remaining PA-043 manual blocker.
+- Decisions: robot rejected/removed, built-in generated abstract arrow copied to workspace; no CLI API credentials. Full business/E2E-03 still untested/Draft. No catalog/dependency changes.
+- Next instruction: doctor/next; start PA-044, inspect actual atomic cleanup/drain/store ordering and implement smallest safe confirmation. Keep no GUI admission by default, no automatic clicks/capture. Read FDD-002/reverse001/003/007 before changes.

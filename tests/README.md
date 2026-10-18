@@ -673,3 +673,10 @@ checks; full FDD-002 S1-S4 are untested.
 API references: [EnumDisplayMonitors](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaymonitors),
 [virtual screen geometry](https://learn.microsoft.com/en-us/windows/win32/gdi/the-virtual-screen),
 [BitBlt](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt).
+
+PA-043 attended result (2026-10-18): user confirmed all requested tray/mini-window
+checks succeeded; App exec34756 shut down normally and exited0. The generic icon
+was reported as missing and replaced with the generated abstract arrow asset,
+embedded in the executable, both windows and tray; see Assets/README.md for source
+and prompt. Icon decoding and seven unchanged DesktopShell/HealthScreen tests
+passed. This does not complete physical-input safe pause/resume acceptance.

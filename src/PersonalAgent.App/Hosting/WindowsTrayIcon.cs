@@ -15,6 +15,7 @@ public sealed class WindowsTrayIcon : ITrayIcon
 {
     private Forms.NotifyIcon? icon;
     private Forms.ContextMenuStrip? menu;
+    private System.Drawing.Icon? ownedIcon;
     private readonly List<(Forms.ToolStripMenuItem Item, ICommand Command)> commands = [];
     public void Start(ControlPanelViewModel model, Action open, Action controls, Action exit)
     {
@@ -27,7 +28,10 @@ public sealed class WindowsTrayIcon : ITrayIcon
         AddCommand("Cancel", model.CancelCommand);
         menu.Items.Add("Exit", null, (_, _) => exit());
         menu.Opening += (_, _) => { model.Refresh(); Refresh(model.Status); };
-        icon = new Forms.NotifyIcon { Icon = System.Drawing.SystemIcons.Application, Text = "Personal Agent", ContextMenuStrip = menu, Visible = true };
+        using var resource = System.Windows.Application.GetResourceStream(new Uri("/PersonalAgent.App;component/Assets/agent.ico", UriKind.Relative)).Stream;
+        using var decoded = new System.Drawing.Icon(resource, Forms.SystemInformation.SmallIconSize);
+        ownedIcon = (System.Drawing.Icon)decoded.Clone();
+        icon = new Forms.NotifyIcon { Icon = ownedIcon, Text = "Personal Agent", ContextMenuStrip = menu, Visible = true };
         icon.DoubleClick += (_, _) => open();
         Refresh(model.Status);
     }
@@ -46,6 +50,7 @@ public sealed class WindowsTrayIcon : ITrayIcon
     public void Dispose()
     {
         if (icon is not null) { icon.Visible = false; icon.Dispose(); icon = null; }
+        ownedIcon?.Dispose(); ownedIcon = null;
         menu?.Dispose(); menu = null; commands.Clear();
     }
 }
