@@ -61,3 +61,9 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 - FDD develop/verify: reviewed FDD-002 and consumers FDD-001/FDD-003/FDD-007. Actual diff contains an isolated attended fixture, no runtime tools or production lease behavior. Static safety scope reviewed; FDD-002 S1-S4 NOT TESTED. No Draft promotion or false test links.
 - Blocker: requires user-operated foreground test and observation of capture, one x, WM_HOTKEY, shutdown, DPI/monitor environment. Requested result; unavailable unattended desktop verification cannot establish acceptance. UIPI/DPI/monitor/lock limits and exact manual steps documented in tests/README.md.
 - Next: independent PA-009 (depends on PA-005); do not bypass PA-008 for tasks that depend on it.
+
+## 2026-10-18 13:34:01 +03:00 | PA-009 | done
+- Inspected Core (empty scaffold); added SDK/UI-free domain records for TaskDefinition, TaskRun, Conversation and RunEvent with IDs, origin, UTC timestamp fields, version, summary, sources and structured event payload. Used full status list from plan 9.2, not a new Started alias from the abbreviated task description.
+- Checks: DomainSerializationTests 2 passed (JSON round-trip/link/result preservation and Core assembly references); scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 3 unit + 14 integration passed; E2E empty. git diff --check passed.
+- FDD develop/verify: reviewed lifecycle FDD-001 and consumers FDD-003/FDD-007, conversation consumer FDD-006. Actual diff adds neutral data contracts only; no execution/storage/delivery or approved contract changes. Complete scenarios remain NOT TESTED, all Drafts preserved. No extra flow documents.
+- Unresolved: PA-008 still awaits attended Windows result; unrelated to PA-009 dependency. Next: PA-010 state machine.

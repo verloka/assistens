@@ -90,14 +90,15 @@
                                        "attempts":  1
                                    },
                         "PA-009":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:32:43.8734128+00:00",
+                                       "completed_at":  "2026-10-18T10:34:01.4269343+00:00",
                                        "evidence":  [
-
+                                                        "Core/Domain/TaskModels.cs SDK-neutral TaskDefinition/TaskRun/Conversation/RunEvent, origin/source links, full plan 9.2 statuses, version and timestamps; DomainSerializationTests JSON graph round-trip and Core assembly isolation. No task execution or durability yet; FDD-001/003/006/007 reviewed; business scenarios remain untested Drafts.",
+                                                        "Verification: DomainSerializationTests 2 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 3 unit + 14 integration passed; E2E empty"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-010":  {
                                        "status":  "pending",
@@ -1260,6 +1261,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-008",
-    "updated_at":  "2026-10-18T10:32:37.2550576+00:00"
+    "last_task_id":  "PA-009",
+    "updated_at":  "2026-10-18T10:34:01.4369530+00:00"
 }

@@ -98,6 +98,9 @@
         "dependencies": {
           "xunit.extensibility.core": "[2.9.3]"
         }
+      },
+      "personalagent.core": {
+        "type": "Project"
       }
     }
   }
