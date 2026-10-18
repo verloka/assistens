@@ -90,3 +90,40 @@ remain unchanged. This verifies local transport/discovery/call compatibility, no
 remote OAuth, TLS, reconnects, tool policy, run integration or corporate access.
 FDD-004 S1-S3 remain untested as complete business outcomes. SDK transport reference:
 [official documentation](https://csharp.sdk.modelcontextprotocol.io/v2/concepts/transports/transports.html).
+
+## Attended Windows diagnostic (PA-008)
+
+Build-only verification is automated. Run this fixture yourself in a dedicated,
+unlocked interactive Windows session; do not run it as a background test:
+
+```powershell
+dotnet run --project tests/PersonalAgent.WindowsSmoke
+```
+
+1. Activate its window yourself. Keep it unobscured and fully within the desktop.
+2. Release all keys, then click its capture/input button with the mouse.
+3. Check that the preview depicts this window and the report shows capture OK,
+   physical pixel dimensions, DPI, monitor count and virtual origin. No file is saved.
+4. Check that exactly one `x` appears in the test field and the report says the
+   SendInput result was observed. It never clicks or types in another application.
+5. Press Ctrl+Shift+F10 yourself; check for WM_HOTKEY observed OK. Close the window.
+   Relaunch if needed to check that the shortcut was released on shutdown.
+6. Record actual results and environment (Windows, normal/elevated session, DPI,
+   monitor count), including failures. Do not mark PA-008 done from build evidence.
+
+Limitations: foreground/focus checks cannot atomically reserve global Windows input;
+use only as an attended one-character diagnostic, without switching apps during
+the operation. There is no agent lease/pause implementation here. A key-down/up
+pair is submitted together; a partial insertion completes only its key-up and never
+retries the character. No modifiers are injected or physical user keys released.
+The hotkey registers only after the user presses the button; conflicts are reported.
+SendInput is subject to UIPI and does not identify UIPI failures reliably. UAC,
+lock, remote/disconnected sessions and elevation mismatch are unsupported, with
+no bypass. PerMonitorV2 is requested before window creation, but mixed DPI,
+negative origins, multi-monitor layouts and RDP still require hardware checks.
+This cropped GDI capture does not validate full-desktop capture, protected windows
+or production coordinate mapping. Screenshots and field content are never persisted.
+
+API references: [SendInput](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput),
+[RegisterHotKey](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey),
+[BitBlt](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt).

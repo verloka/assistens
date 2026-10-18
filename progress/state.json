@@ -80,14 +80,14 @@
                                        "attempts":  1
                                    },
                         "PA-008":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-18T10:30:43.3459605+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Attended fixture tests/PersonalAgent.WindowsSmoke builds; capture/SendInput/hotkey must be run by user in foreground dedicated unlocked Windows session. No observed GUI result yet. Manual instructions in tests/README.md. Automated suite does not launch input.",
+                                       "attempts":  1
                                    },
                         "PA-009":  {
                                        "status":  "pending",
@@ -1260,6 +1260,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-007",
-    "updated_at":  "2026-10-18T10:30:25.6001253+00:00"
+    "last_task_id":  "PA-008",
+    "updated_at":  "2026-10-18T10:32:37.2550576+00:00"
 }

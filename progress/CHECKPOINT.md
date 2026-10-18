@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-007
-- Current task: none
-- Modified files: test-only McpTestServer, McpTransportSpikeTests, integration project/lock, solution, central package pin, tests/README.md, FDD-004 reference, progress state/log/checkpoint.
-- Verified build/test: dotnet test tests/PersonalAgent.IntegrationTests --filter McpTransportSpikeTests --no-restore (2 passed); powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 (locked restore passed, build 0 warnings/errors, 1 unit + 14 integration passed; E2E suite empty).
-- Runtime blockers / waiting on user: none for PA-007; remote corporate auth and business E2E not verified.
-- Decisions: real local SDK transports only; fixture not registered in production; all FDD flows remain Draft and business scenarios untested.
-- Next instruction: run taskctl.ps1 next; inspect any in_progress task first. Expected PA-008.
+- Last completed task: PA-007 (4257961)
+- Current task: none; PA-008 blocked awaiting attended Windows diagnostic
+- Modified files: tests/PersonalAgent.WindowsSmoke project/manifest/native smoke, solution, tests/README.md, progress state/log/checkpoint.
+- Verified build/test: dotnet build tests/PersonalAgent.WindowsSmoke (0 warnings/errors); powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 (locked restore passed, build 0 warnings/errors, 1 unit + 14 integration passed; E2E empty).
+- Runtime blockers / waiting on user: PA-008 requires actual manual capture/input/hotkey result. Run dotnet run --project tests/PersonalAgent.WindowsSmoke and follow tests/README.md; no input was launched automatically.
+- Decisions: attended diagnostic only; no production GUI driver, lease or business scenario coverage claimed. FDD-002 S1-S4 remain untested and all flows Draft.
+- Next instruction: run taskctl.ps1 next; inspect any in_progress task first. Expected independent PA-009, not dependent work bypassing PA-008.
