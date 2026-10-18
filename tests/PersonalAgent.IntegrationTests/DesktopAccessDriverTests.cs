@@ -133,6 +133,7 @@ public sealed class DesktopAccessDriverTests
     {
         public DesktopAccessSnapshot Snapshot => inner.Snapshot;
         public Task<DesktopLease> AcquireAsync(Guid runId, CancellationToken ct = default) => inner.AcquireAsync(runId, ct);
+        public Task<DesktopLease> WaitAcquireAsync(Guid runId, CancellationToken ct = default) => inner.WaitAcquireAsync(runId, ct);
         public bool IsCurrent(DesktopLease lease) => inner.IsCurrent(lease);
         public IDisposable EnterAtomic(DesktopLease lease) { _ = inner.RevokeAsync(lease); return inner.EnterAtomic(lease); }
         public Task RevokeAsync(DesktopLease lease) => inner.RevokeAsync(lease);

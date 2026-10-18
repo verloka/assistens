@@ -721,3 +721,20 @@ resume write delay/failure keeps admission closed, a new takeover wins a pending
 resume without waking old GUI steps, and idempotent Running Resume cannot clear
 human control. Native boundaries are fake; actual physical changed-window resume
 is still part of attended PA-048.
+
+## Waiting desktop runs (PA-046)
+
+WaitAcquireAsync uses the existing resource coordinator's FIFO queue and async
+change signals, not desktop polling or focus acquisition. Trusted admission is
+rechecked after wakeup outside the resource lock. Direct Acquire retains its
+immediate-busy behavior and cannot bypass a waiting queue; the current owner's
+same grant remains idempotent. Token cancellation removes a waiter, and resource
+CancelRunAsync cancels that run's pending requests without affecting another owner.
+A released/cancelled owner never lifts global human pause automatically; only an
+explicit valid resume and allowed admission can grant a waiting run. Uncertain
+input fails queued requests closed. Production admission remains default denied.
+
+`dotnet test tests/PersonalAgent.UnitTests --filter DesktopAccessQueue` runs seven
+screen-free cases for FIFO, token/run cancellation, changed admission, released
+human pause, cancelled owner and input uncertainty. No focus, capture or native
+input is performed; runtime/tool wiring and full attended takeover remain later.

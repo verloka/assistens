@@ -20,6 +20,7 @@ public interface IDesktopAccessCoordinator
 {
     DesktopAccessSnapshot Snapshot { get; }
     Task<DesktopLease> AcquireAsync(Guid runId, CancellationToken ct = default);
+    Task<DesktopLease> WaitAcquireAsync(Guid runId, CancellationToken ct = default);
     bool IsCurrent(DesktopLease lease);
     IDisposable EnterAtomic(DesktopLease lease);
     Task RevokeAsync(DesktopLease lease);
@@ -51,6 +52,8 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
     private Guid? humanControlOwner;
     private bool inputCleanupUncertain;
     private long pauseVersion;
+    private readonly LinkedList<Waiter> waiters = [];
+    private TaskCompletionSource changed = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public DesktopAccessSnapshot Snapshot
     {
@@ -78,12 +81,53 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
                 if (revoked) throw new DesktopAccessException("DesktopPaused");
                 return Task.FromResult(current);
             }
-            var next = new DesktopLease(runId, checked(generation + 1));
-            generation = next.Generation;
-            current = next;
-            revoked = false;
-            return Task.FromResult(next);
+            if (waiters.Count > 0) throw new DesktopAccessException("DesktopBusy");
+            return Task.FromResult(Grant(runId));
         }
+    }
+
+    public async Task<DesktopLease> WaitAcquireAsync(Guid runId, CancellationToken ct = default)
+    {
+        if (runId == Guid.Empty) throw new ArgumentException("A desktop owner requires a run ID.", nameof(runId));
+        ct.ThrowIfCancellationRequested();
+        LinkedListNode<Waiter> node;
+        lock (sync) node = waiters.AddLast(new Waiter(runId));
+        try
+        {
+            while (true)
+            {
+                // Policy may query task state: keep it outside the resource lock, including after wakeup.
+                var allowed = admit(runId);
+                Task wait;
+                lock (sync)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    if (node.Value.Cancelled) throw new OperationCanceledException("Desktop wait cancelled.", new CancellationToken(true));
+                    if (inputCleanupUncertain) throw new DesktopAccessException("InputCleanupUncertain");
+                    if (!allowed) throw new DesktopAccessException("DesktopAccessDenied");
+                    if (!userControl && !pausedRuns.Contains(runId))
+                    {
+                        if (current?.RunId == runId && !revoked) return current;
+                        if (current is null && ReferenceEquals(waiters.First, node)) return Grant(runId);
+                    }
+                    wait = changed.Task;
+                }
+                await wait.WaitAsync(ct).ConfigureAwait(false);
+            }
+        }
+        finally { lock (sync) { waiters.Remove(node); Pulse(); } }
+    }
+
+    private DesktopLease Grant(Guid runId)
+    {
+        current = new(runId, checked(++generation)); revoked = false;
+        return current;
+    }
+    private void Pulse()
+    {
+        var previous = changed;
+        changed = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        previous.TrySetResult();
     }
 
     public bool IsCurrent(DesktopLease lease)
@@ -112,6 +156,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
         {
             if (!ReferenceEquals(current, lease)) return Task.CompletedTask;
             revoked = true;
+            Pulse();
             return active == 0 ? Task.CompletedTask : drained!.Task;
         }
     }
@@ -141,6 +186,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
             pausedRuns.Remove(runId);
             userControl = false;
             humanControlOwner = null;
+            Pulse();
         }
     }
 
@@ -173,6 +219,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
         {
             userControl = true;
             pauseVersion++;
+            Pulse();
             if (current is null) return null;
             var runId = current.RunId;
             humanControlOwner = runId;
@@ -191,6 +238,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
             inputCleanupUncertain = true; revoked = true; userControl = true;
             pauseVersion++;
             humanControlOwner = lease.RunId; pausedRuns.Add(lease.RunId);
+            Pulse();
         }
     }
 
@@ -202,6 +250,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
             pauseVersion++;
             humanControlOwner ??= runId; pausedRuns.Add(runId);
             if (current is not null) revoked = true;
+            Pulse();
         }
     }
 
@@ -226,6 +275,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
                 if (current.RunId != runId) throw new DesktopAccessException("DesktopBusy");
                 if (!revoked || active > 0) throw new DesktopAccessException("DesktopPausing");
                 current = null;
+                Pulse();
             }
             // Resource ownership is released; the human's logical pause owner remains reserved.
             return Snapshot;
@@ -237,6 +287,8 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
         lock (sync)
         {
             pausedRuns.Remove(runId);
+            foreach (var waiter in waiters) if (waiter.RunId == runId) waiter.Cancelled = true;
+            Pulse();
             return current?.RunId == runId ? ReleaseAsync(current) : Task.CompletedTask;
         }
     }
@@ -257,6 +309,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
         {
             if (!ReferenceEquals(current, lease)) return false;
             current = null;
+            Pulse();
             return true;
         }
     }
@@ -269,6 +322,11 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
     {
         private DesktopAccessCoordinator? owner = owner;
         public void Dispose() => Interlocked.Exchange(ref owner, null)?.ExitAtomic();
+    }
+    private sealed class Waiter(Guid runId)
+    {
+        public Guid RunId { get; } = runId;
+        public bool Cancelled;
     }
 }
 
