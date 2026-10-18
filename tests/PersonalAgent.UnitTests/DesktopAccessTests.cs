@@ -66,7 +66,7 @@ public sealed class DesktopAccessTests
         var error = await Assert.ThrowsAsync<DesktopAccessException>(() => coordinator.AcquireAsync(Guid.NewGuid()));
         Assert.Equal("DesktopBusy", error.Code);
         Assert.True(coordinator.IsCurrent(lease));
-        Assert.Equal(new DesktopAccessSnapshot(owner, 1), coordinator.Snapshot);
+        Assert.Equal(new DesktopAccessSnapshot(owner, 1) { State = DesktopAccessState.Granted }, coordinator.Snapshot);
     }
 
     [Fact]

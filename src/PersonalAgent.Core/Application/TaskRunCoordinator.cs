@@ -1,6 +1,7 @@
 using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Domain;
 using PersonalAgent.Core.Persistence;
+using PersonalAgent.Core.Computer;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -11,7 +12,7 @@ namespace PersonalAgent.Core.Application;
 
 // Persist each revision before publishing it. Query locks never cover database I/O.
 // Native desktop lease/generation gating remains a separate resource boundary.
-public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITaskCommands, IDisposable
+public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDesktopAccessCoordinator? desktopAccess = null) : ITaskCommands, IDisposable
 {
     private readonly object sync = new();
     private readonly SemaphoreSlim writes = new(1, 1);
@@ -108,6 +109,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
         Apply(command.CommandId, command.RunId, command.ExpectedVersion, command, change =>
         {
             if (TaskRunStateMachine.IsTerminal(change.Run.Status)) return;
+            _ = desktopAccess?.CancelRunAsync(change.Run.Id);
             change.Run = change.Run with { Summary = null, ErrorCode = null, Sources = [] };
             change.Result = null;
             Move(change, RunStatus.Cancelled, "Cancelled by user");
@@ -124,10 +126,12 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
                 if (scope != command.Scope) throw new InvalidOperationException("Resume before changing pause scope.");
                 return;
             }
+            _ = desktopAccess?.PauseRunAsync(change.Run.Id);
             if (command.Scope == PauseScope.GuiOnly)
             {
                 change.Run = change.Run with { PauseScope = command.Scope, RunVersion = checked(change.Run.RunVersion + 1) };
-                AddEvent(change, RunEventType.DesktopTakenOver, "GUI-only pause requested; no GUI driver is configured");
+                change.NewResume = Signal();
+                AddEvent(change, RunEventType.DesktopTakenOver, "GUI-only pause requested; new desktop actions blocked");
                 return;
             }
             Move(change, change.Run.Status == RunStatus.Queued ? RunStatus.Paused : RunStatus.Pausing, "Pause requested", command.Scope);
@@ -139,6 +143,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
         {
             if (TaskRunStateMachine.IsTerminal(change.Run.Status)) throw new InvalidOperationException("Cannot resume a terminal run.");
             if (change.Run.Status == RunStatus.Pausing) throw new InvalidOperationException("Wait for the current step to reach the pause boundary.");
+            desktopAccess?.ResumeRun(change.Run.Id);
             if (change.Run.Status is RunStatus.Paused or RunStatus.PausedForUser)
             {
                 Move(change, change.Run.StartedAtUtc is null ? RunStatus.Queued : RunStatus.Running, "Task resumed");
@@ -148,8 +153,20 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
             {
                 change.Run = change.Run with { PauseScope = null, RunVersion = checked(change.Run.RunVersion + 1) };
                 AddEvent(change, RunEventType.RunResumed, "GUI-only pause cleared; fresh desktop context is still required before GUI use");
+                change.Wake = true;
             }
             else if (change.Run.Status != RunStatus.Running) throw new InvalidOperationException("Run is not paused.");
+        }, cancellationToken);
+
+    public Task<TaskRun> SkipAsync(SkipRunCommand command, CancellationToken cancellationToken = default) =>
+        Apply(command.CommandId, command.RunId, command.ExpectedVersion, command, change =>
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(command.Reason);
+            if (change.Run.Status != RunStatus.Queued || change.Run.StartedAtUtc is not null)
+                throw new InvalidOperationException("Only an unstarted queued occurrence can be skipped.");
+            _ = desktopAccess?.CancelRunAsync(change.Run.Id);
+            Move(change, RunStatus.Skipped, command.Reason);
+            change.Cancel = true; change.Wake = true;
         }, cancellationToken);
 
     public TaskRun GetRun(Guid runId) { lock (sync) return Find(runId).Run; }
@@ -180,6 +197,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
                     entry.Events.AddRange(stored.Events);
                     if (TaskRunStateMachine.IsTerminal(entry.Run.Status)) entry.Terminal.TrySetResult(entry.Run);
                     runs.Add(entry.Run.Id, entry);
+                    if (entry.Run.PauseScope is not null && !TaskRunStateMachine.IsTerminal(entry.Run.Status))
+                        _ = desktopAccess?.PauseRunAsync(entry.Run.Id);
                     if (safeQueuedRuns.Contains(entry.Run.Id))
                     {
                         if (entry.Run.Status != RunStatus.Queued || entry.Request.ModelProfileId != "fake" || entry.Request.AllowedToolIds.Count != 0)
@@ -267,8 +286,12 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
     });
     internal void ReleaseExecution(Guid runId) { lock (sync) Find(runId).Executing = false; }
 
-    public async Task WaitAtBoundaryAsync(Guid runId, CancellationToken cancellationToken)
+    public Task WaitAtBoundaryAsync(Guid runId, CancellationToken cancellationToken) =>
+        WaitAtBoundaryAsync(runId, RunStepAccess.LocalComputation, cancellationToken);
+
+    public async Task WaitAtBoundaryAsync(Guid runId, RunStepAccess access, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(access);
         while (true)
         {
             await ChangeAsync(runId, change =>
@@ -284,7 +307,9 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
                 var entry = Find(runId);
                 if (entry.Run.Status == RunStatus.Pausing) continue;
                 if (entry.Run.Status == RunStatus.Cancelled) throw new OperationCanceledException("Run cancelled.", entry.Cancellation.Token);
-                wait = entry.Run.Status is RunStatus.Paused or RunStatus.PausedForUser ? entry.Resume.Task : null;
+                var guiPauseBlocksStep = entry.Run.PauseScope == PauseScope.GuiOnly &&
+                    (access.RequiresDesktop || !access.IsReadOnly || !access.IndependentOfDesktop);
+                wait = entry.Run.Status is RunStatus.Paused or RunStatus.PausedForUser || guiPauseBlocksStep ? entry.Resume.Task : null;
             }
             if (wait is null) return;
             await wait.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -414,7 +439,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
         public List<RunEvent> Events { get; } = [];
         public List<Channel<RunEvent>> Watchers { get; } = [];
         public CancellationTokenSource Cancellation { get; } = new();
-        public TaskCompletionSource Resume = CompletedSignal();
+        public TaskCompletionSource Resume = run.PauseScope is null ? CompletedSignal() : Signal();
         public bool Executing;
         public AgentRunResult? Result;
         public TaskCompletionSource<TaskRun> Terminal { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);

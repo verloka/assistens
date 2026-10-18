@@ -5,6 +5,7 @@ using PersonalAgent.Agent;
 using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Application;
 using PersonalAgent.Core.Persistence;
+using PersonalAgent.Core.Computer;
 using PersonalAgent.Persistence;
 using System.IO;
 
@@ -23,6 +24,7 @@ public static class AppHost
             services.AddSingleton<MainWindow>();
             services.AddSingleton<HealthViewModel>();
             services.AddSingleton<DashboardViewModel>();
+            services.AddSingleton<IDesktopAccessCoordinator>(_ => new DesktopAccessCoordinator());
             services.AddSingleton<TaskRunCoordinator>();
             services.AddSingleton<ITaskCommands>(provider => provider.GetRequiredService<TaskRunCoordinator>());
             services.AddSingleton<IAgentRuntime>(provider => new FakeAgentRuntime(

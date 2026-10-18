@@ -357,6 +357,23 @@ and capture, partial-key cleanup quiescence, inter-chunk revoke and paused frame
 discard. Unit DesktopAccess cases cover token/ownership and cancelled release.
 No native input is sent. This is not live task pause/hotkey/idle/resume acceptance.
 
+## Pause scopes and separate desktop state (PA-041)
+
+TaskRunCoordinator accepts the shared default-denied desktop coordinator in DI.
+GUI-only pause closes that run's resource gate and waits only desktop, write or
+desktop-dependent steps. Independent permitted read-only steps may proceed using
+trusted RunStepAccess metadata (not arguments granting their own tool permission).
+EntireRun waits all boundaries. Resume wakes waiters but discards the old lease;
+it refuses while atomic work remains. Cancel wakes with cancellation and closes
+ownership; Skip terminates only an unstarted queued occurrence as Skipped, without
+pausing unrelated runs. Scheduler-specific occurrence/defer UI remains future work.
+
+PauseScopeTests covers these distinctions. PauseScopePersistenceTests reopens a
+real SQLite GUI pause, verifies no new lease/GUI step until explicit resume and
+checks the resumed state persisted. Existing command-id/version/persistence/UI
+regressions remain applicable. These tests do not invoke real MCP or prove global
+hotkey, full safe-pause storage ordering or fresh-screenshot resume orchestration.
+
 ## Screen-independent computer test doubles (PA-029)
 
 PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit

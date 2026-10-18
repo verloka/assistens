@@ -10,6 +10,13 @@ public sealed record RunTriggerKey(string Source, string Value);
 public sealed record CancelRunCommand(Guid CommandId, Guid RunId, long ExpectedVersion);
 public sealed record PauseRunCommand(Guid CommandId, Guid RunId, long ExpectedVersion, PauseScope Scope = PauseScope.EntireRun);
 public sealed record ResumeRunCommand(Guid CommandId, Guid RunId, long ExpectedVersion);
+public sealed record SkipRunCommand(Guid CommandId, Guid RunId, long ExpectedVersion, string Reason);
+
+// Trusted runtime/registry metadata, never permissions supplied by a tool's argument payload.
+public sealed record RunStepAccess(bool RequiresDesktop, bool IsReadOnly, bool IndependentOfDesktop)
+{
+    public static RunStepAccess LocalComputation { get; } = new(false, true, true);
+}
 
 public interface ITaskCommands
 {
@@ -17,4 +24,5 @@ public interface ITaskCommands
     Task<TaskRun> CancelAsync(CancelRunCommand command, CancellationToken cancellationToken = default);
     Task<TaskRun> PauseAsync(PauseRunCommand command, CancellationToken cancellationToken = default);
     Task<TaskRun> ResumeAsync(ResumeRunCommand command, CancellationToken cancellationToken = default);
+    Task<TaskRun> SkipAsync(SkipRunCommand command, CancellationToken cancellationToken = default);
 }

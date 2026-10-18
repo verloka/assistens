@@ -8,7 +8,11 @@ public sealed class DesktopLease
     public long Generation { get; }
 }
 
-public sealed record DesktopAccessSnapshot(Guid? OwnerRunId, long Generation);
+public enum DesktopAccessState { Free, Granted, Pausing, PausedForUser }
+public sealed record DesktopAccessSnapshot(Guid? OwnerRunId, long Generation)
+{
+    public DesktopAccessState State { get; init; }
+}
 public interface IDesktopAccessCoordinator
 {
     DesktopAccessSnapshot Snapshot { get; }
@@ -16,6 +20,9 @@ public interface IDesktopAccessCoordinator
     bool IsCurrent(DesktopLease lease);
     IDisposable EnterAtomic(DesktopLease lease);
     Task RevokeAsync(DesktopLease lease);
+    Task PauseRunAsync(Guid runId);
+    void ResumeRun(Guid runId);
+    Task CancelRunAsync(Guid runId);
     Task<bool> ReleaseAsync(DesktopLease lease, CancellationToken ct = default);
 }
 
@@ -30,16 +37,25 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
     private bool revoked;
     private int active;
     private TaskCompletionSource? drained;
+    private readonly HashSet<Guid> pausedRuns = [];
 
-    public DesktopAccessSnapshot Snapshot { get { lock (sync) return new(current?.RunId, generation); } }
+    public DesktopAccessSnapshot Snapshot
+    {
+        get { lock (sync) return new(current?.RunId, generation) { State = current is null ? DesktopAccessState.Free :
+            !revoked ? DesktopAccessState.Granted : active > 0 ? DesktopAccessState.Pausing : DesktopAccessState.PausedForUser }; }
+    }
 
     public Task<DesktopLease> AcquireAsync(Guid runId, CancellationToken ct = default)
     {
         if (runId == Guid.Empty) throw new ArgumentException("A desktop owner requires a run ID.", nameof(runId));
+        ct.ThrowIfCancellationRequested();
+        // Admission may query task state. Never call external policy while holding the resource lock.
+        var allowed = admit(runId);
         lock (sync)
         {
             ct.ThrowIfCancellationRequested();
-            if (!admit(runId)) throw new DesktopAccessException("DesktopAccessDenied");
+            if (pausedRuns.Contains(runId)) throw new DesktopAccessException("DesktopPaused");
+            if (!allowed) throw new DesktopAccessException("DesktopAccessDenied");
             if (current is not null)
             {
                 if (current.RunId != runId) throw new DesktopAccessException("DesktopBusy");
@@ -81,6 +97,39 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
             if (!ReferenceEquals(current, lease)) return Task.CompletedTask;
             revoked = true;
             return active == 0 ? Task.CompletedTask : drained!.Task;
+        }
+    }
+
+    public Task PauseRunAsync(Guid runId)
+    {
+        if (runId == Guid.Empty) throw new ArgumentException("Run ID required.", nameof(runId));
+        lock (sync)
+        {
+            pausedRuns.Add(runId);
+            if (current?.RunId != runId) return Task.CompletedTask;
+            return RevokeAsync(current);
+        }
+    }
+
+    public void ResumeRun(Guid runId)
+    {
+        lock (sync)
+        {
+            if (current?.RunId == runId && revoked)
+            {
+                if (active > 0) throw new DesktopAccessException("DesktopPausing");
+                current = null; // Never reopen the old lease; next acquire gets a new generation.
+            }
+            pausedRuns.Remove(runId);
+        }
+    }
+
+    public Task CancelRunAsync(Guid runId)
+    {
+        lock (sync)
+        {
+            pausedRuns.Remove(runId);
+            return current?.RunId == runId ? ReleaseAsync(current) : Task.CompletedTask;
         }
     }
 

@@ -136,6 +136,9 @@ public sealed class DesktopAccessDriverTests
         public bool IsCurrent(DesktopLease lease) => inner.IsCurrent(lease);
         public IDisposable EnterAtomic(DesktopLease lease) { _ = inner.RevokeAsync(lease); return inner.EnterAtomic(lease); }
         public Task RevokeAsync(DesktopLease lease) => inner.RevokeAsync(lease);
+        public Task PauseRunAsync(Guid runId) => inner.PauseRunAsync(runId);
+        public void ResumeRun(Guid runId) => inner.ResumeRun(runId);
+        public Task CancelRunAsync(Guid runId) => inner.CancelRunAsync(runId);
         public Task<bool> ReleaseAsync(DesktopLease lease, CancellationToken ct = default) => inner.ReleaseAsync(lease, ct);
     }
     private sealed class CaptureProbe : IWindowsCaptureNative

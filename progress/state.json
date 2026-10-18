@@ -439,14 +439,15 @@
                                        "attempts":  1
                                    },
                         "PA-041":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:59:17.7708561+00:00",
+                                       "completed_at":  "2026-10-18T14:05:59.4871064+00:00",
                                        "evidence":  [
-
+                                                        "Task commands bind GUI-only/EntireRun/cancel/resume to separate desktop resource state; trusted RunStepAccess gates GUI/write/dependent vs independent permitted read boundaries. Resume invalidates old grant; Skip distinct unstartedqueued terminal outcome. Actual SQLite reopen retains GUI-pause lease/blocking. FDD-001/002/003/007 scoped semantics PASS,real MCP/hotkey/safe resume still untested.",
+                                                        "Verification: PauseScope/DesktopAccess/TaskCommands unit21passed; PauseScope/PersistenceRuntime/Dashboard/DesktopAccess integration22passed. Final scripts/verify.ps1 locked restore/build0warnings/errors,73unit+247integration+3localfake-flow passed; diff check passed. No real MCP/GUI actions."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-042":  {
                                        "status":  "pending",
@@ -1289,6 +1290,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-040",
-    "updated_at":  "2026-10-18T13:59:16.8949096+00:00"
+    "last_task_id":  "PA-041",
+    "updated_at":  "2026-10-18T14:05:59.5006442+00:00"
 }
