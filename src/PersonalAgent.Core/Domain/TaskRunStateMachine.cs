@@ -14,8 +14,8 @@ public static class TaskRunStateMachine
             or RunStatus.Pausing or RunStatus.Blocked or RunStatus.Completed or RunStatus.Failed or RunStatus.Cancelled or RunStatus.Interrupted,
         RunStatus.WaitingForDesktop or RunStatus.WaitingForUser or RunStatus.WaitingForApproval =>
             to is RunStatus.Running or RunStatus.Pausing or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted,
-        RunStatus.Pausing => to is RunStatus.Paused or RunStatus.PausedForUser or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted,
-        RunStatus.Paused or RunStatus.PausedForUser => to is RunStatus.Queued or RunStatus.Running or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Interrupted,
+        RunStatus.Pausing => to is RunStatus.Paused or RunStatus.PausedForUser or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted,
+        RunStatus.Paused or RunStatus.PausedForUser => to is RunStatus.Queued or RunStatus.Running or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted,
         // Returning from Blocked is an explicit requeue, not an automatic continuation.
         RunStatus.Blocked => to is RunStatus.Queued or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted,
         _ => false

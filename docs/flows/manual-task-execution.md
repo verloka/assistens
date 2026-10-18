@@ -51,5 +51,7 @@ Status: Draft
 
 - Session-local commands (PA-013): `src/PersonalAgent.Core/Application/TaskCommands.cs`, `TaskRunCoordinator.cs` and `tests/PersonalAgent.UnitTests/TaskCommandsTests.cs` verify idempotent submit/cancel/pause/resume, payload-bound command IDs, optimistic versions and cancellable step boundaries. The coordinator is in-memory, with no runtime consumer, durable store or native GUI driver yet; these checks do not complete S1-S3.
 
+- Session-local runner (PA-014): `src/PersonalAgent.Core/Application/TaskRunner.cs` and `tests/PersonalAgent.IntegrationTests/TaskRunnerTests.cs` verify single consumption/execution under duplicate submits, ordered history, cancel vs late success/progress, pause acknowledgement and same-attempt resume, timeouts, sanitized failures and Interrupted on shutdown. No durable storage, external tools, notification delivery or business E2E proof is implied.
+
 ## Unknowns
-- Runtime queue consumption, durable storage, notifications and end-to-end task submission remain pending. Confirm approval and E2E proof as code lands.
+- Durable storage, notifications and end-to-end UI task submission remain pending. Confirm approval and E2E proof as code lands.

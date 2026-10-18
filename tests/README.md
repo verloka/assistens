@@ -135,5 +135,9 @@ the SDK-neutral `IAgentRuntime`, with ordered operation progress, bounded execut
 cancellation and externally controlled async step boundaries. It uses only the
 `fake` profile and performs no model/tool/network/desktop calls. It can also return
 a scripted failure. `AgentContractTests` covers neutral request/result serialization.
-This is an adapter-level flow; application commands/queue/UI, persistence and
-business end-to-end acceptance are separate backlog work.
+`dotnet test --filter TaskRunnerTests` exercises the session-local command/queue
+pipeline with duplicate submits, queued/active cancellation, late results, bounded
+runtime, step-boundary pause/resume and safe interruption on shutdown. Only one
+runner consumes a coordinator. Runtime adapters must cooperate with cancellation
+and call its async step boundary; this is not a native desktop gate. UI, persistence
+and business end-to-end acceptance remain separate backlog work.

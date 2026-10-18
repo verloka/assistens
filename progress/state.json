@@ -146,14 +146,15 @@
                                        "attempts":  1
                                    },
                         "PA-014":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:44:19.5208117+00:00",
+                                       "completed_at":  "2026-10-18T10:47:59.8564052+00:00",
                                        "evidence":  [
-
+                                                        "TaskRunner consumes coordinator queue once with bounded execution, cancellation, sanitized failure and Interrupted shutdown. Coordinator owns snapshots, ordered events/result and pause acknowledgement; terminal status wins late output. TaskRunnerTests 8 cases include 50 duplicate submits once, cancelled queued item, active cancel/late progress, pause/resume or cancel, timeout/next run, shutdown and duplicate consumer. In-memory only; FDD-001 consumers reviewed; no GUI/durable/business E2E claim.",
+                                                        "Verification: TaskRunnerTests 8 passed; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 35 unit + 28 integration passed; E2E empty; staged diff check passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-015":  {
                                        "status":  "pending",
@@ -1266,6 +1267,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-013",
-    "updated_at":  "2026-10-18T10:44:18.2569406+00:00"
+    "last_task_id":  "PA-014",
+    "updated_at":  "2026-10-18T10:47:59.8694600+00:00"
 }

@@ -16,6 +16,7 @@ public sealed class TaskRunCoordinator : ITaskCommands, IDisposable
     private readonly Dictionary<Guid, (string Fingerprint, Guid RunId)> receipts = [];
     private readonly Channel<Guid> queue = Channel.CreateUnbounded<Guid>(new UnboundedChannelOptions { SingleReader = true });
     private bool disposed;
+    private bool runnerAttached;
 
     public Task<TaskRun> SubmitAsync(SubmitTaskCommand command, CancellationToken cancellationToken = default)
     {
@@ -112,27 +113,108 @@ public sealed class TaskRunCoordinator : ITaskCommands, IDisposable
 
     public TaskRun GetRun(Guid runId) { lock (sync) return Find(runId).Run; }
     public IReadOnlyList<RunEvent> GetEvents(Guid runId) { lock (sync) return Find(runId).Events.ToArray(); }
+    public AgentRunResult? GetResult(Guid runId) { lock (sync) return Find(runId).Result; }
+    public Task<TaskRun> WaitForTerminalAsync(Guid runId, CancellationToken cancellationToken = default)
+    {
+        lock (sync) return Find(runId).Terminal.Task.WaitAsync(cancellationToken);
+    }
+
+    internal ChannelReader<Guid> AttachRunner()
+    {
+        lock (sync)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            if (runnerAttached) throw new InvalidOperationException("A runner is already attached.");
+            runnerAttached = true;
+            return queue.Reader;
+        }
+    }
+    internal void DetachRunner() { lock (sync) runnerAttached = false; }
+    internal (AgentRequest Request, CancellationToken Cancellation) GetExecution(Guid runId)
+    {
+        lock (sync) { var entry = Find(runId); return (entry.Request, entry.Cancellation.Token); }
+    }
+    internal async Task<bool> StartExecutionAsync(Guid runId, CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            await WaitAtBoundaryAsync(runId, cancellationToken);
+            lock (sync)
+            {
+                var entry = Find(runId);
+                cancellationToken.ThrowIfCancellationRequested();
+                if (TaskRunStateMachine.IsTerminal(entry.Run.Status) || entry.Executing) return false;
+                if (entry.Run.Status is RunStatus.Paused or RunStatus.Pausing or RunStatus.PausedForUser) continue;
+                if (entry.Run.Status != RunStatus.Queued) return false;
+                entry.Executing = true;
+                Move(entry, RunStatus.Running, "Task started");
+                return true;
+            }
+        }
+    }
+    internal void RecordProgress(AgentEvent value)
+    {
+        lock (sync)
+        {
+            var entry = Find(value.RunId);
+            if (TaskRunStateMachine.IsTerminal(entry.Run.Status)) return;
+            AddEvent(entry, value.Kind switch
+            {
+                AgentEventKind.ToolRequested => RunEventType.ToolRequested,
+                AgentEventKind.ToolCompleted => RunEventType.ToolExecuted,
+                AgentEventKind.WaitingForApproval => RunEventType.ApprovalRequested,
+                _ => RunEventType.Progress
+            }, value.Message);
+            entry.Events[^1] = entry.Events[^1] with { ToolId = value.ToolId, ToolCallId = value.ToolCallId };
+        }
+    }
+    internal void FinishExecution(Guid runId, AgentRunResult result)
+    {
+        lock (sync)
+        {
+            var entry = Find(runId);
+            if (TaskRunStateMachine.IsTerminal(entry.Run.Status)) return;
+            var status = result.Status switch
+            {
+                AgentResultStatus.Completed => RunStatus.Completed,
+                AgentResultStatus.Cancelled => RunStatus.Cancelled,
+                AgentResultStatus.Blocked => RunStatus.Blocked,
+                AgentResultStatus.Failed => RunStatus.Failed,
+                _ => throw new InvalidOperationException("Unsupported agent result status.")
+            };
+            entry.Result = result with { Sources = result.Sources.ToArray(), Artifacts = result.Artifacts.ToArray(), Warnings = result.Warnings.ToArray() };
+            entry.Run = entry.Run with { Summary = result.Summary, ErrorCode = result.ErrorCode, Sources = entry.Result.Sources };
+            Move(entry, status, result.Summary);
+        }
+    }
+    internal void InterruptExecution(Guid runId)
+    {
+        lock (sync)
+        {
+            var entry = Find(runId);
+            if (!TaskRunStateMachine.IsTerminal(entry.Run.Status) && entry.Run.Status != RunStatus.Queued)
+                Move(entry, RunStatus.Interrupted, "Application stopped; automatic replay is disabled");
+        }
+    }
+    internal void ReleaseExecution(Guid runId) { lock (sync) Find(runId).Executing = false; }
 
     // Used by adapters before the next independent step, never as a desktop lease.
     public async Task WaitAtBoundaryAsync(Guid runId, CancellationToken cancellationToken)
     {
-        Task wait;
-        lock (sync)
+        while (true)
         {
-            var entry = Find(runId);
-            cancellationToken.ThrowIfCancellationRequested();
-            if (entry.Run.Status == RunStatus.Cancelled) throw new OperationCanceledException("Run cancelled.", entry.Cancellation.Token);
-            entry.Cancellation.Token.ThrowIfCancellationRequested();
-            if (entry.Run.Status == RunStatus.Pausing) Move(entry, RunStatus.Paused, "Safe step boundary reached", entry.Run.PauseScope);
-            wait = entry.Run.Status is RunStatus.Paused or RunStatus.PausedForUser ? entry.Resume.Task : Task.CompletedTask;
-        }
-        await wait.WaitAsync(cancellationToken);
-        lock (sync)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var entry = Find(runId);
-            if (entry.Run.Status == RunStatus.Cancelled) throw new OperationCanceledException("Run cancelled.", entry.Cancellation.Token);
-            entry.Cancellation.Token.ThrowIfCancellationRequested();
+            Task wait;
+            lock (sync)
+            {
+                var entry = Find(runId);
+                cancellationToken.ThrowIfCancellationRequested();
+                if (entry.Run.Status == RunStatus.Cancelled) throw new OperationCanceledException("Run cancelled.", entry.Cancellation.Token);
+                entry.Cancellation.Token.ThrowIfCancellationRequested();
+                if (entry.Run.Status == RunStatus.Pausing) Move(entry, RunStatus.Paused, "Safe step boundary reached", entry.Run.PauseScope);
+                if (entry.Run.Status is not (RunStatus.Paused or RunStatus.PausedForUser)) return;
+                wait = entry.Resume.Task;
+            }
+            await wait.WaitAsync(cancellationToken);
         }
     }
 
@@ -193,6 +275,7 @@ public sealed class TaskRunCoordinator : ITaskCommands, IDisposable
             _ => RunEventType.StatusChanged
         };
         AddEvent(entry, type, message);
+        if (TaskRunStateMachine.IsTerminal(status)) entry.Terminal.TrySetResult(entry.Run);
     }
 
     private static void AddEvent(Entry entry, RunEventType type, string message) => entry.Events.Add(new RunEvent
@@ -209,6 +292,8 @@ public sealed class TaskRunCoordinator : ITaskCommands, IDisposable
         public CancellationTokenSource Cancellation { get; } = new();
         public TaskCompletionSource Resume = CompletedSignal();
         public bool Executing = false;
+        public AgentRunResult? Result;
+        public TaskCompletionSource<TaskRun> Terminal { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private static TaskCompletionSource CompletedSignal() { var signal = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously); signal.SetResult(); return signal; }
     }
 }
