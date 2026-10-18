@@ -364,14 +364,15 @@
                                        "attempts":  2
                                    },
                         "PA-034":  {
-                                       "status":  "blocked",
-                                       "started_at":  "2026-10-18T13:38:29.7983069+00:00",
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:43:00.3279456+00:00",
+                                       "completed_at":  "2026-10-18T13:43:00.8126361+00:00",
                                        "evidence":  [
-
+                                                        "Actual corrected WindowsSmoke TYPE TEXT OK,canceledFalse,calls6,42/42; TYPE CANCEL OK,canceledTrue,calls1,15/15. User evidence,exec3014 exit0. Isolated Tab/Enter fix verified in real field; scoped FDD-002 Type PASS; fullS1-S4 Draft/NOT TESTED.",
+                                                        "Verification: Actual user-operated full Unicode/multiline/tab and deterministic between-chunk cancellation reports. Unchanged3e19c71 verify0warnings/errors,60unit+198integration+3fake-flow passed;4 tab/control regressions red-before/green-after; unshown real WPF filter regression passed. No duplicate live typing."
                                                     ],
-                                       "note":  "Actual user TYPE CANCEL passed15chars/calls1; original TYPE TEXT repeatedly failed41/42. Missing Unicode-tab behavior reproduced in real unshown WPF TextBox. Fixed Enter/Tab as isolated balanced key batches with target policy recheck before text;4 regressions red before/green after. Full verify261tests passed. Await corrected actual TYPE TEXT OK42/42; no further native typing triggered.",
-                                       "attempts":  2
+                                       "note":  "Acceptance verified",
+                                       "attempts":  3
                                    },
                         "PA-035":  {
                                        "status":  "pending",
@@ -1285,5 +1286,5 @@
                                    }
                     },
     "last_task_id":  "PA-034",
-    "updated_at":  "2026-10-18T13:41:14.4181746+00:00"
+    "updated_at":  "2026-10-18T13:43:00.8221591+00:00"
 }

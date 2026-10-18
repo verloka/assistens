@@ -263,8 +263,10 @@ batch/policy cases failed against the old driver and pass with isolated key pair
 Attended result before the tab fix: user repeatedly reported TYPE TEXT FAILED,
 41/42 characters, while TYPE CANCEL passed (15 characters, one call). The missing
 tab is reproduced by the WPF input-pipeline test above. Actual TYPE TEXT with the
-corrected driver is **NOT TESTED**; the earlier cancellation observation remains
-recorded. Activate WindowsSmoke and release all keys.
+corrected driver was subsequently verified by the user: **TYPE TEXT OK**, 42/42
+characters, six calls, canceled=False; **TYPE CANCEL OK**, 15/15, one call,
+canceled=True. Diagnostic exited 0. The original failure above remains recorded.
+To repeat, activate WindowsSmoke and release all keys.
 Left-click **TYPE TEXT**. The fixture focuses only its own multiline field and
 types a synthetic sample with Cyrillic, CJK, emoji, punctuation, newline and tab.
 Do not touch keyboard/mouse or switch applications until the report. Check the

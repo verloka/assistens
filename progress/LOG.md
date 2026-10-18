@@ -292,3 +292,8 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 ## 2026-10-18 16:41:34 +03:00 | PA-034 | waiting; corrected Type fixture launched
 - Continued requested diagnostic workflow: dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build, exec3014; process/window present. User should activate, release keys and left-click TYPE TEXT once, returning exact report before close. TYPE CANCEL already has actual PASS evidence; no repeated cancel test required.
 - Checks: unchanged3e19c71 full build/261automated tests passed; doctor/next show valid states and no ready work. No assistant-triggered typing/capture/clipboard use, no actual corrected TYPE TEXT result claimed.
+
+## 2026-10-18 16:43:01 +03:00 | PA-034 | done (corrected actual Type and Cancel)
+- User returned TYPE TEXT OK(canceledFalse,calls6,42/42) and TYPE CANCEL OK(canceledTrue,calls1,15/15). Exec3014 exited0. This confirms the isolated Tab/Enter fix in the dedicated field; original41/42 failure retained above. No duplicate typing or capture triggered.
+- Checks: actual reports meet full-text and between-chunk cancellation criteria; code unchanged3e19c71 with full verify60unit+198integration+3fake-flow,build0warnings/errors and tab regression red/green. Doctor/diff check passed. Unblocked/resumed/done with this actual evidence; no redundant unchanged-code rerun.
+- FDD verify: scoped FDD-002 Type acceptance PASS; FDD-001/003/007 unaffected. FullS1-S4/productionlease/hotkey/lock/UIPI remain NOT TESTED and all flows Draft. Updated references only. Unresolved PA-026/030 hardware gates retained. NextPA-035.
