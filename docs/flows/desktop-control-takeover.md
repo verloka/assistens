@@ -53,6 +53,8 @@ Status: Draft
 
 - Coordinate foundation (PA-027): `src/PersonalAgent.Core/Computer/ScreenshotCoordinates.cs` maps encoded pixel centers to original physical bounds and back using integer arithmetic; physical geometry is not scaled by DPI a second time. It rejects out-of-frame points, monitor gaps and stale generations. `tests/PersonalAgent.UnitTests/CoordinatesTests.cs` covers 100/125/150% DPI, negative origins, resize/upscale, half-open bounds, extreme integers and stale context. This is partial S2 validation; no native click or fresh-resume orchestration is implemented, so full S1-S4 remain `[untested]`.
 
+- Test driver foundation (PA-029): neutral `IComputerController` covers the five planned driver operations. `tests/TestDoubles/FakeComputerController.cs` consumes exact scripted calls/results/errors without OS input or retries; `ScreenshotFixture.cs` contains only a synthetic PNG. `tests/PersonalAgent.UnitTests/FakeComputerTests.cs` executes on net10.0 with no Windows graphics dependency; `tests/PersonalAgent.IntegrationTests/FakeComputerPayloadTests.cs` checks the same fixture through actual codecs and SDK content without capturing a screen. Scripted generation/error cases are foundations, not production lease/pause/recovery proof; full S1-S4 remain `[untested]`.
+
 ## Unknowns
 - Concrete Windows APIs, pause latency and live race results must be established in the implementation.
 

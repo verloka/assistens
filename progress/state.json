@@ -310,14 +310,15 @@
                                        "attempts":  1
                                    },
                         "PA-029":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T13:04:19.6206428+00:00",
+                                       "completed_at":  "2026-10-18T13:06:29.9925714+00:00",
                                        "evidence":  [
-
+                                                        "Core IComputerController matches five planned operations; shared test-only FakeComputerController exact scripts/errors/cancellation; synthetic 4x3 PNG and real SDK/codec integration without desktop. FDD-002 foundation verified, reverse FDD-001/003/007 preserved; full S1-S4 NOT TESTED.",
+                                                        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter FakeComputer --no-restore: 4 passed; scripts/verify.ps1 locked restore/build 0 warnings/errors, 60 unit + 112 integration + 3 local fake-flow passed; diff check passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-030":  {
                                        "status":  "pending",
@@ -1280,6 +1281,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-028",
-    "updated_at":  "2026-10-18T12:09:35.0821695+00:00"
+    "last_task_id":  "PA-029",
+    "updated_at":  "2026-10-18T13:06:30.0035857+00:00"
 }

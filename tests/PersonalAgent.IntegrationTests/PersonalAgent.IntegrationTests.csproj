@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Compile Include="../TestDoubles/*.cs" Link="TestDoubles/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

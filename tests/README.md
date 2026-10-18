@@ -129,6 +129,18 @@ API references: [SendInput](https://learn.microsoft.com/en-us/windows/win32/api/
 [RegisterHotKey](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey),
 [BitBlt](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt).
 
+## Screen-independent computer test doubles (PA-029)
+
+PA-029 shared test doubles live in `tests/TestDoubles/` and are linked into unit
+and integration test assemblies only. `dotnet test tests/PersonalAgent.UnitTests
+--filter FakeComputer` exercises all five `IComputerController` methods, exact
+script ordering, injected failure with no retry, pre-cancellation and separate
+frame generations without Windows graphics assemblies or a display. The embedded
+4x3 PNG is synthetic and contains no captured screen data. Integration
+`FakeComputerPayloadTests` verifies its actual pixels and SDK content with local
+codecs, without a desktop or provider call. The fake does not enforce or prove
+production authorization, lease, input cleanup or fresh-resume orchestration.
+
 ## Bounded model image payloads (PA-028)
 
 `WindowsScreenshotSerializer` implements neutral `IScreenshotSerializer` using
