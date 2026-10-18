@@ -1,5 +1,6 @@
 using PersonalAgent.Core.Application;
 using PersonalAgent.Core.Domain;
+using PersonalAgent.Core.Persistence;
 
 namespace PersonalAgent.UnitTests;
 
@@ -86,6 +87,18 @@ public sealed class TaskCommandsTests
         using var cancel = new CancellationTokenSource();
         cancel.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => coordinator.SubmitAsync(Submit(), cancel.Token));
+    }
+
+    [Fact]
+    public async Task CommandsExternalTriggerDeduplicatesDifferentCommandIdsAndBindsExecutionInputs()
+    {
+        using var coordinator = new TaskRunCoordinator();
+        var command = Submit() with { ExternalKey = new RunTriggerKey("schedule/task-1", "occurrence-1") };
+        var first = await coordinator.SubmitAsync(command);
+        var second = await coordinator.SubmitAsync(command with { CommandId = Guid.NewGuid() });
+        Assert.Equal(first.Id, second.Id);
+        Assert.Single(coordinator.GetRuns());
+        await Assert.ThrowsAsync<RunSubmissionConflictException>(() => coordinator.SubmitAsync(command with { CommandId = Guid.NewGuid(), Instructions = "Changed task" }));
     }
 
     private static SubmitTaskCommand Submit() => new(Guid.NewGuid(), "Local diagnostic", new TaskOrigin("desktop"));

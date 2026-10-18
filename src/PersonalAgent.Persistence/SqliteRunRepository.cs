@@ -9,8 +9,12 @@ namespace PersonalAgent.Persistence;
 
 public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contexts) : IRunRepository
 {
-    public async Task CreateAsync(TaskRun run, Conversation conversation, AgentRequest request,
-        IReadOnlyList<RunEvent> initialEvents, CancellationToken cancellationToken = default)
+    public Task CreateAsync(TaskRun run, Conversation conversation, AgentRequest request,
+        IReadOnlyList<RunEvent> initialEvents, CancellationToken cancellationToken = default) =>
+        CreateCoreAsync(run, conversation, request, initialEvents, null, cancellationToken);
+
+    private async Task CreateCoreAsync(TaskRun run, Conversation conversation, AgentRequest request,
+        IReadOnlyList<RunEvent> initialEvents, RunSubmissionIdentity? identity, CancellationToken cancellationToken)
     {
         if (run.Id == Guid.Empty || conversation.Id == Guid.Empty || conversation.Id != run.ConversationId || request.RunId != run.Id || request.ConversationId != run.ConversationId)
             throw new ArgumentException("Run/conversation/request identity mismatch.");
@@ -34,12 +38,44 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
         {
             Id = run.Id, TaskDefinitionId = run.TaskDefinitionId, ConversationId = run.ConversationId,
             OriginJson = JsonSerializer.Serialize(run.Origin), Instructions = run.Instructions, ModelProfileId = run.ModelProfileId,
-            CreatedAtUtc = run.CreatedAtUtc, RequestJson = JsonSerializer.Serialize(request), PayloadSchemaVersion = 1
+            CreatedAtUtc = run.CreatedAtUtc, RequestJson = JsonSerializer.Serialize(request), PayloadSchemaVersion = 1,
+            SubmissionSource = identity?.Source, SubmissionKey = identity?.Key, SubmissionHash = identity?.IntentHash
         };
         Apply(row, run, null);
         db.TaskRuns.Add(row);
         db.RunEvents.AddRange(initialEvents.Select(ToRow));
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<StoredRun> GetOrCreateAsync(TaskRun run, Conversation conversation, AgentRequest request,
+        IReadOnlyList<RunEvent> initialEvents, RunSubmissionIdentity identity, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(identity.Source);
+        ArgumentException.ThrowIfNullOrWhiteSpace(identity.Key);
+        ArgumentException.ThrowIfNullOrWhiteSpace(identity.IntentHash);
+        if (identity.IntentHash.Length != 64 || !identity.IntentHash.All(Uri.IsHexDigit)) throw new ArgumentException("A SHA-256 intent hash is required.");
+        if (await FindSubmissionAsync(identity, cancellationToken) is { } existing) return existing;
+        try
+        {
+            await CreateCoreAsync(run, conversation, request, initialEvents, identity, cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // A competing unique-key insert can win. The failed transaction rolls back run/conversation/events.
+            // Re-read the authoritative result; never replay an external operation or create a replacement run.
+            if (await FindSubmissionAsync(identity, cancellationToken) is { } winner) return winner;
+            throw;
+        }
+        return (await GetAsync(run.Id, cancellationToken))!;
+    }
+
+    private async Task<StoredRun?> FindSubmissionAsync(RunSubmissionIdentity identity, CancellationToken ct)
+    {
+        await using var db = await contexts.CreateDbContextAsync(ct);
+        var row = await db.TaskRuns.AsNoTracking().SingleOrDefaultAsync(value => value.SubmissionSource == identity.Source && value.SubmissionKey == identity.Key, ct);
+        if (row is null) return null;
+        if (row.SubmissionHash != identity.IntentHash) throw new RunSubmissionConflictException();
+        return await GetAsync(row.Id, ct);
     }
 
     public async Task<StoredRun?> GetAsync(Guid runId, CancellationToken cancellationToken = default)

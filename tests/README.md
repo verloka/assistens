@@ -218,3 +218,17 @@ The OS releases its handle on process exit/crash. A second host with the same DB
 fails startup before recovery can touch a live run. DashboardTests checks this and
 the actual Interrupted status/review warning with Resume disabled. Unstarted fake
 tasks with no allowed tools can restart once; other model/tool sets await review.
+
+`dotnet test --filter PersistenceIdempotencyTests` covers durable Submit identity:
+an explicit `(ExternalKey.Source, ExternalKey.Value)` is authoritative when supplied;
+otherwise CommandId is the key. An execution-intent hash excludes transient IDs and
+normalizes tool-ID sets/default limits. A unique source/key index commits with the
+new run/conversation/events. Concurrent conflicts re-read the winner after rollback,
+never insert a second attempt or replay a completed one. Keys from different
+connections/schedules are separate. Control-command receipts are still session-local.
+New identity columns are nullable for legacy rows; historical keys are not invented.
+
+Tests also lose the creation acknowledgement after commit: redelivery resolves the
+original queued local/no-tool run and permits its first execution once. Started,
+uncertain or terminal attempts never requeue through this path. Actual Telegram
+polling and scheduler occurrence generation remain later backlog work.

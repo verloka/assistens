@@ -45,5 +45,7 @@ Status: Draft
 ## Implementation References
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §§9–10; backlog PR-11 and PR-14.
 
+- Submission deduplication foundation (PA-022): `SubmitTaskCommand.ExternalKey` accepts a namespaced trigger key; `TaskRunCoordinator` and `SqliteRunRepository` bind it to an execution-intent hash and a unique persisted run. `tests/PersonalAgent.IntegrationTests/PersistenceIdempotencyTests.cs` verifies competing occurrence keys, reopen/redelivery, payload conflicts and no repeated completed execution. Scheduler/timezone/countdown/outbox integration is not implemented; complete S1-S3 remain `[untested]`.
+
 ## Unknowns
 - Actual delay thresholds and default idle detection must be verified on Windows.

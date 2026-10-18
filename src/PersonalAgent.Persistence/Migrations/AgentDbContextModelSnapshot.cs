@@ -258,6 +258,15 @@ namespace PersonalAgent.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("SubmissionHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SubmissionKey")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SubmissionSource")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Summary")
                         .HasColumnType("TEXT");
 
@@ -271,6 +280,9 @@ namespace PersonalAgent.Persistence.Migrations
                     b.HasIndex("TaskDefinitionId");
 
                     b.HasIndex("Status", "CreatedAtUtc");
+
+                    b.HasIndex("SubmissionSource", "SubmissionKey")
+                        .IsUnique();
 
                     b.ToTable("TaskRuns", null, t =>
                         {

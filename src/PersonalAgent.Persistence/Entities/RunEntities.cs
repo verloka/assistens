@@ -43,6 +43,9 @@ public sealed class TaskRunRow
     public string RequestJson { get; set; } = "{}";
     public string? ResultJson { get; set; }
     public int PayloadSchemaVersion { get; set; } = 1;
+    public string? SubmissionSource { get; set; }
+    public string? SubmissionKey { get; set; }
+    public string? SubmissionHash { get; set; }
 }
 
 public sealed class RunEventRow

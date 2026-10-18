@@ -234,14 +234,15 @@
                                        "attempts":  1
                                    },
                         "PA-022":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T11:28:33.6414079+00:00",
+                                       "completed_at":  "2026-10-18T11:35:35.0946549+00:00",
                                        "evidence":  [
-
+                                                        "Optional namespaced ExternalKey on SubmitTaskCommand, durable source/key/intent hash unique index and GetOrCreate transaction. Default CommandId is durable when no external key; duplicate external payload with new transient IDs returns original run, changed intent conflicts. Memory and SQLite paths agree; concurrent losers roll back run/conversation/events. Redelivery never requeues started/terminal work; lost creation ack permits only original unstarted local/no-tool first execution. FDD-003/007 references scoped; real scheduler/Telegram not claimed.",
+                                                        "Verification: PersistenceIdempotencyTests 7 passed incl 8 competing creators, reopen, one execution, completed non-replay, namespace and lost ack; unit external-key regression passed; EF model has no pending changes; scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 37 unit + 68 integration + 3 local fake-flow passed; doctor validates 125 tasks"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-023":  {
                                        "status":  "pending",
@@ -1274,6 +1275,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-021",
-    "updated_at":  "2026-10-18T11:28:32.2357012+00:00"
+    "last_task_id":  "PA-022",
+    "updated_at":  "2026-10-18T11:35:35.1041974+00:00"
 }

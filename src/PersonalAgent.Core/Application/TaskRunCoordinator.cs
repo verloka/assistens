@@ -17,6 +17,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
     private readonly SemaphoreSlim writes = new(1, 1);
     private readonly Dictionary<Guid, Entry> runs = [];
     private readonly Dictionary<Guid, (string Fingerprint, Guid RunId)> receipts = [];
+    private readonly Dictionary<(string Source, string Key), (string Hash, Guid RunId)> submissions = [];
     private readonly Channel<Guid> queue = Channel.CreateUnbounded<Guid>(new UnboundedChannelOptions { SingleReader = true });
     private bool disposed, runnerAttached;
 
@@ -28,6 +29,12 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
         ArgumentException.ThrowIfNullOrWhiteSpace(command.Origin.Source);
         (command.Limits ?? new()).Validate();
         if (command.ConversationId == Guid.Empty) throw new ArgumentException("Conversation ID cannot be empty.");
+        if (command.ExternalKey is { } external)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(external.Source);
+            ArgumentException.ThrowIfNullOrWhiteSpace(external.Value);
+        }
+        var identity = SubmissionIdentity(command);
         await writes.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -36,6 +43,12 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
             {
                 ObjectDisposedException.ThrowIf(disposed, this);
                 if (FindReceipt(command.CommandId, fingerprint) is { } existing) return existing;
+                if (submissions.TryGetValue((identity.Source, identity.Key), out var prior))
+                {
+                    if (prior.Hash != identity.IntentHash) throw new RunSubmissionConflictException();
+                    receipts.Add(command.CommandId, (fingerprint, prior.RunId));
+                    return Find(prior.RunId).Run;
+                }
             }
             var now = DateTimeOffset.UtcNow;
             var run = new TaskRun
@@ -54,7 +67,28 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
             if (repository is not null)
             {
                 var conversation = new Conversation { Id = run.ConversationId, Title = run.Instructions, CreatedAtUtc = now, UpdatedAtUtc = now };
-                await PersistAsync(() => repository.CreateAsync(change.Run, conversation, request, change.Events, cancellationToken), cancellationToken).ConfigureAwait(false);
+                StoredRun? stored = null;
+                await PersistAsync(async () => stored = await repository.GetOrCreateAsync(change.Run, conversation, request, change.Events, identity, cancellationToken), cancellationToken).ConfigureAwait(false);
+                if (stored!.Run.Id != run.Id)
+                {
+                    lock (sync)
+                    {
+                        if (!runs.TryGetValue(stored.Run.Id, out var prior))
+                        {
+                            prior = new Entry(stored.Run, stored.Request) { Result = stored.Result };
+                            prior.Events.AddRange(stored.Events);
+                            if (TaskRunStateMachine.IsTerminal(prior.Run.Status)) prior.Terminal.TrySetResult(prior.Run);
+                            runs.Add(prior.Run.Id, prior);
+                            // Lost creation acknowledgement can leave a committed but unqueued local task.
+                            // Only its proven unstarted/no-tool first execution may be queued here.
+                            if (prior.Run.Status == RunStatus.Queued && prior.Run.StartedAtUtc is null && prior.Request.ModelProfileId == "fake" && prior.Request.AllowedToolIds.Count == 0)
+                                queue.Writer.TryWrite(prior.Run.Id);
+                        }
+                        receipts.Add(command.CommandId, (fingerprint, prior.Run.Id));
+                        submissions[(identity.Source, identity.Key)] = (identity.IntentHash, prior.Run.Id);
+                        return prior.Run;
+                    }
+                }
             }
             lock (sync)
             {
@@ -62,6 +96,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
                 runs.Add(run.Id, change.Entry);
                 Commit(change);
                 receipts.Add(command.CommandId, (fingerprint, run.Id));
+                submissions.Add((identity.Source, identity.Key), (identity.IntentHash, run.Id));
                 queue.Writer.TryWrite(run.Id);
                 return change.Entry.Run;
             }
@@ -309,6 +344,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
     {
         try { await Task.Run(persist, ct).ConfigureAwait(false); }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+        catch (RunSubmissionConflictException) { throw; }
         catch (Exception exception) { throw new RunPersistenceException(exception); }
     }
     private TaskRun? FindReceipt(Guid id, string fingerprint)
@@ -320,6 +356,18 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null) : ITas
     }
     private Entry Find(Guid id) => runs.TryGetValue(id, out var entry) ? entry : throw new KeyNotFoundException($"Unknown run {id}.");
     private static string Fingerprint<T>(T command) => typeof(T).Name + ":" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(command))));
+    private static RunSubmissionIdentity SubmissionIdentity(SubmitTaskCommand command)
+    {
+        // Generated Run/Conversation IDs and the transient CommandId do not change external-trigger intent.
+        var intent = JsonSerializer.Serialize(new
+        {
+            command.Instructions, command.Origin, command.ConversationId, command.ModelProfileId,
+            AllowedToolIds = (command.AllowedToolIds ?? []).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray(),
+            Limits = command.Limits ?? new RunLimits(), command.ExternalKey
+        });
+        return new RunSubmissionIdentity(command.ExternalKey is null ? "command" : "external/" + command.ExternalKey.Source,
+            command.ExternalKey?.Value ?? command.CommandId.ToString("D"), Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(intent))));
+    }
     private static TaskCompletionSource Signal() => new(TaskCreationOptions.RunContinuationsAsynchronously);
     private static void Move(Change change, RunStatus status, string message, PauseScope? scope = null)
     {

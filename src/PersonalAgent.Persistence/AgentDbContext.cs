@@ -41,6 +41,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         runs.HasOne<ConversationRow>().WithMany().HasForeignKey(row => row.ConversationId).OnDelete(DeleteBehavior.Restrict);
         runs.HasOne<TaskDefinitionRow>().WithMany().HasForeignKey(row => row.TaskDefinitionId).OnDelete(DeleteBehavior.Restrict);
         runs.HasIndex(row => new { row.Status, row.CreatedAtUtc });
+        runs.HasIndex(row => new { row.SubmissionSource, row.SubmissionKey }).IsUnique();
         runs.Property(row => row.Status).HasConversion<string>();
         runs.Property(row => row.PauseScope).HasConversion<string>();
         runs.Property(row => row.RunVersion).IsConcurrencyToken().ValueGeneratedNever();

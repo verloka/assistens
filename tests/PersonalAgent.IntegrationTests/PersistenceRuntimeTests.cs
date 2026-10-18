@@ -192,6 +192,8 @@ public sealed class PersistenceRuntimeTests
             (failCompletion ? run.Status == RunStatus.Completed : run.Status == RunStatus.Running)
                 ? throw new IOException("Injected storage failure") : inner.UpdateAsync(run, version, events, result, ct);
         public Task<StoredRun?> GetAsync(Guid id, CancellationToken ct = default) => inner.GetAsync(id, ct);
+        public Task<StoredRun> GetOrCreateAsync(TaskRun run, Conversation conversation, AgentRequest request, IReadOnlyList<RunEvent> events, RunSubmissionIdentity identity, CancellationToken ct = default) =>
+            failCreation ? throw new IOException("Injected storage failure") : inner.GetOrCreateAsync(run, conversation, request, events, identity, ct);
         public Task<IReadOnlyList<TaskRun>> ListAsync(CancellationToken ct = default) => inner.ListAsync(ct);
     }
 }
