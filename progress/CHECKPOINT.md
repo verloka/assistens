@@ -1,9 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-041 (b4bf9e0)
-- Current task: none; PA-042 implemented, blocked on actual minimized/outside-focus global hotkey
-- Modified files: WindowsTakeControlHotkey,App TakeControlHotkeyService/startup/DI,Core global takeover and invalid-resume guard,hotkey/delayed-SQLite/unit regressions,WindowsSmoke ARM,README/FDD/index,state/LOG/checkpoint; committed together.
-- Verified build/test: TakeControlHotkey6passed; core desktop/pause17passed; integration TakeControl/PauseScope/DesktopAccess17passed. Final scripts/verify.ps1 locked restore/build0warnings/errors,76unit+254integration+3localfake-flow passed; diff check/doctor passed.
-- Runtime blockers / waiting on user: PA-037 needs KEY Ctrl+A OK with selectedChars=totalChars,modifiersReleasedTrue. PA-042 needs user ARM, minimize window, activate another app, press CtrlShiftF10,restore and return TAKE CONTROL OK(outsideFocusTrue,minimizedTrue,gateClosedTrue,stable fakeActions). ARM uses fake gate counts only, no desktop input/capture. PA-026/030 multiple-display hardware remain blocked.
-- Decisions: PA-034 actual42/42+15/15 acceptedf381008; PA-035 done0ea92e6; PA-036 donef1101d0; PA-037 fixture blocked4e260a2; PA-039 done41b11ed; PA-040 done4f8b9d9; PA-041 doneb4bf9e0. Global takeover closes synchronously even with no owner, async persistence follows; no auto-resume. All flows Draft/full business E2E untested. No task catalog/dependency changes.
-- Next instruction: doctor/next. On actual reports finish one task at a time: reconcile/unblock/start/donePA-037 KEY result, run nextPA-038 regression; reconcilePA-042 actual hotkey before done, then continuePA-043. Without evidence no ready work; keep manual/hardware gates intact.
-- Diagnostic launch: combined WindowsSmoke running in exec89941, process/window confirmed. Await user KEY Ctrl+A and TAKE CONTROL reports plus close. No shortcut registered until ARM gesture; no assistant-triggered input/capture. PA-037/042 remain blocked.
+- Last completed task: PA-037 (actual attended KEY 26/26, modifiersReleased=True)
+- Current task: none; next PA-038
+- Modified files: state, README, FDD-002 evidence, LOG/checkpoint; no production changes.
+- Verified build/test: WindowsSmoke exec89941 exited0; actual KEY PASS plus prior Click/Scroll/Type PASS. Unchanged3ccbf95 full verify333tests passed/build0warnings/errors. Diff/doctor to run before commit.
+- Runtime blockers / waiting on user: PA-042 first hotkey outsideFocusTrue,gateClosedTrue,96->96 passed scoped stop, but minimizedFalse; needs repeated ARM,minimize via title-bar minus,activate IDE,CtrlShiftF10 and report minimizedTrue. Diagnostic closed. PA-026/030 hardware unavailable.
+- Decisions: PA-037 accepted own-window harness only; no full E2E or minimized acceptance claimed. All flows remain Draft/full scenarios untested. No source or task catalog/dependency change.
+- Next instruction: doctor/next; start PA-038 and audit/run existing regression instead of duplicate tests. Reconcile PA-042 only with real minimized-window report; otherwise blocked. Relaunch attended diagnostic after tests; no shortcut/input until explicit user gesture.

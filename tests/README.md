@@ -324,9 +324,10 @@ Release keys/buttons and keep the session still during each action:
    selectedChars equal totalChars, modifiersReleased=True. Only this canonical chord
    is permitted; it neither copies nor sends text outside this window.
 
-The first three operations have prior actual observations in the log; the added
-KEY Ctrl+A path is **NOT TESTED** until an actual attended report arrives.
-Return KEY report and close the window. FAKE/native-boundary safety suites cover
+All four operations have actual attended observations in the log. On 2026-10-18
+the user returned `KEY Ctrl+A OK; selectedChars=26; totalChars=26;
+modifiersReleased=True`; the diagnostic subsequently exited 0.
+FAKE/native-boundary safety suites cover
 faults/cancellation; no deliberate native modifier failure is injected on the
 user's desktop. Global lease/hotkey/resume acceptance remains a separate gate.
 
@@ -392,8 +393,10 @@ pause save. Unit tests cover no-owner takeover, another run's invalid resume and
 queued Resume rejection without clearing human control. No global shortcut is
 registered by these tests; owned hidden HWNDs are the only native window resource.
 
-Actual outside-focus acceptance is **NOT TESTED**. In WindowsSmoke first run
-KEY Ctrl+A (PA-037), then left-click **ARM TAKE CONTROL**. The shortcut is only
+The first actual outside-focus report had outsideFocus=True, gateClosed=True and
+fakeActions=96->96, but minimized=False, so minimized-window acceptance remains
+**NOT TESTED**. KEY Ctrl+A (PA-037) passed; to repeat only this gate, left-click
+**ARM TAKE CONTROL**. The shortcut is only
 registered after this explicit gesture. Minimize the window yourself, activate
 another application and press Ctrl+Shift+F10, then restore WindowsSmoke and copy
 the `TAKE CONTROL ...` line. Expect OK, outsideFocus=True, minimized=True,

@@ -397,14 +397,15 @@
                                        "attempts":  1
                                    },
                         "PA-037":  {
-                                       "status":  "blocked",
-                                       "started_at":  "2026-10-18T13:50:07.5294714+00:00",
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T14:56:32.0213531+00:00",
+                                       "completed_at":  "2026-10-18T14:57:08.8162058+00:00",
                                        "evidence":  [
-
+                                                        "WindowsSmoke repeatable own-target Click/Scroll/Type/PressKey harness; prior actual click/scroll/type reports in LOG; user KEY Ctrl+A OK selectedChars=26 totalChars=26 modifiersReleased=True. Exec89941 exited0. FDD-002 scoped harness PASS; full scenarios Draft/untested.",
+                                                        "Verification: Actual attended KEY result passed; previous unchanged-code verify333tests passed/build0warnings/errors at3ccbf95. No automatic native input performed."
                                                     ],
-                                       "note":  "Existing WindowsSmoke now has repeatable Click/Scroll/Type/PressKey checklist and explicit KEY Ctrl+A own-field selection + modifier-state observation. Prior3operations observed; added KEY path needs actual KEY Ctrl+A OK selectedChars=totalChars,modifiersReleasedTrue. Build0warnings/errors; no real keys injected. Continue independentPA-039.",
-                                       "attempts":  1
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
                                    },
                         "PA-038":  {
                                        "status":  "pending",
@@ -1290,6 +1291,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-042",
-    "updated_at":  "2026-10-18T14:14:49.3237048+00:00"
+    "last_task_id":  "PA-037",
+    "updated_at":  "2026-10-18T14:57:08.8277291+00:00"
 }
