@@ -135,14 +135,15 @@
                                        "attempts":  1
                                    },
                         "PA-013":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:40:11.3574615+00:00",
+                                       "completed_at":  "2026-10-18T10:44:18.2474176+00:00",
                                        "evidence":  [
-
+                                                        "Core/Application TaskCommands and TaskRunCoordinator: shared commands, payload/type-bound idempotency receipts, atomic session-local state/version/events, cancellable pause boundaries. Cancel cannot resume; queued pause resumes to queue only before first start; GuiOnly metadata does not block non-GUI work or grant a desktop lease. Six command tests and two domain regressions. FDD-001/002/003/006/007 reviewed; durable/GUI/E2E not claimed.",
+                                                        "Verification: dotnet test tests/PersonalAgent.UnitTests --filter Commands --no-restore: 6 passed; final scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 35 unit + 20 integration passed; E2E empty"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-014":  {
                                        "status":  "pending",
@@ -1265,6 +1266,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-012",
-    "updated_at":  "2026-10-18T10:40:10.0191851+00:00"
+    "last_task_id":  "PA-013",
+    "updated_at":  "2026-10-18T10:44:18.2569406+00:00"
 }

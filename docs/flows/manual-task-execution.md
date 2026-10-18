@@ -49,5 +49,7 @@ Status: Draft
 
 - Local fake adapter (PA-011/PA-012): `src/PersonalAgent.Core/Agents/AgentContracts.cs`, `src/PersonalAgent.Agent/FakeAgentRuntime.cs` and `tests/PersonalAgent.IntegrationTests/FakeAgentRuntimeTests.cs` verify ordered Start/progress/Complete, cancellation, controlled step boundaries and limits without credentials. This is not yet a submitted application run, durable outcome or notification, so complete S1-S3 remain `[untested]`.
 
+- Session-local commands (PA-013): `src/PersonalAgent.Core/Application/TaskCommands.cs`, `TaskRunCoordinator.cs` and `tests/PersonalAgent.UnitTests/TaskCommandsTests.cs` verify idempotent submit/cancel/pause/resume, payload-bound command IDs, optimistic versions and cancellable step boundaries. The coordinator is in-memory, with no runtime consumer, durable store or native GUI driver yet; these checks do not complete S1-S3.
+
 ## Unknowns
-- Actual types and source/test paths are not yet implemented. Confirm approval and E2E proof as code lands.
+- Runtime queue consumption, durable storage, notifications and end-to-end task submission remain pending. Confirm approval and E2E proof as code lands.

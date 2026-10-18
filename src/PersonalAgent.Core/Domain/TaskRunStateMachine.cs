@@ -15,7 +15,7 @@ public static class TaskRunStateMachine
         RunStatus.WaitingForDesktop or RunStatus.WaitingForUser or RunStatus.WaitingForApproval =>
             to is RunStatus.Running or RunStatus.Pausing or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted,
         RunStatus.Pausing => to is RunStatus.Paused or RunStatus.PausedForUser or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted,
-        RunStatus.Paused or RunStatus.PausedForUser => to is RunStatus.Running or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Interrupted,
+        RunStatus.Paused or RunStatus.PausedForUser => to is RunStatus.Queued or RunStatus.Running or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Interrupted,
         // Returning from Blocked is an explicit requeue, not an automatic continuation.
         RunStatus.Blocked => to is RunStatus.Queued or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted,
         _ => false
@@ -30,6 +30,8 @@ public static class TaskRunStateMachine
             throw new RunVersionConflictException(run.Id, expectedVersion, run.RunVersion);
         if (!CanTransition(run.Status, next))
             throw new InvalidOperationException($"Run {run.Id}: transition {run.Status} -> {next} is not allowed.");
+        if (next == RunStatus.Queued && run.Status is RunStatus.Paused or RunStatus.PausedForUser && run.StartedAtUtc is not null)
+            throw new InvalidOperationException("An already-started paused attempt cannot be requeued.");
         var utc = timestamp.ToUniversalTime();
         if (utc < run.CreatedAtUtc || (run.StartedAtUtc is { } started && utc < started))
             throw new ArgumentOutOfRangeException(nameof(timestamp), "Transition cannot precede run creation/start.");
@@ -37,7 +39,8 @@ public static class TaskRunStateMachine
             throw new ArgumentException("A failure/block/interruption requires a reason.", nameof(reason));
         var scope = next is RunStatus.Pausing or RunStatus.Paused or RunStatus.PausedForUser
             ? pauseScope ?? run.PauseScope ?? Domain.PauseScope.EntireRun
-            : (PauseScope?)null;
+            : !IsTerminal(next) && run.PauseScope == Domain.PauseScope.GuiOnly && run.Status is not (RunStatus.Paused or RunStatus.PausedForUser)
+                ? Domain.PauseScope.GuiOnly : (PauseScope?)null;
         if (scope is not null && !Enum.IsDefined(scope.Value))
             throw new ArgumentOutOfRangeException(nameof(pauseScope));
 

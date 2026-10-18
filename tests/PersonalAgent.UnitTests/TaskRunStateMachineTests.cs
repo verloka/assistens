@@ -109,6 +109,21 @@ public sealed class TaskRunStateMachineTests
         Assert.Throws<ArgumentOutOfRangeException>(() => TaskRunStateMachine.Transition(Create(), RunStatus.Queued, 0, Now.AddSeconds(-1)));
     }
 
+    [Fact]
+    public void TaskRunCannotRequeueAlreadyStartedPausedAttempt()
+    {
+        var running = Move(Move(Create(), RunStatus.Queued), RunStatus.Running);
+        var paused = Move(Move(running, RunStatus.Pausing), RunStatus.Paused);
+        Assert.Throws<InvalidOperationException>(() => Move(paused, RunStatus.Queued));
+    }
+
+    [Fact]
+    public void TaskRunPreservesGuiOnlyGateMetadataWhenNonGuiExecutionStarts()
+    {
+        var queued = Move(Create(), RunStatus.Queued) with { PauseScope = PauseScope.GuiOnly };
+        Assert.Equal(PauseScope.GuiOnly, Move(queued, RunStatus.Running).PauseScope);
+    }
+
     private static TaskRun Move(TaskRun run, RunStatus next, string? reason = null) =>
         TaskRunStateMachine.Transition(run, next, run.RunVersion, Now, reason);
 
