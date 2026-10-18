@@ -80,3 +80,9 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 - Checks: session 41222 exited 0 after user closed window; Get-Process PersonalAgent.WindowsSmoke found none. Exact fixture had build 0 warnings/errors; current full suite 24 unit + 14 integration passed. This is a limited attended spike, not business E2E or a full hardware matrix. No second GUI run was injected.
 - Single-task tracker policy preserved: finished PA-010 before unblocking/starting/completing PA-008. Updated ADR with actual evidence and unknown OS/elevation; tests/README.md records limitations. FDD-002 S1-S4 still NOT TESTED as complete production flows; all statuses remain Draft.
 - Unresolved: none for PA-008 spike. Production lease, input cleanup stress, mixed DPI, multi-monitor, UAC/lock and remote sessions remain future verification. Next: PA-011.
+
+## 2026-10-18 13:38:26 +03:00 | PA-011 | done
+- Defined IAgentRuntime and neutral request/context, positive per-run limits, typed public operation events and structured result/usage/artifacts. SDK sessions and hidden model reasoning are excluded from these boundary payloads. Reused existing SourceLink and domain IDs.
+- Checks: AgentContractTests 3 passed (JSON/request/result, context/source/usage/progress transfer and pre-cancelled probe); scripts/verify.ps1 locked restore passed, build 0 warnings/errors, 27 unit + 14 integration passed; E2E empty. Probe checks the interface contract, not a production model implementation.
+- FDD develop/verify: inspected FDD-001 and dependency/reverse-consumer boundary FDD-002/FDD-003/FDD-004/FDD-005/FDD-006/FDD-007. Actual diff only adds SDK-free types and contract tests; run control, gates, storage and delivery unchanged. Contract scope PASS, complete business scenarios NOT TESTED; all Drafts retained.
+- Unresolved: none for PA-011. Next: PA-012 deterministic FakeAgentRuntime; no keys needed.

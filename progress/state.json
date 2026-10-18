@@ -113,14 +113,15 @@
                                        "attempts":  1
                                    },
                         "PA-011":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T10:37:14.6074427+00:00",
+                                       "completed_at":  "2026-10-18T10:38:26.6894261+00:00",
                                        "evidence":  [
-
+                                                        "Core/Agents/AgentContracts.cs: IAgentRuntime, AgentRequest/context/limits, typed user-visible AgentEvent, structured AgentRunResult/usage/sources/artifacts; no SDK dependencies. AgentContractTests exercises neutral JSON payloads, progress and cancellation signature with local probe. FDD lifecycle/provider boundaries preserved; no production provider acceptance claimed.",
+                                                        "Verification: AgentContractTests 3 passed; scripts/verify.ps1: locked restore passed, build 0 warnings/errors, 27 unit + 14 integration passed; E2E empty"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-012":  {
                                        "status":  "pending",
@@ -1263,6 +1264,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-008",
-    "updated_at":  "2026-10-18T10:36:49.3401626+00:00"
+    "last_task_id":  "PA-011",
+    "updated_at":  "2026-10-18T10:38:26.6989623+00:00"
 }
