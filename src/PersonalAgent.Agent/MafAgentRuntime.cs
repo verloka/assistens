@@ -60,6 +60,7 @@ public sealed class MafAgentRuntime(
                 {
                     Tools = binding?.Functions.Select(function => (AITool)function.AsDeclarationOnly()).ToList() ?? [],
                     ToolMode = binding?.Functions.Count > 0 ? ChatToolMode.Auto : ChatToolMode.None,
+                    AllowMultipleToolCalls = false,
                     MaxOutputTokens = (int)Math.Min(request.Limits.MaxTokens, int.MaxValue)
                 }
             });
@@ -116,24 +117,30 @@ public sealed class MafAgentRuntime(
                         return Failure("ModelResponseIncomplete", "Tool execution requires a confirmed complete tool-call response.", AgentResultStatus.Blocked);
                     if (calls.Any(call => !binding.Functions.Any(function => function.Name == call.Name)))
                         return Failure("ToolNotAllowed", "The model requested an unapproved tool; no action executed.", AgentResultStatus.Blocked);
+                    if (calls.Length > 1 && calls.Any(call => binding.RequiresObservationAfter(call.Name)))
+                        return Failure("FreshObservationPerActionRequired", "GUI input requires one action per model response followed by a new observation.", AgentResultStatus.Blocked);
                     if (calls.Any(call => string.IsNullOrWhiteSpace(call.CallId)) || calls.Select(call => call.CallId).Distinct(StringComparer.Ordinal).Count() != calls.Length)
                         return Failure("ToolCallReplay", "The tool batch contains invalid or duplicate call identities; no action executed.", AgentResultStatus.Blocked);
                     if ((long)toolCalls + calls.Length > request.Limits.MaxSteps)
                         return Failure("StepLimitExceeded", "The tool call limit was reached; no additional action executed.");
                     messages = [];
+                    var observations = new List<ChatMessage>();
                     foreach (var call in calls)
                     {
                         await BoundaryAsync();
                         var eventId = Guid.NewGuid();
-                        ReportTool(AgentEventKind.ToolRequested, "Authorized tool requested.", call.Name, eventId);
+                        ReportTool(AgentEventKind.ToolRequested, "Tool requested; authorization pending.", call.Name, eventId);
                         var outcome = await binding.InvokeAsync(call.Name, call.CallId, JsonSerializer.SerializeToElement(call.Arguments), ct).ConfigureAwait(false);
                         toolCalls++;
                         await BoundaryAsync();
                         if (outcome.Result.Status != ToolResultStatus.Success)
                             return Failure(outcome.Result.ErrorCode ?? "ToolOutcomeUnconfirmed", "Tool completion was not confirmed; no automatic retry was performed.", AgentResultStatus.Blocked);
                         ReportTool(AgentEventKind.ToolCompleted, "Tool execution completed.", call.Name, eventId);
-                        messages.Add(new(ChatRole.Tool, [new FunctionResultContent(call.CallId, outcome.Contents)]));
+                        var resultMessages = ToolResultMessages.Create(call.CallId, outcome.Contents);
+                        messages.AddRange(resultMessages.Where(message => message.Role == ChatRole.Tool));
+                        observations.AddRange(resultMessages.Where(message => message.Role != ChatRole.Tool));
                     }
+                    messages.AddRange(observations); // Satisfy every call ID before adding user-role image observations.
                     continue;
                 }
                 if (response.FinishReason != ChatFinishReason.Stop)

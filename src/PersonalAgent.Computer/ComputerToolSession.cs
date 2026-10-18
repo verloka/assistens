@@ -15,6 +15,7 @@ public sealed class ComputerToolSession : IAsyncDisposable
     private IObservedComputerController? controller;
     private ScreenCapture? frame;
     private string? observationId;
+    private ScreenshotOptions captureOptions = new();
     private bool evaluated, disposed;
     public IReadOnlyList<IAgentTool> Tools { get; }
 
@@ -47,7 +48,8 @@ public sealed class ComputerToolSession : IAsyncDisposable
             {
                 var area = value.TryGetProperty("area", out var areaValue) ? Enum.Parse<ScreenshotArea>(areaValue.GetString()!, true) : ScreenshotArea.PrimaryMonitor;
                 var monitorId = value.TryGetProperty("monitorId", out var monitor) ? monitor.GetString() : null;
-                var options = new ScreenshotOptions(area, monitorId); options.Validate();
+                var options = value.TryGetProperty("area", out _) ? new ScreenshotOptions(area, monitorId) : captureOptions;
+                options.Validate();
                 frame = null; observationId = null; evaluated = false;
                 if (lease is null || !access.IsCurrent(lease))
                 {
@@ -57,6 +59,7 @@ public sealed class ComputerToolSession : IAsyncDisposable
                 frame = await controller!.ScreenshotAsync(options, ct).ConfigureAwait(false);
                 frame.Validate();
                 if (!access.IsCurrent(lease) || frame.DesktopGeneration != lease.Generation) { frame = null; return Blocked("StaleDesktopContext"); }
+                captureOptions = options;
                 observationId = Guid.NewGuid().ToString("N");
                 return new()
                 {
@@ -84,6 +87,8 @@ public sealed class ComputerToolSession : IAsyncDisposable
                 await controller!.ScrollAsync(Point(value), Enum.Parse<ScrollDirection>(value.GetProperty("direction").GetString()!, true), value.GetProperty("amount").GetInt32(), ct).ConfigureAwait(false);
             else if (operation == "type") await controller!.TypeAsync(value.GetProperty("text").GetString()!, ct).ConfigureAwait(false);
             else await controller!.PressKeyAsync(new(value.GetProperty("chord").GetString()!), ct).ConfigureAwait(false);
+            // The registry's separately authorized observation dependency supplies the next frame.
+            frame = null; observationId = null; evaluated = false;
             return new() { Status = ToolResultStatus.Success, Text = "GUI action completed; no retry performed." };
         }
         catch (ComputerInputException error)
@@ -123,9 +128,10 @@ public sealed class ComputerToolSession : IAsyncDisposable
     {
         public ToolDescriptor Descriptor { get; } = new("computer_" + operation,
             operation == "screenshot" ? "Capture the authorized desktop in memory. No input is generated." :
-                "Perform one authorized " + operation + " using the current evaluated observation. Image coordinates are zero-based pixels. Never reuse an observation after pause/resume.",
+                "Perform one authorized " + operation + " using the current evaluated observation. Image coordinates are zero-based pixels. The result includes a fresh post-action screenshot; use its new observationId next. Never reuse an observation after pause/resume.",
             Schema(operation), new(ToolSourceKind.Computer, "windows-computer"),
-            operation == "screenshot" ? ToolRiskLevel.ExternalDisclosure : ToolRiskLevel.Write, RequiresDesktop: true, IsReadOnly: operation == "screenshot");
+            operation == "screenshot" ? ToolRiskLevel.ExternalDisclosure : ToolRiskLevel.Write, RequiresDesktop: true, IsReadOnly: operation == "screenshot",
+            ObservationToolId: operation == "screenshot" ? null : "computer_screenshot");
         public Task<ToolResult> ExecuteAsync(ToolArguments arguments, ToolExecutionContext context, CancellationToken cancellationToken) =>
             owner.ExecuteAsync(operation, arguments, context, cancellationToken);
     }

@@ -39,6 +39,15 @@ and MVP release gate remain unverified until their own backlog tasks are complet
 
 ## MAF runtime adapter (PA-049)
 
+PA-054: `--filter "ToolImageProtocol|ComputerTool|ToolRegistry"` verifies actual
+SDK HTTP image_url content (including decodable PNG and changed synthetic geometry
+after an action), fresh observation IDs, permission checks on automatic post-action
+capture, no capture after a pre-effect denial/MCP read, and GUI batch rejection.
+The pinned bridge does not expose images nested in FunctionResultContent as vision
+input; ToolResultMessages sends correlated text results followed by explicitly
+untrusted user-role binary observations. The network is scripted and native calls
+are fake; no live model/desktop E2E is claimed.
+
 PA-053: `--filter ComputerTool` exercises all five strict computer tool schemas
 through real MAF streaming/manual registry dispatch with both a fake controller
 and the real WindowsComputerController over fake native interfaces. It checks

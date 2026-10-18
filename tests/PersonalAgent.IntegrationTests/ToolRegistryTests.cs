@@ -154,6 +154,17 @@ public sealed class ToolRegistryTests
         Assert.Equal("local_echo", Assert.Single(registry.Bind(Request("local_echo")).Functions).Name);
     }
 
+    [Fact]
+    public async Task AuthorizedMcpReadDoesNotTriggerUnrelatedObservationTool()
+    {
+        var mcp = new Tool(); mcp.Descriptor = mcp.Descriptor with { Source = new(ToolSourceKind.Mcp, "approved-fixture") };
+        var observe = new Tool(id: "observe");
+        var registry = new ToolRegistry([mcp, observe], (_, _, _) => Task.CompletedTask, (_, _, _) => ValueTask.FromResult(true));
+        var outcome = await registry.Bind(Request("local_echo", "observe")).InvokeAsync("local_echo", "mcp-read", Json("{\"text\":\"ok\"}"), CancellationToken.None);
+        Assert.Equal(ToolResultStatus.Success, outcome.Result.Status); Assert.Equal(1, mcp.Calls); Assert.Equal(0, observe.Calls);
+        Assert.Empty(outcome.Result.Images);
+    }
+
     private sealed class Tool(Func<ToolArguments, ToolExecutionContext, CancellationToken, Task<ToolResult>>? execute = null, string id = "local_echo") : IAgentTool
     {
         public ToolDescriptor Descriptor { get; set; } = new(id, "In-memory echo fixture", Json(Schema), new(ToolSourceKind.Local, "local-fixture"), ToolRiskLevel.ReadOnly, IsReadOnly: true, IndependentOfDesktop: true);

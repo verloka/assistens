@@ -583,14 +583,15 @@
                                        "attempts":  1
                                    },
                         "PA-054":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-18T18:57:40.1415700+00:00",
+                                       "completed_at":  "2026-10-18T19:04:54.7407221+00:00",
                                        "evidence":  [
-
+                                                        "Actual pinned OpenAI HTTP bridge loses nested tool image vision input; ToolResultMessages now sends correlated textual tool results followed by explicitly untrusted binary user observations. Metadata-driven registry observation dependency must be allowed/read-only, rechecks classified policy after successful GUI action, attaches fresh token/geometry/image, stops unknown observation outcomes without retry. Input invalidates old frame; GUI batches rejected; no screenshots for pre-effect errors/MCP. Real SDK/MAF/Windows controller with fake native proves decodable changed post-action PNG and metadata in actual HTTP body. FDD scoped PASS/full live flows untested.",
+                                                        "Verification: Targeted ComputerTool|ToolImageProtocol|ToolRegistry|MafAgentRuntime|OpenAiModelProvider70passed; final scripts/verify.ps1 locked restore/build0warnings/errors,88unit+364integration+3localfake-flow passed(455)."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-055":  {
                                        "status":  "pending",
@@ -1303,6 +1304,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-053",
-    "updated_at":  "2026-10-18T18:57:25.2435036+00:00"
+    "last_task_id":  "PA-054",
+    "updated_at":  "2026-10-18T19:04:54.7512373+00:00"
 }

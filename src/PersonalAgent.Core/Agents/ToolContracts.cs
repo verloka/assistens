@@ -6,7 +6,8 @@ public enum ToolSourceKind { Local, Computer, Mcp }
 public sealed record ToolSource(ToolSourceKind Kind, string Id);
 public enum ToolRiskLevel { Unknown, ReadOnly, Write, Destructive, ExternalDisclosure }
 public sealed record ToolDescriptor(string Id, string Description, JsonElement JsonSchema, ToolSource Source,
-    ToolRiskLevel RiskLevel, bool RequiresDesktop = false, bool IsReadOnly = false, bool IndependentOfDesktop = false);
+    ToolRiskLevel RiskLevel, bool RequiresDesktop = false, bool IsReadOnly = false, bool IndependentOfDesktop = false,
+    string? ObservationToolId = null);
 public sealed record ToolArguments(JsonElement Value);
 public sealed record ToolExecutionContext(Guid RunId, Guid ConversationId, string ToolCallId);
 public enum ToolResultStatus { Success, Failed, Blocked, OutcomeUnknown }

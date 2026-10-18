@@ -49,6 +49,11 @@ public sealed partial class ToolRegistry
         var allowed = request.AllowedToolIds.Distinct(StringComparer.Ordinal).ToArray();
         if (allowed.Any(id => !entries.ContainsKey(id)))
             throw new ModelProviderException("ToolUnavailable", "An allowed tool is not registered; model execution cannot start.");
+        foreach (var id in allowed)
+            if (entries[id].Descriptor.ObservationToolId is { } observationId &&
+                (!allowed.Contains(observationId, StringComparer.Ordinal) || !entries[observationId].Descriptor.IsReadOnly
+                 || entries[observationId].Descriptor.ObservationToolId is not null))
+                throw new ModelProviderException("ObservationToolUnavailable", "A tool requires an explicitly allowed read-only observation tool before it can execute.");
         return new(this, request.RunId, request.ConversationId, allowed.Select(id => entries[id]).ToArray());
     }
 
@@ -63,6 +68,7 @@ public sealed partial class ToolRegistry
         private readonly HashSet<string> seenCallIds = new(StringComparer.Ordinal);
         public IReadOnlyList<AIFunction> Functions { get; }
         public bool RequiresDesktop => allowed.Values.Any(entry => entry.Descriptor.RequiresDesktop);
+        internal bool RequiresObservationAfter(string toolId) => allowed[toolId].Descriptor.ObservationToolId is not null;
 
         internal BoundTools(ToolRegistry registry, Guid runId, Guid conversationId, Entry[] allowed)
         {
@@ -78,34 +84,66 @@ public sealed partial class ToolRegistry
                 throw new ModelProviderException("ToolNotAllowed", "The model requested an unapproved tool; no action was executed.");
             await invocation.WaitAsync(ct).ConfigureAwait(false);
             var clock = Stopwatch.StartNew();
-            ToolResult result;
+            var actionCompleted = false;
             try
             {
-                if (string.IsNullOrWhiteSpace(callId) || !seenCallIds.Add(callId)) result = Rejected("ToolCallReplay", "The tool call identity is invalid or has already been handled.");
-                else if (arguments.ValueKind != JsonValueKind.Object || arguments.GetRawText().Length > 65_536 || !entry.Schema.Evaluate(arguments).IsValid)
-                    result = Rejected("InvalidToolArguments", "Tool arguments do not match the registered schema.");
-                else
+                var result = await ExecuteOneAsync(entry, callId, arguments, ct).ConfigureAwait(false);
+                if (result.Status == ToolResultStatus.Success && entry.Descriptor.ObservationToolId is { } observationId)
                 {
-                    var descriptor = entry.Descriptor;
-                    var context = new ToolExecutionContext(runId, conversationId, callId);
-                    await registry.boundary(runId, new(descriptor.RequiresDesktop, descriptor.IsReadOnly && descriptor.RiskLevel == ToolRiskLevel.ReadOnly, descriptor.IndependentOfDesktop), ct).ConfigureAwait(false);
-                    ct.ThrowIfCancellationRequested();
-                    if (descriptor.RiskLevel == ToolRiskLevel.Unknown || !await registry.authorize(descriptor, context, ct).ConfigureAwait(false))
-                        result = Rejected("ToolPermissionDenied", "The tool is not authorized for this run.");
-                    else
+                    actionCompleted = true;
+                    var observationEntry = allowed[observationId];
+                    var observed = await ExecuteOneAsync(observationEntry, callId + ":observation", JsonSerializer.SerializeToElement(new { }), ct).ConfigureAwait(false);
+                    var data = JsonSerializer.SerializeToElement(new
                     {
-                        ct.ThrowIfCancellationRequested();
-                        result = await entry.Tool.ExecuteAsync(new(arguments.Clone()), context, ct).ConfigureAwait(false);
-                        ct.ThrowIfCancellationRequested();
-                    }
+                        actionStatus = "Success",
+                        actionData = result.StructuredData,
+                        observationToolId = observationId,
+                        observationSource = observationEntry.Descriptor.Source,
+                        observation = observed.StructuredData,
+                        observationErrorCode = observed.ErrorCode
+                    });
+                    if (observed.Status == ToolResultStatus.Success && observed.Images.Count > 0)
+                        result = result with { StructuredData = data, Images = observed.Images, Text = result.Text + " Fresh post-action observation attached; use its new observationId for the next input." };
+                    else
+                        result = new()
+                        {
+                            Status = ToolResultStatus.OutcomeUnknown,
+                            ErrorCode = "PostActionObservationFailed",
+                            StructuredData = data,
+                            Text = "The action completed but its resulting UI could not be observed. Do not repeat the action; check the current state explicitly."
+                        };
                 }
                 return Map(entry.Descriptor, result, clock.Elapsed);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
             catch (RunPersistenceException) { throw; }
             catch (Exception)
-            { return Map(entry.Descriptor, new() { Status = ToolResultStatus.Failed, ErrorCode = "ToolExecutionFailed", Text = "Tool execution failed; no automatic retry was performed." }, clock.Elapsed); }
+            {
+                return Map(entry.Descriptor, new()
+                {
+                    Status = actionCompleted ? ToolResultStatus.OutcomeUnknown : ToolResultStatus.Failed,
+                    ErrorCode = actionCompleted ? "PostActionObservationFailed" : "ToolExecutionFailed",
+                    Text = actionCompleted ? "The action completed but its resulting observation failed; do not repeat the action." : "Tool execution failed; no automatic retry was performed."
+                }, clock.Elapsed);
+            }
             finally { invocation.Release(); }
+        }
+
+        private async Task<ToolResult> ExecuteOneAsync(Entry entry, string callId, JsonElement arguments, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(callId) || !seenCallIds.Add(callId)) return Rejected("ToolCallReplay", "The tool call identity is invalid or has already been handled.");
+            if (arguments.ValueKind != JsonValueKind.Object || arguments.GetRawText().Length > 65_536 || !entry.Schema.Evaluate(arguments).IsValid)
+                return Rejected("InvalidToolArguments", "Tool arguments do not match the registered schema.");
+            var descriptor = entry.Descriptor;
+            var context = new ToolExecutionContext(runId, conversationId, callId);
+            await registry.boundary(runId, new(descriptor.RequiresDesktop, descriptor.IsReadOnly && descriptor.RiskLevel == ToolRiskLevel.ReadOnly, descriptor.IndependentOfDesktop), ct).ConfigureAwait(false);
+            ct.ThrowIfCancellationRequested();
+            if (descriptor.RiskLevel == ToolRiskLevel.Unknown || !await registry.authorize(descriptor, context, ct).ConfigureAwait(false))
+                return Rejected("ToolPermissionDenied", "The tool is not authorized for this run.");
+            ct.ThrowIfCancellationRequested();
+            var result = await entry.Tool.ExecuteAsync(new(arguments.Clone()), context, ct).ConfigureAwait(false);
+            ct.ThrowIfCancellationRequested();
+            return result;
         }
 
         private static Invocation Map(ToolDescriptor descriptor, ToolResult result, TimeSpan elapsed)
