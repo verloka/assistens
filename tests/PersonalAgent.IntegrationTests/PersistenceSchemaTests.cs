@@ -25,6 +25,7 @@ public sealed class PersistenceSchemaTests
             Assert.Contains("TaskRuns", tables);
             Assert.Contains("RunEvents", tables);
             Assert.Contains("Conversations", tables);
+            Assert.Contains("ModelProfiles", tables);
             db.Conversations.Add(new ConversationRow { Id = id, Title = "Durable test", CreatedAtUtc = instant, UpdatedAtUtc = instant });
             await db.SaveChangesAsync();
         }

@@ -13,9 +13,14 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<RunEventRow> RunEvents => Set<RunEventRow>();
     public DbSet<ConversationMessageRow> ConversationMessages => Set<ConversationMessageRow>();
     public DbSet<AgentSessionRow> AgentSessions => Set<AgentSessionRow>();
+    public DbSet<ModelProfileRow> ModelProfiles => Set<ModelProfileRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        var profiles = model.Entity<ModelProfileRow>();
+        profiles.ToTable("ModelProfiles");
+        profiles.HasKey(row => row.Id);
+        profiles.Property(row => row.ProfileJson).IsRequired();
         var utcTicks = new ValueConverter<DateTimeOffset, long>(value => value.UtcTicks, ticks => new DateTimeOffset(ticks, TimeSpan.Zero));
         var conversations = model.Entity<ConversationRow>();
         conversations.ToTable("Conversations");

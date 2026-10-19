@@ -37,6 +37,7 @@ public sealed record AgentRequest
     public IReadOnlyList<string> AllowedToolIds { get; init; } = [];
     public RunLimits Limits { get; init; } = new();
     public AgentContext Context { get; init; } = new();
+    public ModelProfile? Profile { get; init; }
 }
 
 public enum AgentResultStatus { Completed, Failed, Cancelled, Blocked }

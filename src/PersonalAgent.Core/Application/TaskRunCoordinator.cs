@@ -28,6 +28,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         ArgumentException.ThrowIfNullOrWhiteSpace(command.Instructions);
         ArgumentException.ThrowIfNullOrWhiteSpace(command.ModelProfileId);
         ArgumentException.ThrowIfNullOrWhiteSpace(command.Origin.Source);
+        if (command.Profile is { } profile && (profile.Id != command.ModelProfileId || profile.Id == "fake"))
+            throw new ArgumentException("The profile snapshot must match the selected cloud profile.");
         (command.Limits ?? new()).Validate();
         if (command.ConversationId == Guid.Empty) throw new ArgumentException("Conversation ID cannot be empty.");
         if (command.ExternalKey is { } external)
@@ -60,7 +62,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             var request = new AgentRequest
             {
                 RunId = run.Id, ConversationId = run.ConversationId, Instructions = run.Instructions,
-                ModelProfileId = run.ModelProfileId, AllowedToolIds = command.AllowedToolIds?.ToArray() ?? [], Limits = command.Limits ?? new()
+                ModelProfileId = run.ModelProfileId, Profile = command.Profile,
+                AllowedToolIds = command.AllowedToolIds?.ToArray() ?? [], Limits = command.Limits ?? new()
             };
             var change = new Change(new Entry(run, request));
             AddEvent(change, RunEventType.RunCreated, "Task created");
@@ -448,6 +451,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             AllowedToolIds = (command.AllowedToolIds ?? []).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray(),
             Limits = command.Limits ?? new RunLimits(), command.ExternalKey
         });
+        // Preserve the exact legacy hash when no profile snapshot was provided.
+        if (command.Profile is not null) intent += "\nProfile:" + JsonSerializer.Serialize(command.Profile);
         return new RunSubmissionIdentity(command.ExternalKey is null ? "command" : "external/" + command.ExternalKey.Source,
             command.ExternalKey?.Value ?? command.CommandId.ToString("D"), Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(intent))));
     }

@@ -18,13 +18,14 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
     private TaskRun? currentRun;
     private bool active;
     private bool disposed;
-    private string message = "Local demo: no model or desktop actions.";
+    private string message = "Ready. The selected model will be used for the next task.";
     private TaskRun? selectedHistory;
 
-    public DashboardViewModel(ITaskCommands commands, TaskRunCoordinator state, IHostApplicationLifetime host)
+    public DashboardViewModel(ITaskCommands commands, TaskRunCoordinator state, IHostApplicationLifetime host, ModelProfilesViewModel? profiles = null)
     {
         this.commands = commands;
         this.state = state;
+        Profiles = profiles;
         lifetime = CancellationTokenSource.CreateLinkedTokenSource(host.ApplicationStopping);
         SubmitCommand = new AsyncCommand(SubmitAsync, () => !active && !disposed && !lifetime.IsCancellationRequested && !string.IsNullOrWhiteSpace(Instructions));
         PauseCommand = new AsyncCommand(() => ControlAsync(run => commands.PauseAsync(new(Guid.NewGuid(), run.Id, run.RunVersion), lifetime.Token)),
@@ -36,6 +37,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+    public ModelProfilesViewModel? Profiles { get; }
     public ObservableCollection<RunEvent> Events { get; } = [];
     public ObservableCollection<TaskRun> History { get; } = [];
     public TaskRun? SelectedHistory
@@ -85,7 +87,9 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         Refresh();
         try
         {
-            currentRun = await commands.SubmitAsync(new(Guid.NewGuid(), Instructions, new TaskOrigin("desktop")), lifetime.Token);
+            var profile = Profiles?.Selected?.Profile;
+            currentRun = await commands.SubmitAsync(new(Guid.NewGuid(), Instructions, new TaskOrigin("desktop"),
+                ModelProfileId: profile?.Id ?? "fake", Profile: profile), lifetime.Token);
             Refresh();
             await WatchAsync(currentRun.Id);
         }

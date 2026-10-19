@@ -25,19 +25,24 @@ public static class AppHost
             services.AddSingleton<MainWindow>();
             services.AddSingleton<HealthViewModel>();
             services.AddSingleton<DashboardViewModel>();
+            services.AddSingleton<ModelProfilesViewModel>();
             services.AddSingleton<ControlPanelViewModel>();
             services.AddSingleton<ControlWindow>();
             services.AddSingleton<IDesktopAccessCoordinator>(_ => new DesktopAccessCoordinator());
             services.AddSingleton<TaskRunCoordinator>();
             services.AddSingleton<ISecretStore>(_ => new WindowsDpapiSecretStore(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PersonalAgent", "secrets")));
-            services.AddSingleton<IModelProvider, OpenAiModelProvider>();
+            services.AddSingleton<OpenAiModelProvider>();
             services.AddSingleton<AnthropicModelProvider>();
+            services.AddSingleton<IModelProvider>(provider => provider.GetRequiredService<AnthropicModelProvider>());
+            services.AddSingleton<IModelProvider>(provider => provider.GetRequiredService<OpenAiModelProvider>());
             services.AddSingleton<TakeControlHotkeyService>();
             services.AddSingleton<ITaskCommands>(provider => provider.GetRequiredService<TaskRunCoordinator>());
-            services.AddSingleton<IAgentRuntime>(provider => new FakeAgentRuntime(
+            services.AddSingleton<FakeAgentRuntime>(provider => new FakeAgentRuntime(
                 [new("Read local task", TimeSpan.FromSeconds(1)), new("Prepare local result", TimeSpan.FromSeconds(1))],
                 provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync));
+            services.AddSingleton<IAgentRuntime>(provider => new ProfileAgentRuntime(provider.GetRequiredService<FakeAgentRuntime>(),
+                provider.GetServices<IModelProvider>(), provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync));
             services.AddSingleton<TaskRunner>();
             services.AddHostedService<LifecycleLoggingService>();
             if (historyDatabasePath is not null)
@@ -45,6 +50,7 @@ public static class AppHost
                 services.AddSingleton(new SqliteAgentDbContextFactory(historyDatabasePath));
                 services.AddSingleton<IRunRepository>(provider => new SqliteRunRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IConversationRepository>(provider => new SqliteConversationRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddSingleton<IModelProfileRepository>(provider => new SqliteModelProfileRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddHostedService<RunHistoryService>();
             }
             services.AddHostedService<TaskRunnerService>();

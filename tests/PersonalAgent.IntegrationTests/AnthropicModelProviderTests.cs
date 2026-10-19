@@ -172,7 +172,7 @@ public sealed class AnthropicModelProviderTests
         using var host = AppHost.CreateBuilder([]).ConfigureLogging(log => log.ClearProviders()).Build();
         Assert.IsType<AnthropicModelProvider>(host.Services.GetRequiredService<AnthropicModelProvider>());
         Assert.IsType<OpenAiModelProvider>(host.Services.GetRequiredService<IModelProvider>());
-        Assert.IsType<FakeAgentRuntime>(host.Services.GetRequiredService<IAgentRuntime>());
+        Assert.IsType<ProfileAgentRuntime>(host.Services.GetRequiredService<IAgentRuntime>());
     }
 
     internal static HttpResponseMessage ModelResponse() => JsonResponse(new

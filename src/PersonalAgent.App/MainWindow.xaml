@@ -48,13 +48,16 @@
             <ProgressBar Height="4" Margin="0,12,0,8" IsIndeterminate="{Binding IsBusy}" />
             <TextBlock x:Name="DiagnosticStatusText" Text="{Binding DiagnosticStatus}" TextWrapping="Wrap" />
         </StackPanel>
-        <GroupBox Grid.Row="4" Header="Local task" DataContext="{Binding Dashboard}" Padding="12" Margin="0,16,0,0">
+        <GroupBox Grid.Row="4" Header="Task" DataContext="{Binding Dashboard}" Padding="12" Margin="0,16,0,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                <StackPanel>
+                    <local:ModelProfilesControl x:Name="ModelsPanel" DataContext="{Binding Profiles}" />
+                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                </StackPanel>
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
                     <TextBlock Text="Task history: " VerticalAlignment="Center" />
                     <ComboBox x:Name="RunHistoryList" ItemsSource="{Binding History}" SelectedItem="{Binding SelectedHistory}"
@@ -71,7 +74,7 @@
                 <TextBox x:Name="TaskInstructions" Grid.Row="2" Text="{Binding Instructions, UpdateSourceTrigger=PropertyChanged}"
                          AcceptsReturn="True" MinHeight="48" TextWrapping="Wrap" />
                 <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8">
-                    <Button x:Name="SubmitTaskButton" Content="Start local task" Command="{Binding SubmitCommand}" Padding="10,5" Margin="0,0,8,0" />
+                    <Button x:Name="SubmitTaskButton" Content="Start task" Command="{Binding SubmitCommand}" Padding="10,5" Margin="0,0,8,0" />
                     <Button x:Name="PauseTaskButton" Content="Pause task" Command="{Binding PauseCommand}" Padding="10,5" Margin="0,0,8,0" />
                     <Button x:Name="ResumeTaskButton" Content="Resume" Command="{Binding ResumeCommand}" Padding="10,5" Margin="0,0,8,0" />
                     <Button x:Name="CancelTaskButton" Content="Cancel" Command="{Binding CancelCommand}" Padding="10,5" />

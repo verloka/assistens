@@ -39,6 +39,15 @@ and MVP release gate remain unverified until their own backlog tasks are complet
 
 ## MAF runtime adapter (PA-049)
 
+PA-062: `--filter ModelProfiles` covers actual profile XAML, create/update/select,
+explicit Test saved profile, DPAPI credentials and SQLite migration/reopen using
+scripted providers. Running and queued runs retain submitted profile snapshots;
+changing a provider requires its own key. Profiles store secret references only;
+passwords clear after save and do not appear in history/database/files. Startup
+selects Local demo, even with saved profiles. Cloud text tasks explicitly selected
+in the UI now use the matching provider; desktop tools remain unconfigured and
+denied in this path. Full live read-only GUI acceptance remains PA-059/065.
+
 PA-061: `--filter AnthropicCapability` runs eleven actual SDK cases for capability
 preflight, tool_use/result correlation, base64 PNGs and fresh post-click geometry,
 cache-inclusive usage, incomplete/refused stop reasons, and synthetic capability

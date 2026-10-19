@@ -1,0 +1,32 @@
+<UserControl x:Class="PersonalAgent.App.ModelProfilesControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel>
+        <TextBlock Text="Model for next task" FontWeight="SemiBold" />
+        <ComboBox x:Name="ModelProfileSelector" ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}"
+                  DisplayMemberPath="Label" IsEnabled="{Binding CanEdit}" Margin="0,4,0,4" />
+        <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+        <Expander Header="Create or edit model profile" Margin="0,4,0,8">
+            <ScrollViewer MaxHeight="230" VerticalScrollBarVisibility="Auto">
+            <StackPanel IsEnabled="{Binding CanEdit}">
+                <TextBlock Text="Profile ID" /><TextBox x:Name="ModelProfileId" Text="{Binding ProfileId, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Text="Provider" /><ComboBox x:Name="ModelProviderSelector" ItemsSource="{Binding ProviderIds}" SelectedItem="{Binding ProviderId}" />
+                <TextBlock Text="Model ID" /><TextBox x:Name="ModelIdentifier" Text="{Binding ModelId, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Text="API key (leave empty to keep the saved key)" />
+                <PasswordBox x:Name="ModelApiKey" PasswordChanged="PasswordChanged" />
+                <StackPanel Orientation="Horizontal" Margin="0,4">
+                    <CheckBox x:Name="ModelTools" Content="Tool calling" IsChecked="{Binding SupportsToolCalling}" Margin="0,0,16,0" />
+                    <CheckBox x:Name="ModelImages" Content="Images" IsChecked="{Binding SupportsImages}" />
+                </StackPanel>
+                <TextBlock Text="Maximum output tokens" />
+                <TextBox x:Name="ModelOutputTokens" Text="{Binding MaxOutputTokens, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
+                <WrapPanel Margin="0,8">
+                    <Button x:Name="NewModelProfile" Content="New profile" Command="{Binding NewCommand}" Padding="8,4" Margin="0,0,8,0" />
+                    <Button x:Name="SaveModelProfile" Content="Save and select" Command="{Binding SaveCommand}" Padding="8,4" Margin="0,0,8,0" />
+                    <Button x:Name="TestModelProfile" Content="Test saved profile (API)" Command="{Binding TestCommand}" Padding="8,4" />
+                </WrapPanel>
+            </StackPanel>
+            </ScrollViewer>
+        </Expander>
+    </StackPanel>
+</UserControl>

@@ -157,7 +157,7 @@ public sealed class OpenAiModelProviderTests
         using var host = AppHost.CreateBuilder([]).ConfigureLogging(log => log.ClearProviders()).Build();
         Assert.IsType<OpenAiModelProvider>(host.Services.GetRequiredService<IModelProvider>());
         Assert.IsType<WindowsDpapiSecretStore>(host.Services.GetRequiredService<ISecretStore>());
-        Assert.IsType<FakeAgentRuntime>(host.Services.GetRequiredService<IAgentRuntime>());
+        Assert.IsType<ProfileAgentRuntime>(host.Services.GetRequiredService<IAgentRuntime>());
         var provider = new OpenAiModelProvider(new Secrets(null));
         var runtime = new MafAgentRuntime(async (_, ct) => (await provider.OpenAsync(Profile, ct)).Client, (_, _) => Task.CompletedTask);
         var result = await runtime.ExecuteAsync(new() { RunId = Guid.NewGuid(), ConversationId = Guid.NewGuid(), ModelProfileId = Profile.Id, Instructions = "Test" }, new InlineProgress(), CancellationToken.None);

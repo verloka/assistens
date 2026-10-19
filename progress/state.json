@@ -671,14 +671,15 @@
                                        "attempts":  1
                                    },
                         "PA-062":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T07:29:19.7179641+00:00",
+                                       "completed_at":  "2026-10-19T07:37:25.5558035+00:00",
                                        "evidence":  [
-
+                                                        "Actual ModelsPanel XAML/ModelProfilesViewModel create/update/select/test profiles, SQLite ModelProfiles migration/repository, DPAPI key-only references and cleared passwords. Dashboard submits immutable profile snapshots; ProfileAgentRuntime routes existing IAgentRuntime to selected DI provider, local startup default and unconfigured-tool denial retained. FDD001 scoped S1/S2 PASS; dependencies/reverse and schema/legacy submission compatibility reviewed; no live/native E2E claim.",
+                                                        "Verification: dotnet test IntegrationTests --filter ModelProfiles --no-restore:5passed; targeted ModelProfiles|Dashboard|Persistence|ModelProvider:91passed (before fifth new case); scripts/verify.ps1 locked restore/build0warnings/errors;88unit+429integration+3fake-flow=520passed; final model-pricing reset adjustment rebuilt and ModelProfiles5passed; diff/doctor passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-063":  {
                                        "status":  "pending",
@@ -1311,6 +1312,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-061",
-    "updated_at":  "2026-10-19T07:29:18.4404300+00:00"
+    "last_task_id":  "PA-062",
+    "updated_at":  "2026-10-19T07:37:25.5658394+00:00"
 }
