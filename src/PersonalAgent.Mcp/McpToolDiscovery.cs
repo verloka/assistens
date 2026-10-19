@@ -26,6 +26,13 @@ public sealed class McpToolDiscovery
     private readonly SemaphoreSlim refresh = new(1, 1);
     private readonly Dictionary<Guid, IReadOnlyList<McpDiscoveredTool>> previous = [];
 
+    internal async Task ForgetAsync(Guid connectionId)
+    {
+        await refresh.WaitAsync().ConfigureAwait(false);
+        try { previous.Remove(connectionId); }
+        finally { refresh.Release(); }
+    }
+
     public async Task<McpDiscoveryResult> RefreshAsync(McpClientConnection connection, CancellationToken cancellationToken = default)
     {
         await refresh.WaitAsync(cancellationToken).ConfigureAwait(false);

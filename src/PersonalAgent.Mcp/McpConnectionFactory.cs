@@ -51,7 +51,7 @@ public sealed class McpConnectionFactory(IEnumerable<IMcpTransportProvider> prov
         }
     }
 
-    private static McpConnectionConfig Snapshot(McpConnectionConfig config)
+    internal static McpConnectionConfig Snapshot(McpConnectionConfig config)
     {
         if (config.SchemaVersion != 1 || config.Id == Guid.Empty || string.IsNullOrWhiteSpace(config.Name)
             || !Enum.IsDefined(config.Transport) || config.ConnectTimeout <= TimeSpan.Zero || config.ConnectTimeout > TimeSpan.FromMinutes(2)

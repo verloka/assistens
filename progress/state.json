@@ -769,14 +769,15 @@
                                        "attempts":  1
                                    },
                         "PA-071":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T08:29:42.6611161+00:00",
+                                       "completed_at":  "2026-10-19T08:38:35.7566953+00:00",
                                        "evidence":  [
-
+                                                        "McpConnectionManager owns state, bounded initialization/reconnect/backoff and read-only health discovery; immediate binding invalidation; disable/remove/replacement cancels handshake and closes processes; McpLifecycleService stops manager with host;11 actual process/SDK/host lifecycle cases; scoped FDD004 verification, all Draft",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter FullyQualifiedName~McpLifecycleTests:11passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+508integration+3localfake=599passed; diff/doctor passed; no owned MCP fixture processes remain"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-072":  {
                                        "status":  "pending",
@@ -1319,6 +1320,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-070",
-    "updated_at":  "2026-10-19T08:29:31.3208750+00:00"
+    "last_task_id":  "PA-071",
+    "updated_at":  "2026-10-19T08:38:35.7656920+00:00"
 }

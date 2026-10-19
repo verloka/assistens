@@ -31,6 +31,7 @@ public static class AppHost
             services.AddSingleton<IMcpTransportProvider, StdioMcpTransportProvider>();
             services.AddSingleton<IMcpTransportProvider, HttpMcpTransportProvider>();
             services.AddSingleton<McpToolDiscovery>();
+            services.AddSingleton<McpConnectionManager>();
             services.AddSingleton<ControlPanelViewModel>();
             services.AddSingleton<ControlWindow>();
             services.AddSingleton<IDesktopAccessCoordinator>(_ => new DesktopAccessCoordinator());
@@ -50,6 +51,7 @@ public static class AppHost
                 provider.GetServices<IModelProvider>(), provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync));
             services.AddSingleton<TaskRunner>();
             services.AddHostedService<LifecycleLoggingService>();
+            services.AddHostedService<McpLifecycleService>();
             if (historyDatabasePath is not null)
             {
                 services.AddSingleton(new SqliteAgentDbContextFactory(historyDatabasePath));

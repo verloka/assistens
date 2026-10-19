@@ -7,10 +7,12 @@ namespace PersonalAgent.Mcp;
 public sealed class McpClientConnection(McpConnectionConfig configuration, McpClient client, IClientTransport transport) : IAsyncDisposable
 {
     private int disposed;
+    private int invalidated;
     private IReadOnlyDictionary<string, string> toolVersions = new Dictionary<string, string>();
     public McpConnectionConfig Configuration { get; } = configuration;
     public McpClient Client { get; } = client;
-    public bool IsAvailable => Volatile.Read(ref disposed) == 0 && !Client.Completion.IsCompleted;
+    public bool IsAvailable => Volatile.Read(ref disposed) == 0 && Volatile.Read(ref invalidated) == 0 && !Client.Completion.IsCompleted;
+    internal void Invalidate() { Interlocked.Exchange(ref invalidated, 1); UpdateToolVersions([]); }
     internal void UpdateToolVersions(IReadOnlyList<McpDiscoveredTool> tools) =>
         Volatile.Write(ref toolVersions, tools.ToDictionary(tool => tool.Descriptor.Id, tool => tool.Version, StringComparer.Ordinal));
     internal bool IsToolCurrent(McpDiscoveredTool tool) => IsAvailable
@@ -38,7 +40,7 @@ public sealed class McpClientConnection(McpConnectionConfig configuration, McpCl
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref disposed, 1) != 0) return;
-        UpdateToolVersions([]);
+        Invalidate();
         try
         {
             try { await Client.DisposeAsync().ConfigureAwait(false); }

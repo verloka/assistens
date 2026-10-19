@@ -1,9 +1,9 @@
 # Agent checkpoint
-- Last completed task: PA-070 (MCP execution through shared tool permissions/boundaries).
-- Current task: none; next PA-071.
-- Modified files: Core McpToolPermission; McpAgentTool; connection catalog validity; discovery refresh invalidation; customizable local fixture; McpExecutionTests; FDD004; progress state/log/checkpoint.
-- Verified build/test: McpExecutionTests14passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+497integration+3fake-flow=588passed. Diff/doctor passed.
-- Runtime blockers / waiting on user: openai-live gpt-5.6-terra saved DisableReasoning=true via repo, live lookup/function/image200 and Connected=true; actual UI-to-SDK regression passed. Latest Models setup app PID24104 TEMP/PersonalAgent-OpenAI-Setup-20261019-112408. Saved-settings badge and unsaved-edit test guard fix1ca3193; key retained. No additional setup answer required to continue independent tasks.
-- External acceptance:059 still needs attended own-window live model/computer tools/hotkey/history fixture; no credentials blocker remains.065 Claude deferred by owner.026/030 multi-monitor. Capability probes do not complete059. Tracker blocker notes updated accordingly.
-- Decisions: version-pinned classification and connection allowlist required; existing per-run ToolRegistry callback/schema/boundary used. Raw provider/tool errors and untyped source claims not trusted. No default production MCP tools/GUI enablement. All flows Draft; FDD004 S1/S2 local PASS, S3 not tested; durable sensitive-action/unknown-outcome semantics follow076..081.
-- Next instruction: taskctl next/start071, inspect in_progress/diff first. Honor incoming setup steering; no multi-agent/unrelated refactor.
+- Last completed task: PA-071 (MCP connection lifecycle/health/bounded reconnect/cleanup).
+- Current task: none. Next normal backlog PA-072; PA-059 OpenAI credential blocker resolved, attended fixture preparation should be revisited.
+- Modified files: McpConnectionManager; connection invalidation; shared config snapshot; discovery forget; hosted lifecycle stop service/DI; McpLifecycleTests; FDD004; progress state/log/checkpoint.
+- Verified build/test: McpLifecycleTests11passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+508integration+3fake-flow=599passed. Diff/doctor passed; no owned MCP fixture processes remain after tests.
+- Runtime blockers / waiting on user: openai-live gpt-5.6-terra saved DisableReasoning=true, live lookup/function/image200 and Connected=true. UI guard/saved-settings label fixed1ca3193; latest Models setup app PID24104 TEMP/PersonalAgent-OpenAI-Setup-20261019-112408 (may be closed). Key retained; no extra profile answer required.
+- External acceptance:059 full attended native+live-model/title/hotkey/durable history not run; no credential blocker remains. Prepare a concrete gated own-window fixture before requesting owner Start; preparation is internal work, not an external blocker.065 Claude deferred;026/030 multi-monitor hardware.
+- Decisions: default reconnect3 attempts per manual generation, no tool replay, health only lists; authentication/policy/schema errors terminal; disconnect/disable/remove invalidate before process cleanup. App startup no MCP network/native interaction. All flows Draft; FDD004 S1/S2 local PASS, S3 not tested.
+- Next instruction: taskctl next, inspect state/diff. Either select072 or unblock/start059 to prepare now-available live acceptance fixture as one task. No multi-agent/unrelated refactor.
