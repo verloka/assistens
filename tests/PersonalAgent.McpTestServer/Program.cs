@@ -1,5 +1,6 @@
 using ModelContextProtocol.Server;
 using System.ComponentModel;
+using ModelContextProtocol.Protocol;
 
 namespace PersonalAgent.McpTestServer;
 
@@ -28,7 +29,8 @@ public static class Program
     }
 
     public static WebApplication CreateHttpServer(Func<HttpContext, Task>? observe = null,
-        Func<IList<ModelContextProtocol.Protocol.Tool>>? listTools = null)
+        Func<IList<ModelContextProtocol.Protocol.Tool>>? listTools = null,
+        McpRequestHandler<CallToolRequestParams, CallToolResult>? callTool = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = [] });
         builder.Configuration["AllowedHosts"] = "127.0.0.1";
@@ -37,6 +39,7 @@ public static class Program
         var mcp = builder.Services.AddMcpServer().WithHttpTransport();
         if (listTools is null) mcp.WithTools<EchoTool>();
         else mcp.WithListToolsHandler((_, _) => ValueTask.FromResult(new ModelContextProtocol.Protocol.ListToolsResult { Tools = listTools() }));
+        if (callTool is not null) mcp.WithCallToolHandler(callTool);
         var app = builder.Build();
         if (observe is not null) app.Use(async (context, next) => { await observe(context); await next(context); });
         app.MapMcp("/mcp");

@@ -41,13 +41,15 @@ public sealed class McpToolDiscovery
                 Array.AsReadOnly(tools.Where(tool => old.TryGetValue(tool.Descriptor.Id, out var value) && value.Version != tool.Version).Select(tool => tool.Descriptor.Id).ToArray()),
                 Array.AsReadOnly(old.Keys.Where(key => !current.ContainsKey(key)).Order(StringComparer.Ordinal).ToArray()));
             previous[id] = tools;
+            connection.UpdateToolVersions(tools);
             return result;
         }
-        catch (OperationCanceledException) { previous.Remove(id); throw; }
-        catch (McpConnectionException) { previous.Remove(id); throw; }
+        catch (OperationCanceledException) { previous.Remove(id); connection.UpdateToolVersions([]); throw; }
+        catch (McpConnectionException) { previous.Remove(id); connection.UpdateToolVersions([]); throw; }
         catch (Exception)
         {
             previous.Remove(id);
+            connection.UpdateToolVersions([]);
             throw Invalid();
         }
         finally { refresh.Release(); }

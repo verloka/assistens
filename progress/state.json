@@ -645,7 +645,7 @@
                                        "evidence":  [
 
                                                     ],
-                                       "note":  "Live E2E-01 requires user-provided configured OpenAI profile/model and authorized API credit plus attended synthetic-window/hotkey session. App currently deliberately uses FakeAgentRuntime, no live profile selected; PA-048 native takeover and PA-058 deterministic contracts do not establish live model-to-GUI/history acceptance. No credentials assumed or paid call initiated.",
+                                       "note":  "OpenAI access/capabilities confirmed live with saved gpt-5.6-terra DisableReasoning=true. Remaining acceptance requires attended own-window live model/computer-tools run, real takeover hotkey and durable history; no such fixture/session executed yet. PA-070 currently in progress; do not claim full GUI E2E from synthetic probes.",
                                        "attempts":  1
                                    },
                         "PA-060":  {
@@ -710,7 +710,7 @@
                                        "evidence":  [
 
                                                     ],
-                                       "note":  "E2E-10 needs user-configured real Claude and OpenAI profiles with authorized API access/credit and observed context switch. PA-062 UI and PA-063/064 scripted actual-SDK contracts are implemented, but no user-supplied live profile/access or paid-call authorization is available in this session. No live call initiated; synthetic evidence cannot satisfy live acceptance.",
+                                       "note":  "Owner explicitly deferred Claude: no Claude profile/API access for live provider-switch E2E10. OpenAI profile and synthetic capability probes now available/passed, but live Claude switch and attended GUI/hotkey acceptance remain unverified. Continue independent backlog.",
                                        "attempts":  1
                                    },
                         "PA-066":  {
@@ -758,14 +758,15 @@
                                        "attempts":  1
                                    },
                         "PA-070":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T08:24:41.7642562+00:00",
+                                       "completed_at":  "2026-10-19T08:29:31.3118702+00:00",
                                        "evidence":  [
-
+                                                        "Core McpToolPermission and McpAgentTool bind owner-classified version-pinned allowlisted declarations; existing ToolRegistry/MAF gates reused; active bindings invalidated on refresh/dispose; bounded untrusted result/images/typed sources; safe errors/no replay; actual local SDK McpExecutionTests; FDD004 S2 verified, all Draft",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter FullyQualifiedName~McpExecutionTests:14passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+497integration+3localfake=588passed; diff/doctor passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-071":  {
                                        "status":  "pending",
@@ -1318,6 +1319,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-069",
-    "updated_at":  "2026-10-19T08:20:45.6700346+00:00"
+    "last_task_id":  "PA-070",
+    "updated_at":  "2026-10-19T08:29:31.3208750+00:00"
 }

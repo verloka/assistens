@@ -1,9 +1,9 @@
 # Agent checkpoint
-- Last completed backlog task: PA-069; PA059/062 saved-profile test consistency follow-up verified.
-- Current task: none; next PA-070.
-- Modified files: model profile VM/XAML unsaved-change guard and saved-settings label; real UI-to-SDK regression; FDD001; progress log/checkpoint.
-- Verified build/test: ModelProfilesTests9passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+483integration+3fake-flow=574passed. Live saved openai-live with DisableReasoning=true: lookup/function/image HTTP200, Connected=true; persisted metadata confirmed. Diff passed.
-- Runtime blockers / waiting on user: saved profile is now gpt-5.6-terra with reasoning disabled. Owner reported on/off failures before this follow-up; old saved config reproduced400. Test previously allowed unsaved edits and used old snapshot; now disabled until Save/select. Updated Models app PID24104 TEMP/PersonalAgent-OpenAI-Setup-20261019-112408; choose openai-live to see Saved settings: reasoning disabled. No key reentry needed.
-- Remaining external acceptance: PA059 full attended live model + native GUI title/hotkey/history not tested;065 Claude deferred;026/030 multi-monitor hardware. Capability tests are real but do not complete059.
-- Decisions: no arbitrary provider messages/model output displayed, no tool execution/screen capture in synthetic probes. All flows Draft. PA069 metadata Unknown/no permissions, approved execution binding follows070.
-- Next instruction: honor incoming setup steering; otherwise taskctl next/start070. Inspect in_progress/diff first; no duplicate implementation.
+- Last completed task: PA-070 (MCP execution through shared tool permissions/boundaries).
+- Current task: none; next PA-071.
+- Modified files: Core McpToolPermission; McpAgentTool; connection catalog validity; discovery refresh invalidation; customizable local fixture; McpExecutionTests; FDD004; progress state/log/checkpoint.
+- Verified build/test: McpExecutionTests14passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+497integration+3fake-flow=588passed. Diff/doctor passed.
+- Runtime blockers / waiting on user: openai-live gpt-5.6-terra saved DisableReasoning=true via repo, live lookup/function/image200 and Connected=true; actual UI-to-SDK regression passed. Latest Models setup app PID24104 TEMP/PersonalAgent-OpenAI-Setup-20261019-112408. Saved-settings badge and unsaved-edit test guard fix1ca3193; key retained. No additional setup answer required to continue independent tasks.
+- External acceptance:059 still needs attended own-window live model/computer tools/hotkey/history fixture; no credentials blocker remains.065 Claude deferred by owner.026/030 multi-monitor. Capability probes do not complete059. Tracker blocker notes updated accordingly.
+- Decisions: version-pinned classification and connection allowlist required; existing per-run ToolRegistry callback/schema/boundary used. Raw provider/tool errors and untyped source claims not trusted. No default production MCP tools/GUI enablement. All flows Draft; FDD004 S1/S2 local PASS, S3 not tested; durable sensitive-action/unknown-outcome semantics follow076..081.
+- Next instruction: taskctl next/start071, inspect in_progress/diff first. Honor incoming setup steering; no multi-agent/unrelated refactor.
