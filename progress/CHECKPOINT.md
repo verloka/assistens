@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed backlog task: PA-067 at5f67f28. Later PA-062/059 usability follow-up: dedicated Models window and top Models button.
-- Current task: PA-068 in_progress; selected before user-reported profile visibility issue, implementation not yet begun. Resume HTTP MCP while waiting for profile input.
-- Modified files: App ModelsWindow/top button/--models/password-view cleanup; one UI visibility regression and serial collection for six desktop UI classes; FDD001; progress state/log/checkpoint.
-- Verified build/test: ModelProfiles|DesktopShell|HealthScreen15passed. scripts/verify.ps1 locked restore/build0warnings/errors;88unit+463integration+3fake-flow=554passed. Diff/doctor passed. Isolated publish successful; PID61996 responding with visible Personal Agent - Models and Personal Agent windows (own PID titles only).
-- Runtime blockers / waiting on user: OpenAI input/test reply pending; PA-059 remains blocked until actual live GUI/hotkey/history evidence. PA-065 Claude deferred by user.026/030 multi-monitor hardware remain.
-- Decisions: dedicated Models window resolves inaccessible embedded settings, same saved-profile/DPAPI flow, no automatic API call. Launch path TEMP/PersonalAgent-OpenAI-Setup-20261019-110249; current published app uses default profile/history store but does not lock repo build outputs. No user secret/screenshots read. All FDD Draft/full business outcomes NOT TESTED.
-- Next instruction: resume existing068; if user reports OpenAI ready inspect profile metadata only and plan attended059 without exposing key. Do not restart067/duplicate implemented slices.
+- Last completed backlog task: PA-068 (owned approved Streamable HTTP MCP transport).
+- Current task: none. Next069 not started; user reports live OpenAI Test Connection CapabilityProbeFailed, prioritize setup diagnostic/fix.
+- Modified files: HttpMcpTransportProvider; Core MCP RequestTimeout; factory validation; connection bounded list/call; AppHost DI; local HTTP/async-wait fixture; McpHttpTests; FDD004/test README; progress state/log/checkpoint.
+- Verified build/test: combined McpHttp|McpStdio|McpConnectionConfig|McpTransportSpike33passed. scripts/verify.ps1 locked restore/build0warnings/errors;88unit+473integration+3fake-flow=564passed. Diff/doctor passed.
+- Runtime blockers / waiting on user:059 OpenAI profile test reports CapabilityProbeFailed; actual live GUI acceptance still unverified.065 Claude deferred.026/030 multi-monitor. Isolated UI PID61996 with visible Models window, TEMP/PersonalAgent-OpenAI-Setup-20261019-110249; default profile/history storage.
+- Decisions: no raw HTTP errors/credential forwarding/replayed tool calls; SDK latest discover/stateless supported. User setup steering before next backlog task. No paid calls initiated by assistant so far; user explicitly ran saved-profile connection test.
+- Next instruction: inspect saved profile metadata only, diagnose capability test safely; keep secrets out of chat/logs. Then resume069 via taskctl next when setup issue resolved or recorded.

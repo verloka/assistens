@@ -18,4 +18,5 @@ public sealed record McpConnectionConfig
     public McpHttpConfig? Http { get; init; }
     public IReadOnlyList<string> AllowedTools { get; init; } = [];
     public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(15);
+    public TimeSpan RequestTimeout { get; init; } = TimeSpan.FromSeconds(30);
 }

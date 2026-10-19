@@ -37,6 +37,15 @@ ambient-secret inheritance or raw stderr logging, real tool list/call, process
 exit, and cancellation/timeout cleanup. The no-protocol child is a test-only
 fixture mode. No shell wrapper, model or corporate service is used.
 
+PA-068: `--filter McpHttp` verifies actual loopback Streamable HTTP list/call,
+scoped bearer auth, explicit reconnect without tool replay, request cancellation
+and timeout, sanitized HTTP status errors and redirect/default-HTTP refusal.
+Owned HTTP clients have redirects/cookies/ambient credentials disabled. Use the
+connection's bounded ListToolsAsync/CallToolAsync methods for application calls.
+SDK2.2 defaults to a stateless server/discover revision; fresh connections may
+therefore have no session ID. All credentials and servers in these tests are local
+synthetic fixtures; no company/API access is required.
+
 - `PersonalAgent.UnitTests`: module boundary and reference cycle checks.
 - `PersonalAgent.IntegrationTests`: actual Generic Host and SDK loading; host
   probes/fakes (`ProbeService`, `CancellableWorker`, recording logger) cover

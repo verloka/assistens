@@ -55,6 +55,7 @@ public sealed class McpConnectionFactory(IEnumerable<IMcpTransportProvider> prov
     {
         if (config.SchemaVersion != 1 || config.Id == Guid.Empty || string.IsNullOrWhiteSpace(config.Name)
             || !Enum.IsDefined(config.Transport) || config.ConnectTimeout <= TimeSpan.Zero || config.ConnectTimeout > TimeSpan.FromMinutes(2)
+            || config.RequestTimeout <= TimeSpan.Zero || config.RequestTimeout > TimeSpan.FromMinutes(5)
             || config.AllowedTools is null || config.AllowedTools.Any(string.IsNullOrWhiteSpace))
             throw Error("McpConfigurationInvalid", "The MCP connection configuration is invalid.");
         if (config.Transport == McpTransportKind.Stdio)

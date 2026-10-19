@@ -27,7 +27,7 @@ public static class Program
         await builder.Build().RunAsync();
     }
 
-    public static WebApplication CreateHttpServer()
+    public static WebApplication CreateHttpServer(Func<HttpContext, Task>? observe = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = [] });
         builder.Configuration["AllowedHosts"] = "127.0.0.1";
@@ -35,6 +35,7 @@ public static class Program
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Services.AddMcpServer().WithHttpTransport().WithTools<EchoTool>();
         var app = builder.Build();
+        if (observe is not null) app.Use(async (context, next) => { await observe(context); await next(context); });
         app.MapMcp("/mcp");
         return app;
     }
@@ -44,11 +45,14 @@ public static class Program
 public sealed class EchoTool
 {
     [McpServerTool(Name = "echo"), Description("Echoes a diagnostic message in memory; no external effects.")]
-    public static string Echo(string message) => message == "__fixture_environment__"
-        ? System.Text.Json.JsonSerializer.Serialize(new
+    public static async Task<string> Echo(string message, CancellationToken cancellationToken)
+    {
+        if (message == "__fixture_wait__") await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+        return message == "__fixture_environment__" ? System.Text.Json.JsonSerializer.Serialize(new
         {
             AmbientPresent = Environment.GetEnvironmentVariable("PERSONAL_AGENT_TEST_AMBIENT_SECRET") is not null,
             ScopedPresent = Environment.GetEnvironmentVariable("MCP_FIXTURE_SECRET") is not null,
             Arguments = Environment.GetCommandLineArgs().Skip(1).ToArray()
         }) : $"Echo: {message}";
+    }
 }

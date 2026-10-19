@@ -29,6 +29,7 @@ public static class AppHost
             services.AddSingleton<ModelProfilesViewModel>();
             services.AddSingleton<McpConnectionFactory>();
             services.AddSingleton<IMcpTransportProvider, StdioMcpTransportProvider>();
+            services.AddSingleton<IMcpTransportProvider, HttpMcpTransportProvider>();
             services.AddSingleton<ControlPanelViewModel>();
             services.AddSingleton<ControlWindow>();
             services.AddSingleton<IDesktopAccessCoordinator>(_ => new DesktopAccessCoordinator());

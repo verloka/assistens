@@ -736,13 +736,14 @@
                                        "attempts":  1
                                    },
                         "PA-068":  {
-                                       "status":  "in_progress",
+                                       "status":  "done",
                                        "started_at":  "2026-10-19T07:57:41.0074658+00:00",
-                                       "completed_at":  null,
+                                       "completed_at":  "2026-10-19T08:08:50.2391811+00:00",
                                        "evidence":  [
-
+                                                        "HttpMcpTransportProvider fixed approved endpoint/scoped bearer, no redirect/cookies/ambient credentials, owned SDK/HTTP cleanup, no automatic stream reconnect or replay. Bounded/sanitized connection list/call methods and configurable request timeout. Actual loopback auth/list/call/fresh-client discover or initialize/reconnect, cancellation/timeout and typed HTTP errors proven. FDD004 scoped PASS; complete business/corporate flows Draft/untested.",
+                                                        "Verification: dotnet test IntegrationTests --filter McpHttp|McpStdio|McpConnectionConfig|McpTransportSpike --no-restore:33passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+473integration+3fake-flow=564passed; diff/doctor passed"
                                                     ],
-                                       "note":  "Work started",
+                                       "note":  "Acceptance verified",
                                        "attempts":  1
                                    },
                         "PA-069":  {
@@ -1317,5 +1318,5 @@
                                    }
                     },
     "last_task_id":  "PA-068",
-    "updated_at":  "2026-10-19T07:57:41.0224864+00:00"
+    "updated_at":  "2026-10-19T08:08:50.2487326+00:00"
 }
