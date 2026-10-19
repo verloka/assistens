@@ -639,14 +639,15 @@
                                        "attempts":  1
                                    },
                         "PA-059":  {
-                                       "status":  "pending",
-                                       "started_at":  "2026-10-19T08:38:48.1431067+00:00",
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T12:08:58.4725920+00:00",
+                                       "completed_at":  "2026-10-19T12:08:58.9628939+00:00",
                                        "evidence":  [
-
+                                                        "Owner attended --live-openai: titleMatched=True, modelCalls2, captures2, generation1-\u003e2, physical hotkeyPause=True, freshAfterResume=True, durableHistory=True, nativeInput0. Reopened synthetic SQLite run E7ADDF79-827F-4C2C-8993-DE169FCFA985 Completed/version19, no error, usage4892+26, pause/resume and correlated tool events; title absent from instructions. Actual SDK/MAF/registry/native GDI/Core/SQLite own-window flow. Fixed fixture Pausing handoff regression. Commit5e3f302; all FDD Draft; full notification/autonomous-opening scenarios unverified.",
+                                                        "Verification: AttendedPauseTests1passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+509integration+3localfake=600passed. Actual owner live title/hotkey/fresh generation/history acceptance plus read-only SQLite verification passed."
                                                     ],
-                                       "note":  "Owner returned actual LIVE OK; reopened synthetic SQLite confirms Completed/version19, pause/resume/tool events/final title and actual usage.",
-                                       "attempts":  2
+                                       "note":  "Acceptance verified",
+                                       "attempts":  3
                                    },
                         "PA-060":  {
                                        "status":  "done",
@@ -781,13 +782,13 @@
                                    },
                         "PA-072":  {
                                        "status":  "in_progress",
-                                       "started_at":  "2026-10-19T08:47:06.9139478+00:00",
+                                       "started_at":  "2026-10-19T12:08:59.9818137+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
                                        "note":  "Work started",
-                                       "attempts":  1
+                                       "attempts":  2
                                    },
                         "PA-073":  {
                                        "status":  "pending",
@@ -1321,5 +1322,5 @@
                                    }
                     },
     "last_task_id":  "PA-072",
-    "updated_at":  "2026-10-19T12:08:27.0242780+00:00"
+    "updated_at":  "2026-10-19T12:08:59.9948128+00:00"
 }
