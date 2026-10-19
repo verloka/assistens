@@ -22,6 +22,7 @@ Status: Draft
 
 ## Validations
 - Consistent persisted state, unique operation IDs, session-provider compatibility, expiry and ownership.
+- Startup with exclusive store ownership converts dispatched calls lacking acknowledgement to OutcomeUnknown and marks their interrupted runs for outcome review. Persisted approval or a fresh SDK session cannot replay that operation.
 
 ## Invariants
 - Unknown external outcomes never trigger blind automatic retries.
@@ -39,11 +40,12 @@ Status: Draft
 - Flow: FDD-006 — notification outbox.
 
 ## Scenarios
-- S1: Given an interruption after an external write whose result is unknown, when app restarts, then the write is not repeated automatically. [untested]
+- S1: Given an interruption after an external write whose result is unknown, when app restarts, then the write is not repeated automatically. [test: tests/PersonalAgent.IntegrationTests/ToolDispatchRecoveryTests.cs]
 - S2: Given a persisted queued read-only run, when app restarts, then recovery safely requeues it at most once. [untested]
 - S3: Given a pending notification and completed run, when app restarts, then only delivery is retried. [untested]
 
 ## Implementation References
+- PA-081: ToolCalls records a durable exact approval-bound dispatch before non-idempotent invocation and a separate acknowledgement afterward. Under exclusive startup ownership RunHistoryService/RunRecovery changes unresolved dispatches to OutcomeUnknown and the started run to Interrupted/ToolOutcomeUnknown with a real-world verification instruction; neither old approval nor call ID can dispatch again. [test: tests/PersonalAgent.IntegrationTests/ToolDispatchRecoveryTests.cs] kills an actual child after one sandbox file effect but before ack, starts the actual App host twice, checks SQLite and unshown Dashboard XAML, rejects replay, completes an independent task and proves exactly one effect/no recovered runtime execution. S1/E2E-08 controlled local acceptance PASS; no corporate/native/paid effect is claimed. Scheduling/outbox S2/S3 remain separate; all Draft.
 - PA-044 preserves persisted InputCleanupUncertain instead of automatically recovering it. Task history restoration reinstates the global input block, including after terminal cancellation; SafePauseTests reopens actual SQLite and verifies no new lease. This is a specific failed-release recovery regression, not full S1-S3 acceptance.
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §§9, 13; backlog PR-03, PR-10, PR-11, PR-12.
 - Schema foundation (PA-017): `src/PersonalAgent.Persistence/AgentDbContext.cs`, `Entities/RunEntities.cs` and `Migrations/` define versioned run payloads, conversation/task references, UTC ticks, application-managed RunVersion and append-only events. `tests/PersonalAgent.IntegrationTests/PersistenceSchemaTests.cs` applies/reapplies migrations to real temporary SQLite files and verifies reopen/data/constraints. There is no startup recovery or durable runtime integration yet; complete S1-S3 remain `[untested]`.

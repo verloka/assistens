@@ -3,6 +3,7 @@ using Microsoft.Extensions.AI;
 using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Application;
 using PersonalAgent.Core.Security;
+using PersonalAgent.Core.Persistence;
 using System.Collections.Frozen;
 using System.Diagnostics;
 using System.Text.Json;
@@ -18,15 +19,17 @@ public sealed partial class ToolRegistry
     private readonly Func<Guid, RunStepAccess, CancellationToken, Task> boundary;
     private readonly ToolAccessContext? accessContext;
     private readonly IToolInvocationAuthorizer? invocationAuthorizer;
+    private readonly IToolCallRepository? toolCalls;
 
     public ToolRegistry(IEnumerable<IAgentTool> tools,
         Func<Guid, RunStepAccess, CancellationToken, Task> waitAtBoundary,
         Func<ToolDescriptor, ToolExecutionContext, CancellationToken, ValueTask<bool>>? authorize = null,
-        ToolAccessContext? accessContext = null, IToolInvocationAuthorizer? invocationAuthorizer = null)
+        ToolAccessContext? accessContext = null, IToolInvocationAuthorizer? invocationAuthorizer = null, IToolCallRepository? toolCalls = null)
     {
         boundary = waitAtBoundary;
         this.accessContext = accessContext;
         this.invocationAuthorizer = invocationAuthorizer;
+        this.toolCalls = toolCalls;
         this.authorize = authorize ?? ((descriptor, _, _) => ValueTask.FromResult(
             descriptor.Source.Kind == ToolSourceKind.Local && descriptor.RiskLevel == ToolRiskLevel.ReadOnly
             && descriptor.IsReadOnly && !descriptor.RequiresDesktop));
@@ -155,6 +158,7 @@ public sealed partial class ToolRegistry
                 || !await registry.authorize(descriptor, context, ct).ConfigureAwait(false))
                 return Rejected("ToolPermissionDenied", "The tool is not authorized for this run.");
             ct.ThrowIfCancellationRequested();
+            ToolDispatchAuthorization? dispatchAuthorization = null;
             if (registry.invocationAuthorizer is not null)
             {
                 if (!await registry.invocationAuthorizer.AuthorizeAsync(descriptor, new(arguments.Clone()), context, ct).ConfigureAwait(false))
@@ -165,14 +169,54 @@ public sealed partial class ToolRegistry
                 if (accessContext is not null && !accessContext.Allows(descriptor, context)
                     || !await registry.authorize(descriptor, context, ct).ConfigureAwait(false))
                     return Rejected("ToolPermissionDenied", "The tool is no longer authorized for this run.");
-                if (!await registry.invocationAuthorizer.ValidateDispatchAsync(descriptor, new(arguments.Clone()), context, ct).ConfigureAwait(false))
+                dispatchAuthorization = await registry.invocationAuthorizer.ValidateDispatchAsync(descriptor, new(arguments.Clone()), context, ct).ConfigureAwait(false);
+                if (!dispatchAuthorization.Allowed)
                     return Rejected("ToolPermissionDenied", "The approved action expired or changed before dispatch.");
             }
             ct.ThrowIfCancellationRequested();
-            var result = await entry.Tool.ExecuteAsync(new(arguments.Clone()), context, ct).ConfigureAwait(false);
-            ct.ThrowIfCancellationRequested();
-            return result;
+            ToolCallDispatch? dispatch = null;
+            if (registry.toolCalls is not null && !descriptor.IsReadOnly)
+            {
+                if (dispatchAuthorization is not { ApprovalRequestId: { } approvalId, ExpectedRunVersion: { } runVersion })
+                    return Rejected("ToolDispatchDenied", "A durable exact action approval is required before this operation.");
+                try { dispatch = await registry.toolCalls.BeginAsync(descriptor, new(arguments.Clone()), context, runVersion, approvalId, ct).ConfigureAwait(false); }
+                catch (ToolDispatchConflictException error)
+                { return error.OutcomeUnknown ? Unknown() : Rejected("ToolCallReplay", "This operation was already acknowledged and cannot be repeated."); }
+                catch (ToolDispatchDeniedException) { return Rejected("ToolDispatchDenied", "The action or run no longer matches its durable approval."); }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+                catch (Exception) { return Rejected("ToolDispatchSaveFailed", "The dispatch reservation could not be confirmed; no tool was invoked."); }
+            }
+            try
+            {
+                ct.ThrowIfCancellationRequested();
+                var result = await entry.Tool.ExecuteAsync(new(arguments.Clone()), context, ct).ConfigureAwait(false);
+                if (dispatch is not null)
+                {
+                    // Ack is local history, not another external operation; caller cancellation must not erase it.
+                    try { await registry.toolCalls!.CompleteAsync(dispatch.Id, result.Status, CancellationToken.None).ConfigureAwait(false); }
+                    catch (Exception) { return Unknown(); }
+                    if (result.Status != ToolResultStatus.Success) return result with { Status = ToolResultStatus.OutcomeUnknown,
+                        Text = "The dispatched operation was not acknowledged as successful. Verify its real-world outcome; no retry was performed." };
+                }
+                ct.ThrowIfCancellationRequested();
+                return result;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                if (dispatch is not null) await MarkUnknownAsync(dispatch.Id).ConfigureAwait(false);
+                throw;
+            }
+            catch (Exception) when (dispatch is not null)
+            { await MarkUnknownAsync(dispatch.Id).ConfigureAwait(false); return Unknown(); }
         }
+
+        private async Task MarkUnknownAsync(Guid dispatchId)
+        {
+            try { await registry.toolCalls!.CompleteAsync(dispatchId, ToolResultStatus.OutcomeUnknown, CancellationToken.None).ConfigureAwait(false); }
+            catch (Exception) { } // Durable Dispatched remains unsafe to replay and is recovered as OutcomeUnknown.
+        }
+        private static ToolResult Unknown() => new() { Status = ToolResultStatus.OutcomeUnknown, ErrorCode = "ToolOutcomeUnknown",
+            Text = "The operation outcome is unknown. Verify its real-world state before starting a new action; no retry was performed." };
 
         private static Invocation Map(ToolDescriptor descriptor, ToolResult result, TimeSpan elapsed)
         {

@@ -4,11 +4,12 @@ using System.Text.Json;
 
 namespace PersonalAgent.Core.Application;
 
-public sealed class RunRecovery(IRunRepository repository)
+public sealed class RunRecovery(IRunRepository repository, IToolCallRepository? toolCalls = null)
 {
     public async Task<IReadOnlyList<Guid>> RecoverAsync(CancellationToken cancellationToken = default)
     {
         var queued = new List<Guid>();
+        if (toolCalls is not null) await toolCalls.RecoverDispatchedAsync(cancellationToken);
         foreach (var summary in await repository.ListAsync(cancellationToken))
         {
             if (TaskRunStateMachine.IsTerminal(summary.Status)) continue;
@@ -21,12 +22,15 @@ public sealed class RunRecovery(IRunRepository repository)
             var safe = unstarted && stored.Request.ModelProfileId == "fake" && stored.Request.AllowedToolIds.Count == 0;
             if (safe && previous.Status == RunStatus.Queued) { queued.Add(previous.Id); continue; }
             var status = safe ? RunStatus.Queued : unstarted ? RunStatus.Blocked : RunStatus.Interrupted;
+            var unknown = toolCalls is not null && (await toolCalls.ListAsync(previous.Id, cancellationToken))
+                .Any(call => call.Status == ToolCallDispatchStatus.OutcomeUnknown);
             var reason = safe ? "Recovered unstarted local diagnostic."
                 : unstarted ? "Queued task needs review after restart; this model/tool set cannot start automatically."
+                : unknown ? "A dispatched operation has an unknown outcome. Verify its real-world result before starting another task; automatic replay is disabled."
                 : "Application restarted during execution. Verify external effects before starting another task; automatic replay is disabled.";
             var next = TaskRunStateMachine.Transition(previous, status, previous.RunVersion, DateTimeOffset.UtcNow, reason) with
             {
-                Summary = reason, ErrorCode = status == RunStatus.Interrupted ? "RunInterrupted" : status == RunStatus.Blocked ? "RecoveryNeedsReview" : null
+                Summary = reason, ErrorCode = unknown ? "ToolOutcomeUnknown" : status == RunStatus.Interrupted ? "RunInterrupted" : status == RunStatus.Blocked ? "RecoveryNeedsReview" : null
             };
             var step = new RunEvent
             {

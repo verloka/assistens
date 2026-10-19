@@ -7,7 +7,8 @@ using System.IO;
 
 namespace PersonalAgent.App;
 
-public sealed class RunHistoryService(SqliteAgentDbContextFactory contexts, TaskRunCoordinator coordinator, IRunRepository repository) : IHostedService, IDisposable
+public sealed class RunHistoryService(SqliteAgentDbContextFactory contexts, TaskRunCoordinator coordinator, IRunRepository repository,
+    IToolCallRepository? toolCalls = null) : IHostedService, IDisposable
 {
     private FileStream? ownership;
     public Task StartAsync(CancellationToken cancellationToken) => Task.Run(async () =>
@@ -19,7 +20,7 @@ public sealed class RunHistoryService(SqliteAgentDbContextFactory contexts, Task
             ownership = new FileStream(contexts.DatabasePath + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             await using var db = contexts.CreateDbContext();
             await db.Database.MigrateAsync(cancellationToken);
-            var safeQueued = await new RunRecovery(repository).RecoverAsync(cancellationToken);
+            var safeQueued = await new RunRecovery(repository, toolCalls).RecoverAsync(cancellationToken);
             await coordinator.RestoreHistoryAsync(safeQueued, cancellationToken);
         }
         catch { Dispose(); throw; }

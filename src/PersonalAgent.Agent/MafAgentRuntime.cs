@@ -174,7 +174,9 @@ public sealed class MafAgentRuntime(
                         toolCalls++;
                         await BoundaryAsync();
                         if (outcome.Result.Status != ToolResultStatus.Success)
-                            return Failure(outcome.Result.ErrorCode ?? "ToolOutcomeUnconfirmed", "Tool completion was not confirmed; no automatic retry was performed.", AgentResultStatus.Blocked);
+                            return Failure(outcome.Result.ErrorCode ?? "ToolOutcomeUnconfirmed", outcome.Result.Status == ToolResultStatus.OutcomeUnknown
+                                ? "The operation outcome is unknown. Verify its real-world state before starting another action; no automatic retry was performed."
+                                : "Tool completion was not confirmed; no automatic retry was performed.", AgentResultStatus.Blocked);
                         ReportTool(AgentEventKind.ToolCompleted, "Tool execution completed.", call.Name, eventId);
                         var resultMessages = ToolResultMessages.Create(call.CallId, outcome.Contents);
                         messages.AddRange(resultMessages.Where(message => message.Role == ChatRole.Tool));

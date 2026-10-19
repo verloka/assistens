@@ -59,18 +59,18 @@ public sealed class HumanApprovalAuthorizer(TaskRunCoordinator runs, IApprovalRe
         return allowed;
     }
 
-    public async ValueTask<bool> ValidateDispatchAsync(ToolDescriptor tool, ToolArguments arguments, ToolExecutionContext invocation, CancellationToken ct)
+    public async ValueTask<ToolDispatchAuthorization> ValidateDispatchAsync(ToolDescriptor tool, ToolArguments arguments, ToolExecutionContext invocation, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested(); var decision = evaluate(tool, invocation);
-        if (decision == ToolPermissionDecision.Allowed) return tool.RiskLevel == ToolRiskLevel.ReadOnly;
-        if (decision != ToolPermissionDecision.RequiresApproval || !receipts.TryRemove((invocation.RunId, invocation.ToolCallId), out var receipt)) return false;
+        if (decision == ToolPermissionDecision.Allowed) return new(tool.RiskLevel == ToolRiskLevel.ReadOnly);
+        if (decision != ToolPermissionDecision.RequiresApproval || !receipts.TryRemove((invocation.RunId, invocation.ToolCallId), out var receipt)) return new(false);
         var current = runs.GetRun(invocation.RunId);
-        if (current.RunVersion != receipt.RunVersion || current.Status != RunStatus.Running || current.PauseScope is not null) return false;
+        if (current.RunVersion != receipt.RunVersion || current.Status != RunStatus.Running || current.PauseScope is not null) return new(false);
         var request = await approvals.GetAsync(receipt.Request.Id, ct).ConfigureAwait(false);
         if (request is null || request.Status != ApprovalStatus.Approved || request.Version != receipt.Request.Version
-            || request.Owner != owner || request.ExpiresAtUtc <= clock.GetUtcNow()) return false;
+            || request.Owner != owner || request.ExpiresAtUtc <= clock.GetUtcNow()) return new(false);
         var exact = receipt.Request.Action with { RunId = invocation.RunId, ConversationId = invocation.ConversationId, ToolCallId = invocation.ToolCallId,
             ToolId = tool.Id, Source = tool.Source, RiskLevel = tool.RiskLevel, ToolVersion = tool.Version, Arguments = arguments.Value };
-        return exact.Fingerprint() == request.ActionHash;
+        return new(exact.Fingerprint() == request.ActionHash, request.Id, current.RunVersion);
     }
 }

@@ -76,7 +76,7 @@ public sealed class SqliteApprovalRepository(IDbContextFactory<AgentDbContext> f
                 .SetProperty(row => row.DecidedAtUtc, now), ct);
     }
 
-    private static ApprovalRequest Read(ApprovalRequestRow row)
+    internal static ApprovalRequest Read(ApprovalRequestRow row)
     {
         if (row.PayloadSchemaVersion != 1) throw new NotSupportedException("Unsupported approval payload version.");
         var action = JsonSerializer.Deserialize<PendingToolAction>(row.ActionJson)?.Snapshot() ?? throw new InvalidDataException("Invalid pending action.");

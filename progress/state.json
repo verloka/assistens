@@ -879,14 +879,15 @@
                                        "attempts":  1
                                    },
                         "PA-081":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T12:59:23.6818109+00:00",
+                                       "completed_at":  "2026-10-19T13:10:44.4374206+00:00",
                                        "evidence":  [
-
+                                                        "Core IToolCallRepository and SQLite ToolCalls migration20261019130339; unique Run/ToolCallId and approval ID, transaction checks exact canonical action/approved TTL/current running revision before non-idempotent dispatch. Common registry commits dispatch before effects, separate ack; failure/timeout/lost ack =\u003eOutcomeUnknown no replay. Human approval grants reference exact durable consent. App startup under existing exclusive lock recovers unresolved dispatches and Interrupted/ToolOutcomeUnknown with verification instruction; unshown Dashboard reflects it. Actual killed-child sandbox write remains exactly1 across2App restarts; no recovered runtime invocation. FDD007 S1/E2E08 controlled PASS; all Draft.",
+                                                        "Verification: ToolDispatchTests9+ToolDispatchRecoveryTests1passed; prior HumanApproval/ApprovalsUI17passed with ledger; final scripts/verify.ps1 locked restore/build0warnings/errors;101unit+565integration+3localfake=669passed. EF no pending model changes; doctor/diff/FDD semantic review passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-082":  {
                                        "status":  "pending",
@@ -1329,6 +1330,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-080",
-    "updated_at":  "2026-10-19T12:59:21.7191816+00:00"
+    "last_task_id":  "PA-081",
+    "updated_at":  "2026-10-19T13:10:44.4484174+00:00"
 }

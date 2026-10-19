@@ -1030,5 +1030,21 @@ screen; current Windows SID supplies owner identity. Full action, destination,
 risk, source, arguments and expiry are visible. Approve requires review, Deny
 does not, and acknowledgement cannot transfer to another selection. Closing or
 refreshing does not make a decision. No real window, corporate account, native
-screen/input or paid model is used by these tests. Crash/dispatch ambiguity is
-the separate PA-081 gate; default production task tool exposure stays closed.
+screen/input or paid model is used by these tests. Default production task tool
+exposure stays closed pending its explicit policy/tool-selection integration.
+
+### PA-081 durable dispatch and crash ambiguity
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter FullyQualifiedName~ToolDispatch
+```
+
+The approval fixture now uses the durable ToolCalls ledger before writes.
+Concurrent dispatch reservations have one winner; exact action, approval, expiry
+and run checks fail before effects. Failed ack persistence or actual MCP timeout
+after a synthetic effect surfaces OutcomeUnknown with a verification instruction.
+The crash case kills a real child after one temporary file write before ack,
+restarts the actual App host twice, checks unshown history XAML, refuses reuse of
+the call/approval and completes an independent local task. File effect count
+remains exactly one. This is controlled E2E-08 evidence, not live corporate or
+physical GUI acceptance. Startup recovery requires exclusive history ownership.

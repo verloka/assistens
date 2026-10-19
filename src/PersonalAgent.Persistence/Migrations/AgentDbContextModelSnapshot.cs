@@ -392,6 +392,59 @@ namespace PersonalAgent.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ToolCallRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ActionHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ApprovalRequestId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("DispatchedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("FinishedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PayloadSchemaVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ToolCallId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ToolId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovalRequestId")
+                        .IsUnique();
+
+                    b.HasIndex("RunId", "ToolCallId")
+                        .IsUnique();
+
+                    b.ToTable("ToolCalls", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ToolCalls_SchemaVersion", "PayloadSchemaVersion > 0");
+
+                            t.HasCheckConstraint("CK_ToolCalls_Status", "Status IN ('Dispatched','Acknowledged','OutcomeUnknown')");
+                        });
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.AgentSessionRow", b =>
                 {
                     b.HasOne("PersonalAgent.Persistence.Entities.ConversationRow", null)
@@ -445,6 +498,21 @@ namespace PersonalAgent.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("TaskDefinitionId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ToolCallRow", b =>
+                {
+                    b.HasOne("PersonalAgent.Persistence.Entities.ApprovalRequestRow", null)
+                        .WithMany()
+                        .HasForeignKey("ApprovalRequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("PersonalAgent.Persistence.Entities.TaskRunRow", null)
+                        .WithMany()
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

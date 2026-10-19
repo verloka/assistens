@@ -105,7 +105,7 @@ public sealed class ApprovalRepositoryTests
         Assert.Equal(ApprovalStatus.Pending, (await db.ApprovalRequests.AsNoTracking().SingleAsync()).Status);
     }
 
-    private static async Task<PendingToolAction> Seed(TemporaryAgentDatabase database)
+    internal static async Task<PendingToolAction> Seed(TemporaryAgentDatabase database)
     {
         await using (var db = database.Open()) await db.Database.MigrateAsync();
         var now = DateTimeOffset.UtcNow; var conversation = new Conversation { Id = Guid.NewGuid(), Title = "Synthetic approval", CreatedAtUtc = now, UpdatedAtUtc = now };

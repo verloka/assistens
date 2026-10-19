@@ -17,6 +17,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<ModelProfileRow> ModelProfiles => Set<ModelProfileRow>();
     public DbSet<McpConnectionRow> McpConnections => Set<McpConnectionRow>();
     public DbSet<ApprovalRequestRow> ApprovalRequests => Set<ApprovalRequestRow>();
+    public DbSet<ToolCallRow> ToolCalls => Set<ToolCallRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -29,6 +30,20 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         connections.HasKey(row => row.Id);
         connections.Property(row => row.ProfileJson).IsRequired();
         var utcTicks = new ValueConverter<DateTimeOffset, long>(value => value.UtcTicks, ticks => new DateTimeOffset(ticks, TimeSpan.Zero));
+        var calls = model.Entity<ToolCallRow>();
+        calls.ToTable("ToolCalls", table =>
+        {
+            table.HasCheckConstraint("CK_ToolCalls_SchemaVersion", "PayloadSchemaVersion > 0");
+            table.HasCheckConstraint("CK_ToolCalls_Status", "Status IN ('Dispatched','Acknowledged','OutcomeUnknown')");
+        });
+        calls.HasKey(row => row.Id);
+        calls.HasOne<TaskRunRow>().WithMany().HasForeignKey(row => row.RunId).OnDelete(DeleteBehavior.Restrict);
+        calls.HasOne<ApprovalRequestRow>().WithMany().HasForeignKey(row => row.ApprovalRequestId).OnDelete(DeleteBehavior.Restrict);
+        calls.HasIndex(row => new { row.RunId, row.ToolCallId }).IsUnique();
+        calls.HasIndex(row => row.ApprovalRequestId).IsUnique();
+        calls.Property(row => row.Status).HasConversion<string>();
+        calls.Property(row => row.DispatchedAtUtc).HasConversion(utcTicks);
+        calls.Property(row => row.FinishedAtUtc).HasConversion(utcTicks);
         var approvals = model.Entity<ApprovalRequestRow>();
         approvals.ToTable("ApprovalRequests", table =>
         {

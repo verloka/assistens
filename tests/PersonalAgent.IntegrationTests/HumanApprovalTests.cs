@@ -41,6 +41,8 @@ public sealed class HumanApprovalTests
         Assert.Equal(approve ? null : "ToolPermissionDenied", stored.Result!.ErrorCode);
         Assert.Single(stored.Events, value => value.EventType == RunEventType.ApprovalRequested);
         Assert.Equal(approve ? 2 : 1, fixture.Client.CallCount);
+        if (approve) Assert.Equal(ToolCallDispatchStatus.Acknowledged, Assert.Single(await fixture.ToolCalls.ListAsync(fixture.RunId)).Status);
+        else Assert.Empty(await fixture.ToolCalls.ListAsync(fixture.RunId));
         await Assert.ThrowsAsync<ApprovalConflictException>(() => fixture.Approvals.DecideAsync(Decision(request, true)));
         Assert.Equal(approve ? 1 : 0, fixture.Calls);
     }
@@ -106,6 +108,7 @@ public sealed class HumanApprovalTests
         public readonly DesktopAccessCoordinator Desktop = new(_ => true);
         public readonly TestClock Clock = new();
         public IRunRepository Repository = null!; public IApprovalRepository Approvals = null!;
+        public IToolCallRepository ToolCalls = null!;
         public TaskRunCoordinator Runs = null!; public ScriptedChatClient? Client;
         public Guid RunId; public int Calls; public bool PolicyEnabled = true;
         public bool HoldDispatch;
@@ -116,20 +119,26 @@ public sealed class HumanApprovalTests
         private IAgentTool tool = null!; private McpToolPermission permission = null!;
         private DesktopLease? lease;
 
-        public static async Task<Fixture> Start(bool mcp)
+        public static async Task<Fixture> Start(bool mcp, Func<IToolCallRepository, IToolCallRepository>? decorateLedger = null, bool loseMcpReply = false)
         {
             var fixture = new Fixture();
             await using (var db = fixture.Database.Open()) await db.Database.MigrateAsync();
             fixture.Repository = new SqliteRunRepository(fixture.Database); fixture.Approvals = new SqliteApprovalRepository(fixture.Database, fixture.Clock);
+            fixture.ToolCalls = new SqliteToolCallRepository(fixture.Database, fixture.Clock);
+            if (decorateLedger is not null) fixture.ToolCalls = decorateLedger(fixture.ToolCalls);
             fixture.Runs = new(fixture.Repository, fixture.Desktop);
             fixture.server = McpTestServer.Program.CreateHttpServer(listTools: () => [new Tool { Name = "write_issue", Description = "Synthetic write only",
-                InputSchema = Schema() }], callTool: (_, _) =>
-                { Interlocked.Increment(ref fixture.Calls); return ValueTask.FromResult(new CallToolResult { Content = [new TextContentBlock { Text = "Synthetic write acknowledged" }] }); });
+                InputSchema = Schema() }], callTool: async (_, token) =>
+                {
+                    Interlocked.Increment(ref fixture.Calls);
+                    if (loseMcpReply) await Task.Delay(Timeout.InfiniteTimeSpan, token);
+                    return new CallToolResult { Content = [new TextContentBlock { Text = "Synthetic write acknowledged" }] };
+                });
             await fixture.server.StartAsync();
             var endpoint = new Uri(Assert.Single(fixture.server.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses) + "/mcp");
             fixture.connection = await new McpConnectionFactory([new HttpMcpTransportProvider(new Secrets())]).ConnectAsync(new()
             { Id = Guid.NewGuid(), Name = "Fixture", Enabled = true, Approved = true, Transport = McpTransportKind.StreamableHttp,
-                Http = new(endpoint, AllowLoopbackHttp: true), AllowedTools = ["write_issue"] });
+                Http = new(endpoint, AllowLoopbackHttp: true), AllowedTools = ["write_issue"], RequestTimeout = TimeSpan.FromSeconds(loseMcpReply ? 1 : 10) });
             var declaration = Assert.Single((await new McpToolDiscovery().RefreshAsync(fixture.connection)).Tools);
             fixture.permission = new(fixture.connection.Configuration.Id, declaration.Descriptor.Id, declaration.Version, ToolRiskLevel.Write);
             fixture.tool = mcp ? new McpAgentTool(fixture.connection, declaration, fixture.permission) : new LocalWrite(fixture);
@@ -155,7 +164,7 @@ public sealed class HumanApprovalTests
                 if (++boundaries == 2 && HoldDispatch)
                 { DispatchEntered.TrySetResult(); await DispatchRelease.Task.WaitAsync(token); }
                 await Runs.WaitAtBoundaryAsync(id, step, token);
-            }, (declaration, context, _) => ValueTask.FromResult(Evaluate(declaration, context) != ToolPermissionDecision.Denied), access, human);
+            }, (declaration, context, _) => ValueTask.FromResult(Evaluate(declaration, context) != ToolPermissionDecision.Denied), access, human, ToolCalls);
             Client = new((_, _) => new(new ChatMessage(ChatRole.Assistant, [new FunctionCallContent("sdk-exact-call", descriptor.Id,
                 new Dictionary<string, object?> { ["target"] = "synthetic-target" })])) { FinishReason = ChatFinishReason.ToolCalls },
                 (messages, _) => { Assert.Contains(messages.SelectMany(value => value.Contents).OfType<FunctionResultContent>(), value => value.CallId == "sdk-exact-call");
