@@ -868,14 +868,15 @@
                                        "attempts":  1
                                    },
                         "PA-080":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T12:53:06.3418346+00:00",
+                                       "completed_at":  "2026-10-19T12:59:21.7081791+00:00",
                                        "evidence":  [
-
+                                                        "MainWindow Approvals header and owned nonmodal ShowActivatedFalse ApprovalsWindow; current Windows SID owner from trusted DI, exact action/destination/risk/tool/source/readonly arguments/expiry, explicit review before Approve and immediate Deny. Polling unchanged request preserves review; selection/revision/expiry/close clears it. Stale/foreign decisions atomic refusal; UI pending query excludes invalid run revision. Actual XAML+shared079 Core/MAF/SQLite/local MCP fixture verifies outcomes and responsive dispatcher. FDD005 scoped PASS; all Draft, no live/corporate/native claims.",
+                                                        "Verification: ApprovalsUiTests7passed in final suite; scripts/verify.ps1 locked restore/build0warnings/errors;101unit+555integration+3localfake=659passed; doctor/diff and FDD semantic review passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-081":  {
                                        "status":  "pending",
@@ -1328,6 +1329,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-079",
-    "updated_at":  "2026-10-19T12:53:04.4307700+00:00"
+    "last_task_id":  "PA-080",
+    "updated_at":  "2026-10-19T12:59:21.7191816+00:00"
 }

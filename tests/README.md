@@ -1014,3 +1014,21 @@ after GUI keeps XAML and durable Blocked results consistent, releases the lease
 and does not replay the read. This covers deterministic E2E-02/E2E-05 composition;
 physical idle detection, corporate accounts and notification delivery remain
 separate. Default production model tool exposure remains closed.
+
+### PA-078..080 exact human approvals
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter "FullyQualifiedName~ApprovalRepositoryTests|FullyQualifiedName~HumanApprovalTests|FullyQualifiedName~ApprovalsUiTests|FullyQualifiedName~ApprovalYield"
+```
+
+These cases use real SQLite, Core/MAF, local fixture tools or loopback MCP and
+unshown WPF/XAML. They verify exact payload/owner/revision/expiry decisions,
+one winner under races, no writes before approval, controlled denial, desktop
+release, fresh observation after yield, pause/cancel/revocation and revalidation
+immediately before dispatch. The App's Approvals header opens an owned nonmodal
+screen; current Windows SID supplies owner identity. Full action, destination,
+risk, source, arguments and expiry are visible. Approve requires review, Deny
+does not, and acknowledgement cannot transfer to another selection. Closing or
+refreshing does not make a decision. No real window, corporate account, native
+screen/input or paid model is used by these tests. Crash/dispatch ambiguity is
+the separate PA-081 gate; default production task tool exposure stays closed.

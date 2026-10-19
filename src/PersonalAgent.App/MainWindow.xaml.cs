@@ -18,16 +18,29 @@ public partial class MainWindow : Window
 {
     private ModelProfilesWindow? models;
     private McpConnectionsWindow? mcp;
+    private ApprovalsWindow? approvals;
     private readonly PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections;
-    public MainWindow(PersonalAgent.App.ViewModels.HealthViewModel viewModel, PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections = null)
+    private readonly PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel;
+    public MainWindow(PersonalAgent.App.ViewModels.HealthViewModel viewModel, PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections = null,
+        PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel = null)
     {
         InitializeComponent();
         DataContext = viewModel;
         this.mcpConnections = mcpConnections;
+        this.approvalModel = approvalModel;
     }
 
     private void OpenModelsClicked(object sender, RoutedEventArgs e) => OpenModels();
     private void OpenMcpClicked(object sender, RoutedEventArgs e) => OpenMcpConnections();
+    private void OpenApprovalsClicked(object sender, RoutedEventArgs e) => OpenApprovals();
+    public void OpenApprovals()
+    {
+        if (approvalModel is null) return;
+        if (approvals is not null) { approvals.Activate(); return; }
+        approvals = new ApprovalsWindow(approvalModel) { Owner = this };
+        approvals.Closed += (_, _) => approvals = null;
+        approvals.Show();
+    }
     public void OpenMcpConnections()
     {
         if (mcpConnections is null) return;

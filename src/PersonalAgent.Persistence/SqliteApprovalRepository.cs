@@ -41,7 +41,9 @@ public sealed class SqliteApprovalRepository(IDbContextFactory<AgentDbContext> f
     {
         owner.Validate(); await using var db = await factory.CreateDbContextAsync(ct); await ExpireAsync(db, ct);
         var rows = await db.ApprovalRequests.AsNoTracking().Where(row => row.OwnerSource == owner.Source && row.OwnerId == owner.UserId
-            && row.Status == ApprovalStatus.Pending).OrderBy(row => row.CreatedAtUtc).ToArrayAsync(ct);
+            && row.Status == ApprovalStatus.Pending
+            && db.TaskRuns.Any(run => run.Id == row.RunId && run.RunVersion == row.RunVersion && run.Status == RunStatus.WaitingForApproval))
+            .OrderBy(row => row.CreatedAtUtc).ToArrayAsync(ct);
         return rows.Select(Read).ToArray();
     }
 

@@ -10,6 +10,7 @@ using PersonalAgent.Core.Security;
 using PersonalAgent.Persistence;
 using PersonalAgent.Mcp;
 using System.IO;
+using System.Security.Principal;
 
 namespace PersonalAgent.App;
 
@@ -28,6 +29,12 @@ public static class AppHost
             services.AddSingleton<DashboardViewModel>();
             services.AddSingleton<ModelProfilesViewModel>();
             services.AddSingleton<McpConnectionsViewModel>();
+            services.AddSingleton<ApprovalsViewModel>();
+            services.AddSingleton(_ =>
+            {
+                using var identity = WindowsIdentity.GetCurrent();
+                return new ApprovalOwner("desktop", identity.User?.Value ?? throw new InvalidOperationException("The local owner identity is unavailable."));
+            });
             services.AddSingleton<McpConnectionFactory>();
             services.AddSingleton<IMcpTransportProvider, StdioMcpTransportProvider>();
             services.AddSingleton<IMcpTransportProvider, HttpMcpTransportProvider>();

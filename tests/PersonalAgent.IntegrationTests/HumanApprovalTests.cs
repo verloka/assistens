@@ -99,7 +99,7 @@ public sealed class HumanApprovalTests
     private static async Task Until(Func<bool> condition)
     { using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10)); while (!condition()) await Task.Delay(20, timeout.Token); }
 
-    private sealed class Fixture : IAsyncDisposable
+    internal sealed class Fixture : IAsyncDisposable
     {
         public static readonly ApprovalOwner Owner = new("desktop", "synthetic-owner");
         public readonly TemporaryAgentDatabase Database = new();
@@ -184,7 +184,7 @@ public sealed class HumanApprovalTests
         private static JsonElement Schema() => JsonSerializer.SerializeToElement(new { type = "object", properties = new { target = new { type = "string", @const = "synthetic-target" } },
             required = new[] { "target" }, additionalProperties = false });
     }
-    private sealed class TestClock : TimeProvider { public DateTimeOffset Now = DateTimeOffset.UtcNow; public override DateTimeOffset GetUtcNow() => Now; }
+    internal sealed class TestClock : TimeProvider { public DateTimeOffset Now = DateTimeOffset.UtcNow; public override DateTimeOffset GetUtcNow() => Now; }
     private sealed class Secrets : ISecretStore
     {
         public ValueTask<string> StoreAsync(string secret, CancellationToken ct = default) => throw new NotSupportedException();

@@ -18,6 +18,7 @@
         <DockPanel>
             <Button x:Name="ModelsButton" DockPanel.Dock="Right" Content="Models" Click="OpenModelsClicked" Padding="12,5" />
             <Button x:Name="McpConnectionsButton" DockPanel.Dock="Right" Content="MCP" Click="OpenMcpClicked" Padding="12,5" Margin="0,0,8,0" />
+            <Button x:Name="ApprovalsButton" DockPanel.Dock="Right" Content="Approvals" Click="OpenApprovalsClicked" Padding="12,5" Margin="0,0,8,0" />
             <TextBlock Text="Personal Agent" FontSize="26" FontWeight="SemiBold" />
         </DockPanel>
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,16">
