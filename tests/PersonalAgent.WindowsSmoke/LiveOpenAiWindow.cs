@@ -150,7 +150,7 @@ internal sealed class LiveOpenAiWindow : Window
         var run = runs.GetRun(id);
         cancel.IsEnabled = !TaskRunStateMachine.IsTerminal(run.Status);
         resume.IsEnabled = canResume && takeover!.Handoff.Confirmed;
-        if (takeover!.Handoff.Confirmed && run.Status is RunStatus.Paused or RunStatus.PausedForUser) paused.TrySetResult();
+        if (AttendedPause.Acknowledged(run, takeover!.Handoff.Confirmed)) paused.TrySetResult();
         if (!reported && run.Status is RunStatus.Blocked or RunStatus.Failed or RunStatus.Cancelled)
         {
             reported = true; consent = false;
@@ -220,8 +220,11 @@ internal sealed class LiveOpenAiWindow : Window
             await Task.Delay(350, ct);
             window.pauseVerified = window.takeover.Handoff.Confirmed && beforeCalls == window.modelCalls && beforeCaptures == window.captures && window.nativeInputs == 0;
             if (!window.pauseVerified) return new() { Status = ToolResultStatus.Blocked, ErrorCode = "LivePauseUnconfirmed", Text = "Attended pause was not confirmed." };
-            await window.Dispatcher.InvokeAsync(() => { window.canResume = true; window.Write("PA059 PAUSE OK; API/capture counts stable, nativeInput=0. Click RESUME for a new title and fresh image."); });
-            await window.runs!.WaitAtBoundaryAsync(context.RunId, new RunStepAccess(true, true, false), ct);
+            await AttendedPause.WaitForResumeAsync(window.runs!, context.RunId, () => window.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                window.canResume = true;
+                window.Write("PA059 PAUSE OK; API/capture counts stable, nativeInput=0. Click RESUME for a new title and fresh image.");
+            })), ct);
             selected = new(JsonSerializer.SerializeToElement(new { area = "Monitor", monitorId = capture.OwnMonitor().Id }));
             return await inner.ExecuteAsync(selected, context, ct); // Fresh read only; the held pre-pause image is discarded.
         }

@@ -18,6 +18,7 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <Compile Include="../TestDoubles/*.cs" Link="TestDoubles/%(Filename)%(Extension)" />
+    <Compile Include="../PersonalAgent.WindowsSmoke/AttendedPause.cs" Link="Fixture/AttendedPause.cs" />
   </ItemGroup>
 
   <ItemGroup>

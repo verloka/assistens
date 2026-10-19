@@ -966,5 +966,15 @@ an explicit attended hold inside that read-only tool so the hotkey has a
 repeatable test point. This is not evidence of arbitrary GUI input automation,
 fully automatic model pause recovery or corporate workflows. Synthetic history
 is kept in the temporary directory printed by the window; no image files or
-keys are written. Cancel/close stops the run without retries. Before an attended
-`LIVE OK` result, PA-059 and full E2E-01 remain unverified.
+keys are written. Cancel/close stops the run without retries.
+
+Attended acceptance passed on 2026-10-19. The owner returned LIVE OK with
+modelCalls=2, captures=2, generation=1->2, hotkeyPause=True,
+freshAfterResume=True, durableHistory=True, nativeInput=0. The reopened actual
+SQLite run E7ADDF79-827F-4C2C-8993-DE169FCFA985 is Completed/version19,
+with pause/resume, correlated ToolRequested/ToolExecuted and final result.
+Provider-reported usage is4892input+26output; cost remains unknown. The final
+synthetic title does not appear in request instructions. This completes PA-059's
+live read-only acceptance; full autonomous app opening/input and notification
+business scenarios remain separate. AttendedPauseTests verifies the fixture's
+Pausing-state handoff and explicit boundary/resume, using no native/API calls.

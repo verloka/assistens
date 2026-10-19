@@ -639,13 +639,13 @@
                                        "attempts":  1
                                    },
                         "PA-059":  {
-                                       "status":  "blocked",
+                                       "status":  "pending",
                                        "started_at":  "2026-10-19T08:38:48.1431067+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  "OpenAI access and UI capability check confirmed by owner. Implemented and launched gated own-window live fixture --live-openai (PID62060); waiting for owner START, physical Ctrl+Shift+F10, Resume and actual PA059 LIVE result. Build599 local regressions passed, no native/live acceptance claimed before returned evidence. Continue independent072.",
+                                       "note":  "Owner returned actual LIVE OK; reopened synthetic SQLite confirms Completed/version19, pause/resume/tool events/final title and actual usage.",
                                        "attempts":  2
                                    },
                         "PA-060":  {
@@ -780,14 +780,14 @@
                                        "attempts":  1
                                    },
                         "PA-072":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "in_progress",
+                                       "started_at":  "2026-10-19T08:47:06.9139478+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Work started",
+                                       "attempts":  1
                                    },
                         "PA-073":  {
                                        "status":  "pending",
@@ -1320,6 +1320,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-059",
-    "updated_at":  "2026-10-19T08:46:58.1367473+00:00"
+    "last_task_id":  "PA-072",
+    "updated_at":  "2026-10-19T12:08:27.0242780+00:00"
 }
