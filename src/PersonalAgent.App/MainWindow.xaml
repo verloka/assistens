@@ -15,7 +15,10 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <TextBlock Text="Personal Agent" FontSize="26" FontWeight="SemiBold" />
+        <DockPanel>
+            <Button x:Name="ModelsButton" DockPanel.Dock="Right" Content="Models" Click="OpenModelsClicked" Padding="12,5" />
+            <TextBlock Text="Personal Agent" FontSize="26" FontWeight="SemiBold" />
+        </DockPanel>
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,16">
             <Ellipse Width="12" Height="12" Margin="0,0,8,0">
                 <Ellipse.Style>

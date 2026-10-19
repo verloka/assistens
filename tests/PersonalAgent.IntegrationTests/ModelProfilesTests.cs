@@ -23,8 +23,35 @@ using System.Windows.Threading;
 
 namespace PersonalAgent.IntegrationTests;
 
+[Collection("Desktop UI")]
 public sealed class ModelProfilesTests
 {
+    [Fact]
+    public Task ModelsButtonAndDedicatedEditorRemainAccessibleAtMinimumDashboardSize() => OnWpfThread(async () =>
+    {
+        using var database = new TemporaryAgentDatabase();
+        using var host = Host(database, Path.Combine(Path.GetDirectoryName(database.DatabasePath)!, "secrets"), new Provider("openai"));
+        await host.StartAsync(); var main = host.Services.GetRequiredService<MainWindow>();
+        var profiles = host.Services.GetRequiredService<ModelProfilesViewModel>(); await profiles.Initialization;
+        var editor = new ModelProfilesWindow(profiles);
+        try
+        {
+            main.Measure(new Size(650, 600)); main.Arrange(new Rect(0, 0, 650, 600)); main.UpdateLayout();
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            var models = (Button)main.FindName("ModelsButton");
+            Assert.Equal("Models", models.Content);
+            Assert.InRange(models.TranslatePoint(new Point(0, 0), main).Y, 0, 80);
+            await Bind(editor);
+            var panel = (ModelProfilesControl)editor.FindName("ProfileEditor");
+            Assert.Same(profiles, panel.DataContext);
+            Assert.True(((Expander)panel.FindName("ModelProfileEditor")).IsExpanded);
+            Assert.True(double.IsPositiveInfinity(((ScrollViewer)panel.FindName("ModelProfileScroll")).MaxHeight));
+            Assert.Same(profiles.SaveCommand, ((Button)panel.FindName("SaveModelProfile")).Command);
+            Assert.NotNull(panel.FindName("ModelApiKey"));
+        }
+        finally { editor.Close(); main.Close(); await host.StopAsync(); }
+    });
+
     [Fact]
     public Task ActualProfileUiProtectsKeysUpdatesSelectionAndUsesBothProvidersForFollowingRuns() => OnWpfThread(async () =>
     {

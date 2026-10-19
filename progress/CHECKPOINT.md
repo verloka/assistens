@@ -1,13 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-067 (safe actual stdio child transport).
-- Current task: none. User steering: open model profile screen for OpenAI entry; Claude deferred. Next independent backlog task068.
-- Modified files: StdioMcpTransportProvider; AppHost DI; local MCP fixture; McpStdioTests; FDD004/test README; progress state/log/checkpoint.
-- Verified build/test: McpStdio8passed. scripts/verify.ps1 locked restore/build0warnings/errors;88unit+462integration+3fake-flow=553passed. Diff/doctor passed.
-- Runtime blockers / waiting on user:026/030 multi-monitor hardware;059 live OpenAI GUI acceptance/profile input;065 Claude intentionally deferred by user. User will enter OpenAI on app screen; no credential needed in chat. No paid/live calls initiated.
-- Decisions: direct hidden .exe/argv launch, no cmd wrapper, SDK stream protocol; per-child opaque credential scope, bounded discarded stderr, owned bounded process-tree cleanup. Default App opens no MCP process. Full FDD outcomes Draft/NOT TESTED.
-- Next instruction: launch isolated app copy for OpenAI protected profile entry without locking repo build outputs; continue068 if waiting on user. taskctl next and inspect in_progress before backlog work.
-
-## OpenAI setup steering
-- User chose to enter OpenAI on screen; Claude deferred.
-- Isolated published app running: PID61632, responding window Personal Agent, TEMP/PersonalAgent-OpenAI-Setup-20261019-105650. Default profile/history store; no automatic API/GUI/MCP action.
-- User will save openai-live and report Test saved profile result (no key in chat). PA-059 remains blocked pending actual access/live acceptance; PA-065 deferred. Continue independent068 while waiting.
+- Last completed backlog task: PA-067 at5f67f28. Later PA-062/059 usability follow-up: dedicated Models window and top Models button.
+- Current task: PA-068 in_progress; selected before user-reported profile visibility issue, implementation not yet begun. Resume HTTP MCP while waiting for profile input.
+- Modified files: App ModelsWindow/top button/--models/password-view cleanup; one UI visibility regression and serial collection for six desktop UI classes; FDD001; progress state/log/checkpoint.
+- Verified build/test: ModelProfiles|DesktopShell|HealthScreen15passed. scripts/verify.ps1 locked restore/build0warnings/errors;88unit+463integration+3fake-flow=554passed. Diff/doctor passed. Isolated publish successful; PID61996 responding with visible Personal Agent - Models and Personal Agent windows (own PID titles only).
+- Runtime blockers / waiting on user: OpenAI input/test reply pending; PA-059 remains blocked until actual live GUI/hotkey/history evidence. PA-065 Claude deferred by user.026/030 multi-monitor hardware remain.
+- Decisions: dedicated Models window resolves inaccessible embedded settings, same saved-profile/DPAPI flow, no automatic API call. Launch path TEMP/PersonalAgent-OpenAI-Setup-20261019-110249; current published app uses default profile/history store but does not lock repo build outputs. No user secret/screenshots read. All FDD Draft/full business outcomes NOT TESTED.
+- Next instruction: resume existing068; if user reports OpenAI ready inspect profile metadata only and plan attended059 without exposing key. Do not restart067/duplicate implemented slices.

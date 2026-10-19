@@ -9,6 +9,7 @@ using PersonalAgent.App.ViewModels;
 
 namespace PersonalAgent.IntegrationTests;
 
+[Collection("Desktop UI")]
 public sealed class HealthScreenTests
 {
     [Fact]

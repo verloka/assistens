@@ -3,6 +3,7 @@ using System.Windows.Threading;
 
 namespace PersonalAgent.IntegrationTests;
 
+[Collection("Desktop UI")]
 public sealed class TakeControlHotkeyTests
 {
     [Fact]

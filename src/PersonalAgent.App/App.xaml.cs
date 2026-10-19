@@ -43,6 +43,7 @@ public partial class App : Application
                 host.Services.GetRequiredService<ViewModels.ControlPanelViewModel>(), new WindowsTrayIcon(), () => BeginShutdown());
             _shell.Start();
             MainWindow.Show();
+            if (e.Args.Contains("--models", StringComparer.Ordinal)) ((MainWindow)MainWindow).OpenModels();
         }
         catch (OperationCanceledException) when (_shutdownStarted)
         {

@@ -17,6 +17,7 @@ using System.IO;
 
 namespace PersonalAgent.IntegrationTests;
 
+[Collection("Desktop UI")]
 public sealed class DashboardTests
 {
     [Theory]

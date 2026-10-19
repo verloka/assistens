@@ -6,15 +6,28 @@ namespace PersonalAgent.App;
 
 public partial class ModelProfilesControl : UserControl
 {
+    private ModelProfilesViewModel? subscribed;
     public ModelProfilesControl()
     {
         InitializeComponent();
-        DataContextChanged += (_, change) =>
+        DataContextChanged += (_, _) =>
         {
-            if (change.OldValue is ModelProfilesViewModel old) old.ClearSecretRequested -= ClearPassword;
+            Unsubscribe();
             ModelApiKey.Clear();
-            if (change.NewValue is ModelProfilesViewModel current) current.ClearSecretRequested += ClearPassword;
+            Subscribe();
         };
+        Loaded += (_, _) => Subscribe();
+        Unloaded += (_, _) => { ModelApiKey.Clear(); Unsubscribe(); };
+    }
+    private void Subscribe()
+    {
+        if (subscribed is not null || DataContext is not ModelProfilesViewModel current) return;
+        subscribed = current; current.ClearSecretRequested += ClearPassword;
+    }
+    private void Unsubscribe()
+    {
+        if (subscribed is not null) subscribed.ClearSecretRequested -= ClearPassword;
+        subscribed = null;
     }
     private void PasswordChanged(object sender, RoutedEventArgs e)
     {

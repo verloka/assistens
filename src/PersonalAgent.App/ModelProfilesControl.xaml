@@ -6,8 +6,8 @@
         <ComboBox x:Name="ModelProfileSelector" ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}"
                   DisplayMemberPath="Label" IsEnabled="{Binding CanEdit}" Margin="0,4,0,4" />
         <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
-        <Expander Header="Create or edit model profile" Margin="0,4,0,8">
-            <ScrollViewer MaxHeight="230" VerticalScrollBarVisibility="Auto">
+        <Expander x:Name="ModelProfileEditor" Header="Create or edit model profile" Margin="0,4,0,8">
+            <ScrollViewer x:Name="ModelProfileScroll" MaxHeight="230" VerticalScrollBarVisibility="Auto">
             <StackPanel IsEnabled="{Binding CanEdit}">
                 <TextBlock Text="Profile ID" /><TextBox x:Name="ModelProfileId" Text="{Binding ProfileId, UpdateSourceTrigger=PropertyChanged}" />
                 <TextBlock Text="Provider" /><ComboBox x:Name="ModelProviderSelector" ItemsSource="{Binding ProviderIds}" SelectedItem="{Binding ProviderId}" />
