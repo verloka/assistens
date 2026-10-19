@@ -33,6 +33,10 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             throw new ArgumentException("The profile snapshot must match the selected cloud profile.");
         (command.Limits ?? new()).Validate();
         if (command.ConversationId == Guid.Empty) throw new ArgumentException("Conversation ID cannot be empty.");
+        if (command.TaskDefinitionId == Guid.Empty) throw new ArgumentException("Task definition ID cannot be empty.");
+        if (command.ScheduleClaim is { } claim && (command.TaskDefinitionId is null || claim.ExpectedVersion < 0
+            || command.ExternalKey != ScheduleOccurrenceIdentity.Create(claim.ScheduleId, claim.OccurrenceUtc)))
+            throw new ArgumentException("Scheduled admission must match the exact task and occurrence trigger.");
         if (command.ExternalKey is { } external)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(external.Source);
@@ -58,7 +62,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             var now = DateTimeOffset.UtcNow;
             var run = new TaskRun
             {
-                Id = Guid.NewGuid(), ConversationId = command.ConversationId ?? Guid.NewGuid(), Origin = command.Origin,
+                Id = Guid.NewGuid(), TaskDefinitionId = command.TaskDefinitionId, ConversationId = command.ConversationId ?? Guid.NewGuid(), Origin = command.Origin,
                 Instructions = command.Instructions, ModelProfileId = command.ModelProfileId, CreatedAtUtc = now
             };
             var request = new AgentRequest
@@ -450,6 +454,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         try { await Task.Run(persist, ct).ConfigureAwait(false); }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (RunSubmissionConflictException) { throw; }
+        catch (ScheduleSubmissionConflictException) { throw; }
         catch (Exception exception) { throw new RunPersistenceException(exception); }
     }
     private TaskRun? FindReceipt(Guid id, string fingerprint)
@@ -499,8 +504,9 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         });
         // Preserve the exact legacy hash when no profile snapshot was provided.
         if (command.Profile is not null) intent += "\nProfile:" + JsonSerializer.Serialize(command.Profile);
+        if (command.TaskDefinitionId is { } definitionId) intent += "\nTaskDefinitionId:" + definitionId.ToString("D");
         return new RunSubmissionIdentity(command.ExternalKey is null ? "command" : "external/" + command.ExternalKey.Source,
-            command.ExternalKey?.Value ?? command.CommandId.ToString("D"), Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(intent))));
+            command.ExternalKey?.Value ?? command.CommandId.ToString("D"), Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(intent))), command.ScheduleClaim);
     }
     private static TaskCompletionSource Signal() => new(TaskCreationOptions.RunContinuationsAsynchronously);
     private static void Move(Change change, RunStatus status, string message, PauseScope? scope = null)

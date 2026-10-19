@@ -923,14 +923,15 @@
                                        "attempts":  1
                                    },
                         "PA-085":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T13:31:45.7166834+00:00",
+                                       "completed_at":  "2026-10-19T13:41:01.9529676+00:00",
                                        "evidence":  [
-
+                                                        "ScheduleDispatcher/hosted SchedulerService after exclusive history recovery; reuse unique external ScheduleId/UTC tick keys and atomic run/conversation/events creation. Optional TaskDefinitionId/ScheduleClaim preserve legacy null serialization/hash; admission transaction checks enabled schedule/version/slot/task inputs. Advance requires matching committed run+version CAS; lost advance/restart finds existing Run without resubmit. Active run holds later slots; overdue default coalesces once, no GUI/tool grants. FDD003 S3 controlled PASS; explicit DST/misfire086/UI087 separate, all Draft.",
+                                                        "Verification: SchedulerTests6passed:8competing ticks/1Run/1execution, UTC-offset identity, coalescing, disable/edit admission race, overlap, no advance without Run, actual host lost-advance2restarts/0reexecution. scripts/verify.ps1 locked restore/build0warnings/errors;116unit+597integration+3localfake=716passed. Doctor/diff/FDD semantic review passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-086":  {
                                        "status":  "pending",
@@ -1333,6 +1334,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-084",
-    "updated_at":  "2026-10-19T13:31:43.7069309+00:00"
+    "last_task_id":  "PA-085",
+    "updated_at":  "2026-10-19T13:41:01.9639912+00:00"
 }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Domain;
+using PersonalAgent.Core.Application;
 using PersonalAgent.Core.Persistence;
 using PersonalAgent.Persistence.Entities;
 using System.Text.Json;
@@ -29,6 +30,17 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
         request.Limits.Validate();
         ValidateEvents(run.Id, initialEvents, 0);
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        await using var admission = identity?.Schedule is not null ? await db.Database.BeginTransactionAsync(cancellationToken) : null;
+        if (identity?.Schedule is { } claim)
+        {
+            var trigger = ScheduleOccurrenceIdentity.Create(claim.ScheduleId, claim.OccurrenceUtc);
+            if (identity.Source != ScheduleOccurrenceIdentity.PersistedSource || identity.Key != trigger.Value
+                || !await db.Schedules.AnyAsync(schedule => schedule.Id == claim.ScheduleId && schedule.Enabled && schedule.PayloadSchemaVersion == 1
+                    && schedule.Version == claim.ExpectedVersion && schedule.NextRunAtUtc == claim.OccurrenceUtc && schedule.TaskDefinitionId == run.TaskDefinitionId
+                    && db.TaskDefinitions.Any(task => task.Id == schedule.TaskDefinitionId && task.Enabled
+                        && task.Instructions == run.Instructions && task.ModelProfileId == run.ModelProfileId), cancellationToken))
+                throw new ScheduleSubmissionConflictException();
+        }
         if (!await db.Conversations.AnyAsync(row => row.Id == conversation.Id, cancellationToken))
             db.Conversations.Add(new ConversationRow
             {
@@ -45,6 +57,7 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
         db.TaskRuns.Add(row);
         db.RunEvents.AddRange(initialEvents.Select(ToRow));
         await db.SaveChangesAsync(cancellationToken);
+        if (admission is not null) await admission.CommitAsync(cancellationToken);
     }
 
     public async Task<StoredRun> GetOrCreateAsync(TaskRun run, Conversation conversation, AgentRequest request,

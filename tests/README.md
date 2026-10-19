@@ -1063,3 +1063,19 @@ after consent. It introduces no production locator/semantic GUI tool and never
 reads or controls the real desktop. Existing generic coordinate-tool stale-frame
 refusal remains covered separately. This is account-free E2E-07 evidence; live
 Teams/corporate acceptance remains a separate release gate.
+
+### PA-084..085 schedule data and occurrence deduplication
+
+```powershell
+dotnet test --no-restore --filter "FullyQualifiedName~Schedule"
+```
+
+Strict four-mode recurrence data and real SQLite tests cover UTC/timezone,
+validation, versioned edits and cadence anchors. SchedulerTests uses actual Core
+queue/persistence and hosted App restart with a controlled clock/local runtime:
+eight ticks create one Run, missed intervals coalesce, active runs do not overlap,
+disable/edit wins before admission, and a committed run survives a lost schedule
+advance without another execution on restart. The existing unique external-key
+store supplies occurrence identity; no extra occurrence subsystem is added.
+No GUI lease/tool grant comes from scheduling. Explicit DST/misfire and
+editor/countdown/idle acceptance are subsequent tasks.

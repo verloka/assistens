@@ -53,6 +53,36 @@ public sealed class SqliteScheduleRepository(IDbContextFactory<AgentDbContext> f
             orderby schedule.CreatedAtUtc, schedule.Id select new { Schedule = schedule, Task = task }).ToArrayAsync(ct);
         return rows.Select(value => Read(value.Schedule, value.Task)).ToArray();
     }
+    public async Task<Guid?> FindOccurrenceRunAsync(Guid scheduleId, DateTimeOffset occurrenceUtc, CancellationToken ct = default)
+    {
+        var key = ScheduleOccurrenceIdentity.Create(scheduleId, occurrenceUtc);
+        await using var db = await factory.CreateDbContextAsync(ct);
+        return await db.TaskRuns.AsNoTracking().Where(row => row.SubmissionSource == ScheduleOccurrenceIdentity.PersistedSource && row.SubmissionKey == key.Value)
+            .Select(row => (Guid?)row.Id).SingleOrDefaultAsync(ct);
+    }
+    public async Task<bool> HasActiveRunAsync(Guid scheduleId, CancellationToken ct = default)
+    {
+        var prefix = ScheduleOccurrenceIdentity.Prefix(scheduleId); await using var db = await factory.CreateDbContextAsync(ct);
+        return await db.TaskRuns.AnyAsync(row => row.SubmissionSource == ScheduleOccurrenceIdentity.PersistedSource && row.SubmissionKey!.StartsWith(prefix)
+            && row.Status != RunStatus.Completed && row.Status != RunStatus.Failed && row.Status != RunStatus.Cancelled
+            && row.Status != RunStatus.Skipped && row.Status != RunStatus.Interrupted, ct);
+    }
+    public async Task<bool> AdvanceAsync(Guid scheduleId, long expectedVersion, DateTimeOffset occurrenceUtc, DateTimeOffset observedAtUtc, CancellationToken ct = default)
+    {
+        var key = ScheduleOccurrenceIdentity.Create(scheduleId, occurrenceUtc);
+        if (observedAtUtc < occurrenceUtc) throw new ArgumentException("An occurrence cannot advance before it is due.");
+        var scheduled = await GetAsync(scheduleId, ct);
+        if (scheduled is null || !scheduled.Task.Enabled || !scheduled.Schedule.Enabled || scheduled.Schedule.Version != expectedVersion
+            || scheduled.Schedule.NextRunAtUtc != occurrenceUtc) return false;
+        var next = ScheduleCalculator.Next(scheduled.Schedule.Recurrence, scheduled.Schedule.TimeZoneId, scheduled.Schedule.CreatedAtUtc, observedAtUtc);
+        await using var db = await factory.CreateDbContextAsync(ct);
+        var count = await db.Schedules.Where(row => row.Id == scheduleId && row.Version == expectedVersion && row.Enabled && row.NextRunAtUtc == occurrenceUtc
+            && db.TaskDefinitions.Any(task => task.Id == row.TaskDefinitionId && task.Enabled)
+            && db.TaskRuns.Any(run => run.TaskDefinitionId == row.TaskDefinitionId && run.SubmissionSource == ScheduleOccurrenceIdentity.PersistedSource && run.SubmissionKey == key.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(row => row.NextRunAtUtc, next).SetProperty(row => row.Version, row => row.Version + 1)
+                .SetProperty(row => row.UpdatedAtUtc, observedAtUtc.ToUniversalTime()), ct);
+        return count == 1;
+    }
     private static void Validate(ScheduledTask draft)
     {
         if (draft.Task is not { } task || draft.Schedule is not { } schedule || schedule.SchemaVersion != 1 || task.Id == Guid.Empty || schedule.Id == Guid.Empty

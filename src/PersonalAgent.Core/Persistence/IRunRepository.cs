@@ -4,7 +4,9 @@ using PersonalAgent.Core.Domain;
 namespace PersonalAgent.Core.Persistence;
 
 public sealed record StoredRun(TaskRun Run, AgentRequest Request, IReadOnlyList<RunEvent> Events, AgentRunResult? Result);
-public sealed record RunSubmissionIdentity(string Source, string Key, string IntentHash);
+public sealed record ScheduleSubmissionClaim(Guid ScheduleId, long ExpectedVersion, DateTimeOffset OccurrenceUtc);
+public sealed class ScheduleSubmissionConflictException() : InvalidOperationException("The schedule or task changed before this occurrence could be admitted.");
+public sealed record RunSubmissionIdentity(string Source, string Key, string IntentHash, ScheduleSubmissionClaim? Schedule = null);
 public sealed class RunSubmissionConflictException() : InvalidOperationException("Submission key was already used with different execution inputs.");
 
 // A successful update commits the run snapshot and appended events together.
