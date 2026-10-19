@@ -628,14 +628,15 @@
                                        "attempts":  1
                                    },
                         "PA-058":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T07:16:45.0540712+00:00",
+                                       "completed_at":  "2026-10-19T07:20:35.9734692+00:00",
                                        "evidence":  [
-
+                                                        "AgentContractTests: 7 actual MAF/registry/TaskRunner/SQLite cases; sequence and correlated durable progress, malformed second args, tool timeout cancellation, pause resume/cancel; existing ComputerToolTests proves five GUI tools with fake native. FDD-001 scoped S1/S2 regression PASS; dependencies/reverse reviewed, full live/notification flows remain Draft/untested.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter AgentContract --no-restore: 7 passed; scripts/verify.ps1 locked restore/build 0 warnings/errors, 88 unit+395 integration+3 fake-flow=486 passed; dotnet test --filter Agent --no-build: 486 passed; git diff --check passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-059":  {
                                        "status":  "pending",
@@ -1308,6 +1309,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-048",
-    "updated_at":  "2026-10-19T07:14:32.4793398+00:00"
+    "last_task_id":  "PA-058",
+    "updated_at":  "2026-10-19T07:20:35.9854631+00:00"
 }

@@ -39,6 +39,15 @@ and MVP release gate remain unverified until their own backlog tasks are complet
 
 ## MAF runtime adapter (PA-049)
 
+PA-058: `--filter AgentContract` runs seven deterministic contracts through the
+actual MAF runtime, registry, Task Runner and SQLite: correlated sequential calls,
+three malformed second-call variants, cancellation of a timed-out in-flight tool,
+and pause followed by explicit resume or cancellation. Completed earlier reads
+are not repeated; invalid/paused/cancelled work cannot produce a final success.
+Existing ComputerToolTests covers the five GUI-tool sequence with fake native I/O.
+No network, paid model or real desktop action is used; full business scenarios
+including delivery and live-model takeover remain untested.
+
 PA-057: `--filter "StructuredResult|Dashboard|ToolRegistry"` verifies typed
 source/warning aggregation, reported usage even after budget failure, optional
 configured cost estimates, invalid-source refusal and retained action evidence
