@@ -46,6 +46,23 @@ SDK2.2 defaults to a stateless server/discover revision; fresh connections may
 therefore have no session ID. All credentials and servers in these tests are local
 synthetic fixtures; no company/API access is required.
 
+PA-073: run the deterministic MCP suite with:
+
+```powershell
+dotnet test --no-restore --filter Mcp
+```
+
+Existing Config/Stdio/Http/Discovery/Execution/Lifecycle/ConnectionsUi tests cover
+approval/authentication errors, cancellation/timeouts, actual child cleanup,
+bounded reconnect, discovery changes and new-tool denial, plus actual XAML and
+protected configuration. McpMalformedResponseTests adds actual loopback calls
+whose replies are corrupted after the server responds: broken JSON, unknown
+content type and invalid image base64. The pinned SDK/common registry/MAF stop
+without another model call or replay of the unconfirmed operation; raw bodies
+do not enter the public result. No Jira/ADO account, paid model, physical desktop
+input or tenant permission is needed. This is a local contract suite, not live
+corporate or complete hybrid GUI acceptance.
+
 - `PersonalAgent.UnitTests`: module boundary and reference cycle checks.
 - `PersonalAgent.IntegrationTests`: actual Generic Host and SDK loading; host
   probes/fakes (`ProbeService`, `CancellableWorker`, recording logger) cover

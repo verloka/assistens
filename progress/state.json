@@ -792,14 +792,15 @@
                                        "attempts":  2
                                    },
                         "PA-073":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T12:21:12.3562676+00:00",
+                                       "completed_at":  "2026-10-19T12:23:17.5970721+00:00",
                                        "evidence":  [
-
+                                                        "Reused existing actual local MCP config/stdio/HTTP/discovery/execution/lifecycle/UI suites; added McpMalformedResponseTests3 SDK/registry/MAF cases for corrupted JSON/unknown content/image base64 after actual loopback server reply; raw error exclusion, blocked outcome, one model/tool call and no replay; README mapping; no production behavior changes",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter FullyQualifiedName~McpMalformedResponseTests:3passed; dotnet test --no-restore --filter Mcp:72integration passed, Unit/E2E no matches; build clean; previous full production604passed; diff/doctor passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-074":  {
                                        "status":  "pending",
@@ -1322,6 +1323,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-072",
-    "updated_at":  "2026-10-19T12:20:32.8790622+00:00"
+    "last_task_id":  "PA-073",
+    "updated_at":  "2026-10-19T12:23:17.6070728+00:00"
 }
