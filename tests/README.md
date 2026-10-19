@@ -823,7 +823,7 @@ No timing sleeps, randomized stress or desktop side effects are used.
 `dotnet test --filter DesktopAccess --no-restore` includes these unit cases and the
 existing fake-native driver gate suite; no matching physical E2E is implied.
 
-## Attended native takeover/resume (PA-048; NOT TESTED)
+## Attended native takeover/resume (PA-048; passed 2026-10-19)
 
 Run `dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --takeover`.
 Launch alone performs no capture/input or hotkey registration. START explicitly
@@ -850,6 +850,17 @@ For each mode, **20 clicks** and **Unicode text**:
 6. Return PAUSE and RESUME lines for both modes, then close the window.
 
 NO PAUSE means the sequence completed before interruption; START can repeat by
-explicit gesture. BLOCKED/FAILED is not success and no input is retried. Actual
-results remain pending and do not substitute multi-display/locked-session/live
-model acceptance. Original WindowsSmoke without --takeover remains available.
+explicit gesture. BLOCKED/FAILED is not success and no input is retried.
+
+The user returned actual attended results on 2026-10-19 on one monitor:
+
+| Mode | PAUSE OK | RESUME OK |
+| --- | --- | --- |
+| 20 clicks | nativeCalls=3->3; clickEvents=3; chars=0/2750; modifiersReleased=True; validUnicode=True; checkpoint=True | oldDenied=True; foreignFrameDenied=True; generation=1->2; freshCapture=True; freshClick=True; CtrlA=True; modifiersReleased=True |
+| Unicode text | nativeCalls=12->12; clickEvents=0; chars=191/2750; modifiersReleased=True; validUnicode=True; checkpoint=True | oldDenied=True; foreignFrameDenied=True; generation=1->2; freshCapture=True; freshClick=True; CtrlA=True; modifiersReleased=True |
+
+Both modes discarded the unfinished sequence. The real controller, hotkey, input
+and SQLite pause checkpoint satisfy PA-048's attended takeover/resume criterion.
+This does not substitute multi-display/locked-session/live-model acceptance or
+full model-driven FDD-002 S2. Original WindowsSmoke without --takeover remains
+available. Full observed evidence is retained in progress/LOG.md.

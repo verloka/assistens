@@ -518,14 +518,15 @@
                                        "attempts":  1
                                    },
                         "PA-048":  {
-                                       "status":  "blocked",
-                                       "started_at":  "2026-10-18T15:45:51.0340974+00:00",
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T07:14:31.5306299+00:00",
+                                       "completed_at":  "2026-10-19T07:14:32.4683386+00:00",
                                        "evidence":  [
-
+                                                        "tests/PersonalAgent.WindowsSmoke/TakeoverWindow.cs (implementation 6c78968); actual user reports 2026-10-19 in progress/LOG.md and tests/README.md: clicks PAUSE OK calls3-\u003e3 events3/20; Unicode PAUSE OK calls12-\u003e12 chars191/2750 validUnicode=True; both checkpoint/modifiersReleased=True. Both RESUME OK: oldDenied/foreignFrameDenied=True, generation1-\u003e2, freshCapture/freshClick/CtrlA/modifiersReleased=True; unfinished sequences discarded. FDD-002 S1 and controller portion of S2 scoped PASS, reverse FDD-001/003/007 unchanged; full model-driven S2/S3/S4 untested, all flows Draft.",
+                                                        "Verification: dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --takeover: user-attended PAUSE OK + RESUME OK in both modes; dotnet build tests/PersonalAgent.WindowsSmoke --no-restore: 0 warnings/errors; dotnet test tests/PersonalAgent.IntegrationTests --filter SafePause|SafeResume|ComputerResume|TakeControl|DesktopAccess --no-restore: 36 passed; dotnet test tests/PersonalAgent.UnitTests --filter DesktopAccess --no-restore: 23 passed."
                                                     ],
-                                       "note":  "Dedicated --takeover attended fixture is implemented/built; needs actual PA048 PAUSE OK + PA048 RESUME OK for both 20 clicks and Unicode text, showing stable native effects/modifier release/durable checkpoint/fresh generation capture and stale denial. No actual gesture run yet; earlier fake-count PA042 report is insufficient.",
-                                       "attempts":  1
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
                                    },
                         "PA-049":  {
                                        "status":  "done",
@@ -1307,6 +1308,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-057",
-    "updated_at":  "2026-10-18T19:28:39.8291378+00:00"
+    "last_task_id":  "PA-048",
+    "updated_at":  "2026-10-19T07:14:32.4793398+00:00"
 }
