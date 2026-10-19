@@ -27,13 +27,16 @@ public static class Program
         await builder.Build().RunAsync();
     }
 
-    public static WebApplication CreateHttpServer(Func<HttpContext, Task>? observe = null)
+    public static WebApplication CreateHttpServer(Func<HttpContext, Task>? observe = null,
+        Func<IList<ModelContextProtocol.Protocol.Tool>>? listTools = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = [] });
         builder.Configuration["AllowedHosts"] = "127.0.0.1";
         builder.Logging.ClearProviders();
         builder.WebHost.UseUrls("http://127.0.0.1:0");
-        builder.Services.AddMcpServer().WithHttpTransport().WithTools<EchoTool>();
+        var mcp = builder.Services.AddMcpServer().WithHttpTransport();
+        if (listTools is null) mcp.WithTools<EchoTool>();
+        else mcp.WithListToolsHandler((_, _) => ValueTask.FromResult(new ModelContextProtocol.Protocol.ListToolsResult { Tools = listTools() }));
         var app = builder.Build();
         if (observe is not null) app.Use(async (context, next) => { await observe(context); await next(context); });
         app.MapMcp("/mcp");

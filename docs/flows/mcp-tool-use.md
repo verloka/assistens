@@ -35,9 +35,11 @@ Status: Draft
 - Flow: FDD-005 — tool approval.
 
 ## Scenarios
-- S1: Given an MCP server with a newly added write tool, when tools are discovered, then it is denied by default. [untested]
+- S1: Given an MCP server with a newly added write tool, when tools are discovered, then it is denied by default. [test: tests/PersonalAgent.IntegrationTests/McpDiscoveryTests.cs]
 - S2: Given an allowed read tool, when it is called with valid arguments, then the model receives the result. [untested]
 - S3: Given a tool timeout, when the agent handles failure, then the UI and run state remain consistent. [untested]
+
+- PA-069: McpToolDiscovery lists actual SDK declarations, maps self-contained object schemas and connection-scoped stable provider-safe IDs, and detects added/changed/removed tools with canonical metadata fingerprints. Discovery records and server read-only hints grant no permissions: declarations register in the existing ToolRegistry with Unknown risk, and direct execution remains review-required until an owner-approved execution binding exists (PA-070). New tools, metadata and schema changes therefore do not inherit approval. App registers the discovery service without startup network calls. [test: tests/PersonalAgent.IntegrationTests/McpDiscoveryTests.cs] covers live loopback SDK discovery, registry schema/permission denial, new-tool refusal, connection namespace isolation, versions and rejected remote schema references. S1 scoped local-server acceptance passed; S2 execution and S3 run/UI failure handling remain untested. All flows Draft.
 
 ## Implementation References
 - PA-068: HttpMcpTransportProvider creates only approved explicit Streamable HTTP connections. Each owned HttpClient scopes bearer auth to the exact configured HTTPS endpoint (opt-in loopback HTTP for tests), disables redirect/cookie/ambient credentials and SDK stream reconnection, drops raw HTTP error bodies and returns sanitized status codes. McpClientConnection request methods bound/cancel list/call and never replay unknown outcomes; explicit factory reconnect creates a fresh client/discovery or initialize sequence. [test: tests/PersonalAgent.IntegrationTests/McpHttpTests.cs] exercises real loopback list/call/auth/reconnect, actual cancelled/timed-out tool and HTTP status/redirect/credential refusals. SDK2.2 can use stateless server/discover with no session ID. No corporate server/model or complete S1-S3 acceptance; future manager/discovery/permission tasks remain separate and all flows Draft.

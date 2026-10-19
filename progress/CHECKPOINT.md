@@ -1,9 +1,8 @@
 # Agent checkpoint
-- Last completed backlog task: PA-068 (approved Streamable HTTP MCP transport); follow-up PA-051/059/062 capability setup fix verified.
-- Current task: none; next PA-069 not started.
-- Modified files: ModelGenerationSettings; ModelCapabilityProbe; IModelProvider diagnostics; OpenAI/Anthropic result mapping; MafAgentRuntime; model profile VM/XAML; ModelCapabilityTests/AgentLimitsTests/ModelProfilesTests; FDD001; progress log/checkpoint.
-- Verified build/test: targeted49passed. scripts/verify.ps1 locked restore/build0warnings/errors;88unit+477integration+3fake-flow=568passed. Live OpenAI profile with explicit DisableReasoning=true: lookup200, tool probe200/tool_calls, image probe200/tool_calls; Connected=true. Diff/doctor passed.
-- Runtime blockers / waiting on user: user saved gpt-5.6-terra profile; original probe HTTP400, docs require reasoning disabled for Chat Completions tools. Awaiting owner selection/save/test of new flag in refreshed Models window; diagnostic did not modify profile. PA059 full attended GUI run/hotkey/history still unverified;065 Claude deferred;026/030 multi-monitor hardware.
-- Decisions: default profile JSON unchanged; explicit reasoning flag applied identically to probes and runtime, profile output cap respected up to4096. No raw provider errors/credentials displayed; enum-based stage diagnostics only. No actual tool/screen capture in live probes; all flows Draft.
-- Setup app: isolated TEMP/PersonalAgent-OpenAI-Setup-20261019-111553 PID24860 launched --models; protected saved key retained. No app startup API calls.
-- Next instruction: honor incoming setup result; taskctl next/start069 when continuing independent backlog. Never claim PA059 done from capability-only evidence.
+- Last completed backlog task: PA-069 (MCP discovery, schema mapping and version/new-tool detection).
+- Current task: none; next PA-070.
+- Modified files: McpToolDiscovery; AppHost DI; dynamic tool list fixture; McpDiscoveryTests; FDD004 S1; progress state/log/checkpoint.
+- Verified build/test: McpDiscoveryTests5passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+482integration+3fake-flow=573passed. Diff/doctor passed.
+- Runtime blockers / waiting on user: PA059 openai-live gpt-5.6-terra original tool probe400; explicit DisableReasoning=true live lookup/function/image200, Connected=true. UI fix548d566; Models app PID24860 from TEMP/PersonalAgent-OpenAI-Setup-20261019-111553; owner asked select saved profile/tick Disable reasoning/save/test (no key reentry).059 full native-model-run/hotkey/history acceptance still unverified.065 Claude deferred,026/030 multi-monitor hardware.
+- Decisions: discovery is metadata only; every tool Unknown and blocked pending owner classification and execution binding in070, server hints/connection allowlists cannot grant permissions. Existing ToolRegistry schema/policy/boundary reused. All flows Draft; FDD004 S1 local-server PASS, S2/S3 not tested.
+- Next instruction: taskctl next; start070 unless incoming setup result changes priority. Inspect any in_progress/diff first. Do not claim059 complete from capability probes.
