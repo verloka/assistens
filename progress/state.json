@@ -901,14 +901,15 @@
                                        "attempts":  1
                                    },
                         "PA-083":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T13:18:48.7247486+00:00",
+                                       "completed_at":  "2026-10-19T13:22:48.9969703+00:00",
                                        "evidence":  [
-
+                                                        "CommonToolPolicyTests reuses actual Core/MAF/SQLite/owner approval/ToolCalls fixture across loopback MCP and fixture-only semantic GUI reply backed by real WindowsComputerController/fake native. Identical approve/reject/expire/cancel/unknown-risk/race checks: no effect/capture/input before exact owner consent, foreign/modified payload refused, fresh GUI lease/frame only after consent, single acknowledged dispatch and no duplicate racing effects. Generic coordinate stale-frame policy unchanged. FDD005 S1/S3/E2E07 controlled PASS and S2 exact mutation reference verified; all Draft, live corporate/native acceptance separate. No production implementation changes.",
+                                                        "Verification: Required dotnet test --no-restore --filter Policy:10unit+50integrationpassed, E2E no matches; final scripts/verify.ps1 locked restore/build0warnings/errors;103unit+581integration+3localfake=687passed; doctor/diff/FDD semantic review passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-084":  {
                                        "status":  "pending",
@@ -1331,6 +1332,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-082",
-    "updated_at":  "2026-10-19T13:18:46.7630599+00:00"
+    "last_task_id":  "PA-083",
+    "updated_at":  "2026-10-19T13:22:49.0069650+00:00"
 }

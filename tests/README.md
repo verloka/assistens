@@ -1048,3 +1048,18 @@ restarts the actual App host twice, checks unshown history XAML, refuses reuse o
 the call/approval and completes an independent local task. File effect count
 remains exactly one. This is controlled E2E-08 evidence, not live corporate or
 physical GUI acceptance. Startup recovery requires exclusive history ownership.
+
+### PA-083 shared Computer Use / MCP policy matrix
+
+```powershell
+dotnet test --no-restore --filter Policy
+```
+
+CommonToolPolicyTests runs the same exact-owner approval, denial, expiry,
+cancellation, unknown-write classification and approval/cancel race cases for
+loopback MCP and a fixture-only semantic GUI reply tool. The latter uses the real
+WindowsComputerController with fake capture/input natives and a fresh lease/frame
+after consent. It introduces no production locator/semantic GUI tool and never
+reads or controls the real desktop. Existing generic coordinate-tool stale-frame
+refusal remains covered separately. This is account-free E2E-07 evidence; live
+Teams/corporate acceptance remains a separate release gate.

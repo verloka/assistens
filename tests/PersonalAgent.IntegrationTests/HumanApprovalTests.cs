@@ -6,6 +6,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using PersonalAgent.Agent;
+using PersonalAgent.Computer;
 using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Application;
 using PersonalAgent.Core.Computer;
@@ -111,6 +112,8 @@ public sealed class HumanApprovalTests
         public IToolCallRepository ToolCalls = null!;
         public TaskRunCoordinator Runs = null!; public ScriptedChatClient? Client;
         public Guid RunId; public int Calls; public bool PolicyEnabled = true;
+        public ComputerToolTests.Native Native = new();
+        public TaskCompletionSource ExecutionCompleted = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public bool HoldDispatch;
         public TaskCompletionSource DispatchEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public TaskCompletionSource DispatchRelease = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -119,7 +122,8 @@ public sealed class HumanApprovalTests
         private IAgentTool tool = null!; private McpToolPermission permission = null!;
         private DesktopLease? lease;
 
-        public static async Task<Fixture> Start(bool mcp, Func<IToolCallRepository, IToolCallRepository>? decorateLedger = null, bool loseMcpReply = false)
+        public static async Task<Fixture> Start(bool mcp, Func<IToolCallRepository, IToolCallRepository>? decorateLedger = null, bool loseMcpReply = false,
+            bool computer = false, bool unknownRisk = false)
         {
             var fixture = new Fixture();
             await using (var db = fixture.Database.Open()) await db.Database.MigrateAsync();
@@ -141,7 +145,8 @@ public sealed class HumanApprovalTests
                 Http = new(endpoint, AllowLoopbackHttp: true), AllowedTools = ["write_issue"], RequestTimeout = TimeSpan.FromSeconds(loseMcpReply ? 1 : 10) });
             var declaration = Assert.Single((await new McpToolDiscovery().RefreshAsync(fixture.connection)).Tools);
             fixture.permission = new(fixture.connection.Configuration.Id, declaration.Descriptor.Id, declaration.Version, ToolRiskLevel.Write);
-            fixture.tool = mcp ? new McpAgentTool(fixture.connection, declaration, fixture.permission) : new LocalWrite(fixture);
+            fixture.tool = computer ? new ComputerWrite(fixture) : mcp ? new McpAgentTool(fixture.connection, declaration, fixture.permission) : new LocalWrite(fixture);
+            if (unknownRisk) fixture.tool = new Unclassified(fixture.tool);
             var run = await fixture.Runs.SubmitAsync(new(Guid.NewGuid(), "Synthetic approval fixture", new("desktop", Owner.UserId), ModelProfileId: "fixture",
                 AllowedToolIds: [fixture.tool.Descriptor.Id])); fixture.RunId = run.Id;
             fixture.runner = new TaskRunner(fixture.Runs, new Runtime(fixture.Execute)).RunAsync(fixture.stop.Token);
@@ -155,7 +160,7 @@ public sealed class HumanApprovalTests
             var descriptor = tool.Descriptor;
             var policy = new ToolPermissionPolicy(access, [new(descriptor.Id, descriptor.Source, descriptor.RiskLevel, ToolPermissionEffect.Allow, descriptor.Version)],
                 descriptor.Source.Kind == ToolSourceKind.Mcp ? [permission] : []);
-            ToolPermissionDecision Evaluate(ToolDescriptor declaration, ToolExecutionContext context) => PolicyEnabled ? policy.Evaluate(declaration, context) : ToolPermissionDecision.Denied;
+            ToolPermissionDecision Evaluate(ToolDescriptor declaration, ToolExecutionContext context) => PolicyEnabled ? policy.EvaluateScope(declaration, context) : ToolPermissionDecision.Denied;
             var human = new HumanApprovalAuthorizer(Runs, Approvals, Evaluate, Owner, (_, args) => ("Write the synthetic fixture", args.Value.GetProperty("target").GetString()!),
                 Desktop, async token => { if (lease is not null) await Desktop.ReleaseAsync(lease, token); lease = null; }, TimeSpan.FromMinutes(1), Clock);
             var boundaries = 0;
@@ -164,12 +169,13 @@ public sealed class HumanApprovalTests
                 if (++boundaries == 2 && HoldDispatch)
                 { DispatchEntered.TrySetResult(); await DispatchRelease.Task.WaitAsync(token); }
                 await Runs.WaitAtBoundaryAsync(id, step, token);
-            }, (declaration, context, _) => ValueTask.FromResult(Evaluate(declaration, context) != ToolPermissionDecision.Denied), access, human, ToolCalls);
+            }, (declaration, context, _) => ValueTask.FromResult(Evaluate(declaration, context) != ToolPermissionDecision.Denied), access, human, ToolCalls, policy);
             Client = new((_, _) => new(new ChatMessage(ChatRole.Assistant, [new FunctionCallContent("sdk-exact-call", descriptor.Id,
                 new Dictionary<string, object?> { ["target"] = "synthetic-target" })])) { FinishReason = ChatFinishReason.ToolCalls },
                 (messages, _) => { Assert.Contains(messages.SelectMany(value => value.Contents).OfType<FunctionResultContent>(), value => value.CallId == "sdk-exact-call");
                     return new(new ChatMessage(ChatRole.Assistant, "Synthetic approved action complete")) { FinishReason = ChatFinishReason.Stop }; });
-            return await new MafAgentRuntime((_, _) => ValueTask.FromResult<IChatClient>(Client), Runs.WaitAtBoundaryAsync, registry).ExecuteAsync(request, progress, ct);
+            try { return await new MafAgentRuntime((_, _) => ValueTask.FromResult<IChatClient>(Client), Runs.WaitAtBoundaryAsync, registry).ExecuteAsync(request, progress, ct); }
+            finally { if (lease is not null) { await Desktop.ReleaseAsync(lease); lease = null; } ExecutionCompleted.TrySetResult(); }
         }
         public async Task<ApprovalRequest> Pending()
         {
@@ -177,7 +183,11 @@ public sealed class HumanApprovalTests
             while (pending is null) { pending = (await Approvals.ListPendingAsync(Owner, timeout.Token)).SingleOrDefault(); if (pending is null) await Task.Delay(20, timeout.Token); }
             return pending;
         }
-        public Task UntilFinished() => Until(() => Runs.GetRun(RunId).Status is RunStatus.Completed or RunStatus.Blocked or RunStatus.Cancelled);
+        public async Task UntilFinished()
+        {
+            await Until(() => Runs.GetRun(RunId).Status is RunStatus.Completed or RunStatus.Blocked or RunStatus.Cancelled);
+            await ExecutionCompleted.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        }
         public async ValueTask DisposeAsync()
         {
             stop.Cancel(); await runner; Runs.Dispose(); stop.Dispose();
@@ -189,6 +199,29 @@ public sealed class HumanApprovalTests
             public ToolDescriptor Descriptor { get; } = new("fixture_write", "Synthetic local write", Schema(), new(ToolSourceKind.Local, "fixture"), ToolRiskLevel.Write);
             public Task<ToolResult> ExecuteAsync(ToolArguments arguments, ToolExecutionContext context, CancellationToken ct)
             { Interlocked.Increment(ref fixture.Calls); return Task.FromResult(new ToolResult { Status = ToolResultStatus.Success, Text = "Synthetic write acknowledged" }); }
+        }
+        private sealed class ComputerWrite(Fixture fixture) : IAgentTool
+        {
+            public ToolDescriptor Descriptor { get; } = new("fixture_computer_reply", "Write a synthetic reply to the owned fake Teams surface", Schema(),
+                new(ToolSourceKind.Computer, "synthetic-teams"), ToolRiskLevel.Write, RequiresDesktop: true);
+            public async Task<ToolResult> ExecuteAsync(ToolArguments arguments, ToolExecutionContext context, CancellationToken ct)
+            {
+                // Fixture-only semantic operation, not a production UI locator/tool. No native OS I/O.
+                var lease = await fixture.Desktop.AcquireAsync(context.RunId, ct);
+                try
+                {
+                    var controller = new WindowsComputerController(fixture.Desktop, lease, fixture.Native, fixture.Native, fixture.Native.GetMonitors);
+                    var frame = await controller.ScreenshotAsync(new(), ct); controller.ConfirmObservation(frame);
+                    await controller.TypeAsync("synthetic reply", ct); Interlocked.Increment(ref fixture.Calls);
+                    return new() { Status = ToolResultStatus.Success, Text = "Synthetic GUI reply acknowledged" };
+                }
+                finally { await fixture.Desktop.ReleaseAsync(lease); }
+            }
+        }
+        private sealed class Unclassified(IAgentTool inner) : IAgentTool
+        {
+            public ToolDescriptor Descriptor { get; } = inner.Descriptor with { RiskLevel = ToolRiskLevel.Unknown };
+            public Task<ToolResult> ExecuteAsync(ToolArguments arguments, ToolExecutionContext context, CancellationToken ct) => inner.ExecuteAsync(arguments, context, ct);
         }
         private static JsonElement Schema() => JsonSerializer.SerializeToElement(new { type = "object", properties = new { target = new { type = "string", @const = "synthetic-target" } },
             required = new[] { "target" }, additionalProperties = false });
