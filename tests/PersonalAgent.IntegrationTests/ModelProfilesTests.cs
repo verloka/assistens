@@ -20,12 +20,47 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using System.Net;
+using System.Net.Http;
+using System.Text.RegularExpressions;
 
 namespace PersonalAgent.IntegrationTests;
 
 [Collection("Desktop UI")]
 public sealed class ModelProfilesTests
 {
+    [Fact]
+    public Task SavedReasoningCheckboxReachesActualSdkAndUnsavedChangesCannotTriggerPaidProbe() => OnWpfThread(async () =>
+    {
+        using var database = new TemporaryAgentDatabase();
+        var secretDirectory = Path.Combine(Path.GetDirectoryName(database.DatabasePath)!, "secrets");
+        using var http = new HttpClient(new ProfileProbeHttp());
+        using var host = Host(database, secretDirectory, new OpenAiModelProvider(new WindowsDpapiSecretStore(secretDirectory), http));
+        await host.StartAsync(); var window = host.Services.GetRequiredService<MainWindow>();
+        try
+        {
+            await Bind(window);
+            var profiles = host.Services.GetRequiredService<ModelProfilesViewModel>(); await profiles.Initialization;
+            var panel = (ModelProfilesControl)window.FindName("ModelsPanel");
+            await Save(panel, profiles, "sdk-ui", "openai", "opaque-ui-model", "synthetic-ui-sdk-key");
+            var reasoning = (CheckBox)panel.FindName("ModelDisableReasoning");
+            reasoning.IsChecked = true;
+            Assert.True(profiles.HasUnsavedChanges); Assert.False(profiles.TestCommand.CanExecute(null));
+            Assert.Contains("Save and select", profiles.SaveStateMessage);
+            profiles.TestCommand.Execute(null); Assert.Null(profiles.TestCommand.ExecutionTask);
+            profiles.SaveCommand.Execute(null); await profiles.SaveCommand.ExecutionTask!;
+            Assert.False(profiles.HasUnsavedChanges); Assert.True(profiles.TestCommand.CanExecute(null));
+            Assert.Contains("reasoning disabled", profiles.SaveStateMessage);
+            Assert.True((await host.Services.GetRequiredService<IModelProfileRepository>().ListAsync()).Single().GenerationSettings.DisableReasoning);
+            profiles.TestCommand.Execute(null); await profiles.TestCommand.ExecutionTask!;
+            Assert.Equal("Connection and configured capabilities confirmed.", profiles.Message);
+            reasoning.IsChecked = false;
+            Assert.False(profiles.TestCommand.CanExecute(null)); Assert.True(profiles.HasUnsavedChanges);
+            Assert.True(profiles.Selected!.Profile!.GenerationSettings.DisableReasoning);
+        }
+        finally { window.Close(); await host.StopAsync(); }
+    });
+
     [Fact]
     public Task ModelsButtonAndDedicatedEditorRemainAccessibleAtMinimumDashboardSize() => OnWpfThread(async () =>
     {
@@ -148,6 +183,7 @@ public sealed class ModelProfilesTests
             Assert.Contains("Enter an API key", profiles.Message);
             Assert.Equal("openai", Assert.Single(await host.Services.GetRequiredService<IModelProfileRepository>().ListAsync()).ProviderId);
             Assert.Equal(0, anthropic.Opens); Assert.Equal(0, anthropic.Tests);
+            profiles.Selected = profiles.Choices.Single(choice => choice.Profile?.Id == "shared");
             openai.ThrowOnTest = true;
             profiles.TestCommand.Execute(null); await profiles.TestCommand.ExecutionTask!;
             Assert.DoesNotContain("private-provider-secret", profiles.Message);
@@ -346,6 +382,23 @@ public sealed class ModelProfilesTests
         return done.Task.WaitAsync(TimeSpan.FromSeconds(35));
     }
     private sealed class Progress : IProgress<AgentEvent> { public void Report(AgentEvent value) { } }
+    private sealed class ProfileProbeHttp : HttpMessageHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            if (request.Method == HttpMethod.Get)
+                return Json("{\"id\":\"opaque-ui-model\",\"object\":\"model\",\"created\":1,\"owned_by\":\"test\"}");
+            var payload = await request.Content!.ReadAsStringAsync(ct);
+            using var document = JsonDocument.Parse(payload);
+            Assert.Equal("none", document.RootElement.GetProperty("reasoning_effort").GetString());
+            var nonce = Regex.Match(payload, "exactly: ([a-f0-9]{32})").Groups[1].Value;
+            Assert.NotEmpty(nonce);
+            return Json(JsonSerializer.Serialize(new { id = "ui-probe", @object = "chat.completion", created = 1, model = "opaque-ui-model",
+                choices = new[] { new { index = 0, finish_reason = "tool_calls", message = new { role = "assistant", content = (string?)null,
+                    tool_calls = new[] { new { id = "ui-call", type = "function", function = new { name = "capability_probe", arguments = JsonSerializer.Serialize(new { value = nonce }) } } } } } } }));
+        }
+        private static HttpResponseMessage Json(string body) => new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+    }
     private sealed class Provider(string id) : IModelProvider
     {
         public string ProviderId => id;

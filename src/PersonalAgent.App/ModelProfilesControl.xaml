@@ -21,6 +21,7 @@
                 <TextBlock Text="Maximum output tokens" />
                 <TextBox x:Name="ModelOutputTokens" Text="{Binding MaxOutputTokens, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
                 <CheckBox x:Name="ModelDisableReasoning" Content="Disable reasoning (for models that support this setting)" IsChecked="{Binding DisableReasoning}" Margin="0,4" />
+                <TextBlock x:Name="ModelSaveState" Text="{Binding SaveStateMessage}" TextWrapping="Wrap" Margin="0,4" />
                 <WrapPanel Margin="0,8">
                     <Button x:Name="NewModelProfile" Content="New profile" Command="{Binding NewCommand}" Padding="8,4" Margin="0,0,8,0" />
                     <Button x:Name="SaveModelProfile" Content="Save and select" Command="{Binding SaveCommand}" Padding="8,4" Margin="0,0,8,0" />

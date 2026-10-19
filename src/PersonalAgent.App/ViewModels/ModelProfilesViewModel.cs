@@ -32,7 +32,7 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
         ProviderIds = this.providers.Keys.Order(StringComparer.Ordinal).ToArray();
         lifetime = CancellationTokenSource.CreateLinkedTokenSource(host.ApplicationStopping);
         SaveCommand = new AsyncCommand(SaveAsync, () => CanEdit && repository is not null);
-        TestCommand = new AsyncCommand(TestAsync, () => CanEdit && Selected?.Profile is not null);
+        TestCommand = new AsyncCommand(TestAsync, () => CanEdit && Selected?.Profile is not null && !HasUnsavedChanges);
         NewCommand = new AsyncCommand(() => { ResetEditor(); return Task.CompletedTask; }, () => CanEdit && repository is not null);
         Choices.Add(new("Local demo (no API)", null)); selected = Choices[0];
         Initialization = LoadAsync();
@@ -48,13 +48,19 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
     public AsyncCommand NewCommand { get; }
     public bool CanEdit => !busy && !disposed && !lifetime.IsCancellationRequested;
     public string Message => message;
-    public string ProfileId { get => profileId; set { profileId = value; Changed(); } }
-    public string ProviderId { get => providerId; set { providerId = value; Changed(); } }
-    public string ModelId { get => modelId; set { modelId = value; Changed(); } }
-    public bool SupportsImages { get => images; set { images = value; Changed(); } }
-    public bool SupportsToolCalling { get => tools; set { tools = value; Changed(); } }
-    public int MaxOutputTokens { get => outputTokens; set { outputTokens = value; Changed(); } }
-    public bool DisableReasoning { get => disableReasoning; set { disableReasoning = value; Changed(); } }
+    public bool HasUnsavedChanges => Selected?.Profile is not { } p || pendingSecret.Length != 0 || ProfileId.Trim() != p.Id
+        || ProviderId != p.ProviderId || ModelId.Trim() != p.ModelId || SupportsImages != p.Capabilities.SupportsImages
+        || SupportsToolCalling != p.Capabilities.SupportsToolCalling || MaxOutputTokens != (p.GenerationSettings.MaxOutputTokens ?? 4096)
+        || DisableReasoning != p.GenerationSettings.DisableReasoning;
+    public string SaveStateMessage => HasUnsavedChanges ? "Unsaved settings. Click Save and select before testing."
+        : "Saved settings: reasoning " + (Selected!.Profile!.GenerationSettings.DisableReasoning ? "disabled." : "uses the provider default.");
+    public string ProfileId { get => profileId; set { profileId = value; EditorChanged(); } }
+    public string ProviderId { get => providerId; set { providerId = value; EditorChanged(); } }
+    public string ModelId { get => modelId; set { modelId = value; EditorChanged(); } }
+    public bool SupportsImages { get => images; set { images = value; EditorChanged(); } }
+    public bool SupportsToolCalling { get => tools; set { tools = value; EditorChanged(); } }
+    public int MaxOutputTokens { get => outputTokens; set { outputTokens = value; EditorChanged(); } }
+    public bool DisableReasoning { get => disableReasoning; set { disableReasoning = value; EditorChanged(); } }
     public ModelProfileChoice? Selected
     {
         get => selected;
@@ -74,7 +80,7 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
         }
     }
     // Transient password input is never a bindable/persisted profile property.
-    public void SetPendingSecret(string secret) => pendingSecret = secret;
+    public void SetPendingSecret(string secret) { pendingSecret = secret; Refresh(); }
 
     private async Task LoadAsync()
     {
@@ -153,6 +159,11 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
     private void ClearSecret() { pendingSecret = ""; ClearSecretRequested?.Invoke(); }
     private static ModelProfileChoice Choice(ModelProfile profile) => new($"{profile.Id}: {profile.ProviderId} / {profile.ModelId}", profile);
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
-    private void Refresh() { Changed(nameof(CanEdit)); Changed(nameof(Message)); SaveCommand.Refresh(); TestCommand.Refresh(); NewCommand.Refresh(); }
+    private void EditorChanged([CallerMemberName] string? name = null) { Changed(name); Refresh(); }
+    private void Refresh()
+    {
+        Changed(nameof(CanEdit)); Changed(nameof(Message)); Changed(nameof(HasUnsavedChanges)); Changed(nameof(SaveStateMessage));
+        SaveCommand.Refresh(); TestCommand.Refresh(); NewCommand.Refresh();
+    }
     public void Dispose() { if (disposed) return; disposed = true; ClearSecret(); lifetime.Cancel(); lifetime.Dispose(); }
 }
