@@ -20,7 +20,7 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
     private readonly CancellationTokenSource lifetime;
     private ModelProfileChoice? selected;
     private string profileId = "", providerId = "openai", modelId = "", pendingSecret = "";
-    private bool images, tools = true, busy, disposed;
+    private bool images, tools = true, disableReasoning, busy, disposed;
     private int outputTokens = 4096;
     private string message = "Local demo selected. Cloud tasks use the selected provider API.";
 
@@ -54,6 +54,7 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
     public bool SupportsImages { get => images; set { images = value; Changed(); } }
     public bool SupportsToolCalling { get => tools; set { tools = value; Changed(); } }
     public int MaxOutputTokens { get => outputTokens; set { outputTokens = value; Changed(); } }
+    public bool DisableReasoning { get => disableReasoning; set { disableReasoning = value; Changed(); } }
     public ModelProfileChoice? Selected
     {
         get => selected;
@@ -66,6 +67,7 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
                 ProfileId = profile.Id; ProviderId = profile.ProviderId; ModelId = profile.ModelId;
                 SupportsImages = profile.Capabilities.SupportsImages; SupportsToolCalling = profile.Capabilities.SupportsToolCalling;
                 MaxOutputTokens = profile.GenerationSettings.MaxOutputTokens ?? 4096;
+                DisableReasoning = profile.GenerationSettings.DisableReasoning;
             }
             else ResetEditor();
             ClearSecret(); Refresh();
@@ -103,7 +105,7 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
                 Id = id, ProviderId = provider, ModelId = model,
                 SecretRef = string.IsNullOrWhiteSpace(secret) ? existing!.SecretRef : await secrets.StoreAsync(secret, lifetime.Token),
                 Capabilities = new(SupportsImages, SupportsToolCalling),
-                GenerationSettings = new(existing?.ProviderId == provider ? existing.GenerationSettings.Temperature : null, MaxOutputTokens),
+                GenerationSettings = new(existing?.ProviderId == provider ? existing.GenerationSettings.Temperature : null, MaxOutputTokens, DisableReasoning),
                 Pricing = existing?.ProviderId == provider && existing.ModelId == model ? existing.Pricing : null
             };
             await repository!.SaveAsync(snapshot, lifetime.Token);
@@ -126,6 +128,17 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
         {
             var result = await providers[profile.ProviderId].TestConnectionAsync(profile, lifetime.Token);
             message = result.Connected ? "Connection and configured capabilities confirmed." : "Connection test failed: " + (result.ErrorCode ?? "Unavailable") + ".";
+            // Show only application-owned diagnostics, never arbitrary provider text or returned arguments.
+            message += result.Connected ? "" : result.ProbeDiagnostic switch
+            {
+                ModelProbeDiagnostic.ToolsRequestFailed => " Tool request failed. Check model access and generation settings; some models require Disable reasoning for tool calling.",
+                ModelProbeDiagnostic.ImageRequestFailed => " Image request failed. Check image support and generation settings.",
+                ModelProbeDiagnostic.ToolsOutputLimit => " Tool test reached the output limit. Review the output limit or reasoning setting.",
+                ModelProbeDiagnostic.ImageOutputLimit => " Image test reached the output limit. Review the output limit or reasoning setting.",
+                ModelProbeDiagnostic.ToolsResponseInvalid => " The model did not return the required function and arguments.",
+                ModelProbeDiagnostic.ImageResponseInvalid => " The model did not correctly identify the synthetic image.",
+                _ => ""
+            };
         }
         catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { message = "Connection test cancelled: application is stopping."; }
         catch (Exception) { message = "Connection test failed. Check the saved profile and credential."; }
@@ -134,7 +147,7 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
 
     private void ResetEditor()
     {
-        ProfileId = ""; ProviderId = "openai"; ModelId = ""; SupportsImages = false; SupportsToolCalling = true; MaxOutputTokens = 4096;
+        ProfileId = ""; ProviderId = "openai"; ModelId = ""; SupportsImages = false; SupportsToolCalling = true; MaxOutputTokens = 4096; DisableReasoning = false;
         ClearSecret();
     }
     private void ClearSecret() { pendingSecret = ""; ClearSecretRequested?.Invoke(); }

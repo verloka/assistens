@@ -12,26 +12,42 @@ internal static class ModelCapabilityProbe
     {
         if (!profile.Capabilities.SupportsToolCalling) return new();
         var nonce = Guid.NewGuid().ToString("N");
-        await CheckAsync(new(ChatRole.User, "Call capability_probe with value exactly: " + nonce), nonce);
+        await CheckAsync(new(ChatRole.User, "Call capability_probe with value exactly: " + nonce), nonce, false);
         if (profile.Capabilities.SupportsImages)
             await CheckAsync(new(ChatRole.User, [new TextContent("Identify the solid image color (red, green or blue). Call capability_probe with that lowercase color as value."),
-                new DataContent(RedImage, "image/png")]), "red");
+                new DataContent(RedImage, "image/png")]), "red", true);
         return new(profile.Capabilities.SupportsImages, true);
 
-        async Task CheckAsync(ChatMessage message, string expected)
+        async Task CheckAsync(ChatMessage message, string expected, bool image)
         {
             // Declaration only: the provider can return arguments but cannot execute a function.
             var declaration = AIFunctionFactory.Create((string value) => value, "capability_probe").AsDeclarationOnly();
-            var response = await client.GetResponseAsync([message], new()
+            ChatResponse response;
+            try
             {
-                ModelId = profile.ModelId, Tools = [declaration], ToolMode = ChatToolMode.RequireSpecific("capability_probe"), MaxOutputTokens = 128
-            }, ct).ConfigureAwait(false);
+                response = await client.GetResponseAsync([message], new()
+                {
+                    ModelId = profile.ModelId, Tools = [declaration], ToolMode = ChatToolMode.RequireSpecific("capability_probe"),
+                    MaxOutputTokens = Math.Min(profile.GenerationSettings.MaxOutputTokens ?? 1024, 4096),
+                    Reasoning = profile.GenerationSettings.DisableReasoning ? new() { Effort = ReasoningEffort.None } : null
+                }, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception)
+            {
+                throw new ModelProviderException("CapabilityProbeFailed", "The capability request failed; no action was executed or retried.",
+                    image ? ModelProbeDiagnostic.ImageRequestFailed : ModelProbeDiagnostic.ToolsRequestFailed);
+            }
             ct.ThrowIfCancellationRequested();
+            if (response.FinishReason == ChatFinishReason.Length)
+                throw new ModelProviderException("CapabilityProbeFailed", "The capability response reached its output limit.",
+                    image ? ModelProbeDiagnostic.ImageOutputLimit : ModelProbeDiagnostic.ToolsOutputLimit);
             var calls = response.Messages.Where(item => item.Role == ChatRole.Assistant).SelectMany(item => item.Contents).OfType<FunctionCallContent>().ToArray();
             if (response.FinishReason != ChatFinishReason.ToolCalls || calls.Length != 1 || calls[0].Name != "capability_probe"
                 || string.IsNullOrWhiteSpace(calls[0].CallId) || calls[0].Arguments is not { Count: 1 } arguments
                 || !arguments.TryGetValue("value", out var value) || value?.ToString() != expected)
-                throw new ModelProviderException("CapabilityProbeFailed", "The model did not confirm the configured function/image capability; the profile cannot be accepted for that use.");
+                throw new ModelProviderException("CapabilityProbeFailed", "The model did not confirm the configured function/image capability; the profile cannot be accepted for that use.",
+                    image ? ModelProbeDiagnostic.ImageResponseInvalid : ModelProbeDiagnostic.ToolsResponseInvalid);
         }
     }
 }

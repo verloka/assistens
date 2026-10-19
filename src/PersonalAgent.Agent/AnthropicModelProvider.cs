@@ -78,7 +78,7 @@ public sealed partial class AnthropicModelProvider(ISecretStore secrets, HttpCli
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (OperationCanceledException) { return new(false, "ProviderTimedOut", "The model connection test timed out."); }
-        catch (ModelProviderException exception) { return new(false, exception.Code, exception.Message); }
+        catch (ModelProviderException exception) { return new(false, exception.Code, exception.Message, ProbeDiagnostic: exception.ProbeDiagnostic); }
         catch (Exception) { return new(false, "CapabilityProbeFailed", "The configured capability test failed; no action was executed or retried."); }
     }
 

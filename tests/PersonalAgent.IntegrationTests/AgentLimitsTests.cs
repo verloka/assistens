@@ -51,15 +51,17 @@ public sealed class AgentLimitsTests
         using var client = new ScriptedChatClient((_, options) =>
         {
             Assert.Equal(5, options!.MaxOutputTokens); Assert.Equal(0.25f, options.Temperature);
+            Assert.Equal(ReasoningEffort.None, options.Reasoning?.Effort);
             Assert.Equal(AgentPromptPolicy.Instructions, options.Instructions); Assert.Equal(5, options.Tools!.Count);
             return WithUsage(Call("capture", "computer_screenshot", new { }), 1, 1);
         }, (messages, options) =>
         {
             Assert.Equal(4, options!.MaxOutputTokens); Assert.Equal(0.25f, options.Temperature);
+            Assert.Equal(ReasoningEffort.None, options.Reasoning?.Effort);
             Assert.Equal(AgentPromptPolicy.Instructions, options.Instructions); Assert.Equal(5, options.Tools!.Count);
             return WithUsage(Click("blocked", Observation(messages)), 3, 2);
         });
-        var result = await run.Runtime(client, new(0.25f, 5)).ExecuteAsync(run.Request, new Progress(), CancellationToken.None);
+        var result = await run.Runtime(client, new(0.25f, 5, DisableReasoning: true)).ExecuteAsync(run.Request, new Progress(), CancellationToken.None);
         Assert.Equal("TokenLimitExceeded", result.ErrorCode); Assert.Equal(2, client.CallCount);
         Assert.Equal(1, run.Native.Captures); Assert.Empty(run.Native.Inputs);
     }

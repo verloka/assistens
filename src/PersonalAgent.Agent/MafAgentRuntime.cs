@@ -68,6 +68,7 @@ public sealed class MafAgentRuntime(
                 ToolMode = binding?.Functions.Count > 0 ? ChatToolMode.Auto : ChatToolMode.None,
                 AllowMultipleToolCalls = false,
                 Temperature = generationSettings?.Temperature,
+                Reasoning = generationSettings?.DisableReasoning == true ? new() { Effort = ReasoningEffort.None } : null,
                 MaxOutputTokens = OutputLimit(request.Limits.MaxTokens)
             };
             var agent = new ChatClientAgent(client, new ChatClientAgentOptions

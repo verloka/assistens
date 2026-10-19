@@ -71,9 +71,11 @@ public sealed class ModelProfilesTests
                 var panel = (ModelProfilesControl)window.FindName("ModelsPanel");
                 Assert.Same(profiles, panel.DataContext);
                 Assert.Null(profiles.Selected!.Profile);
+                ((CheckBox)panel.FindName("ModelDisableReasoning")).IsChecked = true;
                 await Save(panel, profiles, "work", "openai", "model-one", "synthetic-openai-ui-key");
                 var firstProfile = profiles.Selected!.Profile!;
                 Assert.StartsWith("dpapi:", firstProfile.SecretRef);
+                Assert.True(firstProfile.GenerationSettings.DisableReasoning);
                 Assert.Equal("", ((PasswordBox)panel.FindName("ModelApiKey")).Password);
                 var test = (Button)panel.FindName("TestModelProfile");
                 test.Command.Execute(null); await profiles.TestCommand.ExecutionTask!;
@@ -102,6 +104,7 @@ public sealed class ModelProfilesTests
                 Assert.Equal("claude-fixture", Assert.Single(anthropic.Profiles).ModelId);
                 var stored = await host.Services.GetRequiredService<IRunRepository>().GetAsync(firstRun);
                 Assert.Equal("model-one", stored!.Request.Profile!.ModelId);
+                Assert.True(stored.Request.Profile.GenerationSettings.DisableReasoning);
                 Assert.DoesNotContain("synthetic-openai-ui-key", JsonSerializer.Serialize(stored));
             }
             finally { openai.Release.TrySetResult(); window.Close(); await host.StopAsync(); }
@@ -114,6 +117,8 @@ public sealed class ModelProfilesTests
             Assert.Equal(3, profiles.Choices.Count);
             Assert.Null(profiles.Selected!.Profile); // Restart never opts into paid API use by itself.
             Assert.Equal("model-two", profiles.Choices.Single(c => c.Profile?.Id == "work").Profile!.ModelId);
+            profiles.Selected = profiles.Choices.Single(c => c.Profile?.Id == "work");
+            Assert.True(profiles.DisableReasoning);
             var saved = await reopened.Services.GetRequiredService<IRunRepository>().GetAsync(firstRun);
             Assert.Equal("model-one", saved!.Request.Profile!.ModelId);
             await reopened.StopAsync();
@@ -149,6 +154,11 @@ public sealed class ModelProfilesTests
             Assert.Contains("Connection test failed", profiles.Message);
             Assert.Equal(0, openai.Opens);
             Assert.True(profiles.CanEdit);
+            openai.ThrowOnTest = false;
+            openai.TestResult = new(false, "CapabilityProbeFailed", "private-provider-secret", ProbeDiagnostic: ModelProbeDiagnostic.ToolsRequestFailed);
+            profiles.TestCommand.Execute(null); await profiles.TestCommand.ExecutionTask!;
+            Assert.Contains("Tool request failed", profiles.Message); Assert.Contains("Disable reasoning", profiles.Message);
+            Assert.DoesNotContain("private-provider-secret", profiles.Message);
         }
         finally { window.Close(); await host.StopAsync(); }
     });
@@ -341,6 +351,7 @@ public sealed class ModelProfilesTests
         public string ProviderId => id;
         public int Opens, Tests;
         public bool HoldOpen, ThrowOnTest;
+        public ModelConnectionTest? TestResult;
         public List<ModelProfile> Profiles { get; } = [];
         public List<IReadOnlyList<ChatMessage>> Messages { get; } = [];
         public List<string?> Instructions { get; } = [];
@@ -360,7 +371,7 @@ public sealed class ModelProfilesTests
         {
             Tests++;
             if (ThrowOnTest) throw new InvalidOperationException("private-provider-secret");
-            return Task.FromResult(new ModelConnectionTest(true, null, "Synthetic success", profile.Capabilities));
+            return Task.FromResult(TestResult ?? new ModelConnectionTest(true, null, "Synthetic success", profile.Capabilities));
         }
     }
 }

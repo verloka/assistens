@@ -56,6 +56,23 @@ public sealed class ModelCapabilityTests
     }
 
     [Theory]
+    [InlineData(false, null, 1024)]
+    [InlineData(true, 4096, 4096)]
+    [InlineData(true, 32, 32)]
+    [InlineData(true, 8192, 4096)]
+    public async Task ExplicitReasoningSettingAndBoundedProfileLimitReachTheActualSdk(bool disableReasoning, int? limit, int expectedLimit)
+    {
+        using var handler = new ProbeHttp(); using var http = new HttpClient(handler);
+        var profile = Profile with { Capabilities = new(true, true), GenerationSettings = new(MaxOutputTokens: limit, DisableReasoning: disableReasoning) };
+        var result = await new OpenAiModelProvider(new Secrets(), http).TestConnectionAsync(profile, CancellationToken.None);
+        Assert.True(result.Connected, result.Message); Assert.Equal(2, handler.Probes);
+        Assert.Equal(expectedLimit, handler.OutputLimit); Assert.Equal(disableReasoning ? "none" : null, handler.ReasoningEffort);
+        var legacy = JsonSerializer.Deserialize<ModelGenerationSettings>("{\"Temperature\":null,\"MaxOutputTokens\":4096}")!;
+        Assert.False(legacy.DisableReasoning);
+        Assert.Equal("{\"Temperature\":null,\"MaxOutputTokens\":4096}", JsonSerializer.Serialize(legacy));
+    }
+
+    [Theory]
     [InlineData("text")][InlineData("wrong-name")][InlineData("wrong-arguments")][InlineData("extra-argument")][InlineData("length")][InlineData("http-error")]
     public async Task UnconfirmedCapabilityProbeCannotBecomeSuccessfulOrExposeRawProviderError(string invalid)
     {
@@ -65,6 +82,8 @@ public sealed class ModelCapabilityTests
         Assert.False(result.Connected); Assert.Equal("CapabilityProbeFailed", result.ErrorCode);
         Assert.Null(result.VerifiedCapabilities); Assert.Equal(1, handler.Probes);
         Assert.DoesNotContain("private-probe-error", result.Message);
+        Assert.Equal(invalid switch { "length" => ModelProbeDiagnostic.ToolsOutputLimit, "http-error" => ModelProbeDiagnostic.ToolsRequestFailed,
+            _ => ModelProbeDiagnostic.ToolsResponseInvalid }, result.ProbeDiagnostic);
     }
 
     [Fact]
@@ -75,6 +94,7 @@ public sealed class ModelCapabilityTests
             Profile with { Capabilities = new(true, true) }, CancellationToken.None);
         Assert.False(result.Connected); Assert.Null(result.VerifiedCapabilities);
         Assert.True(handler.SawImage); Assert.Equal(2, handler.Probes);
+        Assert.Equal(ModelProbeDiagnostic.ImageResponseInvalid, result.ProbeDiagnostic);
     }
 
     private static AgentRequest Request() => new() { RunId = Guid.NewGuid(), ConversationId = Guid.NewGuid(), Instructions = "Test", ModelProfileId = Profile.Id };
@@ -96,6 +116,8 @@ public sealed class ModelCapabilityTests
     {
         public int Probes;
         public bool SawImage;
+        public int OutputLimit;
+        public string? ReasoningEffort;
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             if (request.Method == HttpMethod.Get)
@@ -103,6 +125,8 @@ public sealed class ModelCapabilityTests
             Probes++;
             var payload = await request.Content!.ReadAsStringAsync(cancellationToken);
             using var document = JsonDocument.Parse(payload);
+            OutputLimit = document.RootElement.GetProperty("max_completion_tokens").GetInt32();
+            ReasoningEffort = document.RootElement.TryGetProperty("reasoning_effort", out var effort) ? effort.GetString() : null;
             Assert.Equal("capability_probe", document.RootElement.GetProperty("tools")[0].GetProperty("function").GetProperty("name").GetString());
             Assert.Equal("capability_probe", document.RootElement.GetProperty("tool_choice").GetProperty("function").GetProperty("name").GetString());
             var image = payload.Contains("image_url", StringComparison.Ordinal); SawImage |= image;

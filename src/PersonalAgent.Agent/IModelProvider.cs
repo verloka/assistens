@@ -18,8 +18,11 @@ public sealed class ModelConnection(IChatClient client, ModelProfile profile) : 
     public void Dispose() => Client.Dispose();
 }
 
-public sealed record ModelConnectionTest(bool Connected, string? ErrorCode, string Message, ModelCapabilities? VerifiedCapabilities = null);
-public sealed class ModelProviderException(string code, string message) : Exception(message)
+public enum ModelProbeDiagnostic { ToolsRequestFailed, ImageRequestFailed, ToolsOutputLimit, ImageOutputLimit, ToolsResponseInvalid, ImageResponseInvalid }
+public sealed record ModelConnectionTest(bool Connected, string? ErrorCode, string Message, ModelCapabilities? VerifiedCapabilities = null,
+    ModelProbeDiagnostic? ProbeDiagnostic = null);
+public sealed class ModelProviderException(string code, string message, ModelProbeDiagnostic? probeDiagnostic = null) : Exception(message)
 {
     public string Code { get; } = code;
+    public ModelProbeDiagnostic? ProbeDiagnostic { get; } = probeDiagnostic;
 }

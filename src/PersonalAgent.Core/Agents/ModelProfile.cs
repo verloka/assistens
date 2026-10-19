@@ -1,7 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace PersonalAgent.Core.Agents;
 
 public sealed record ModelCapabilities(bool SupportsImages = false, bool SupportsToolCalling = false);
-public sealed record ModelGenerationSettings(float? Temperature = null, int? MaxOutputTokens = null);
+public sealed record ModelGenerationSettings(float? Temperature = null, int? MaxOutputTokens = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool DisableReasoning = false);
 public sealed record ModelPricing(decimal InputPerMillionTokens, decimal OutputPerMillionTokens, string Currency);
 
 // Persist/export only this configuration; never put credential values in it.
