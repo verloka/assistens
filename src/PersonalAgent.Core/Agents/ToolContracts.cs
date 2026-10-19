@@ -5,7 +5,7 @@ namespace PersonalAgent.Core.Agents;
 
 public enum ToolSourceKind { Local, Computer, Mcp }
 public sealed record ToolSource(ToolSourceKind Kind, string Id);
-public enum ToolRiskLevel { Unknown, ReadOnly, Write, Destructive, ExternalDisclosure }
+public enum ToolRiskLevel { Unknown, ReadOnly, Write, Destructive, ExternalDisclosure, Navigation }
 public sealed record ToolDescriptor(string Id, string Description, JsonElement JsonSchema, ToolSource Source,
     ToolRiskLevel RiskLevel, bool RequiresDesktop = false, bool IsReadOnly = false, bool IndependentOfDesktop = false,
     string? ObservationToolId = null);

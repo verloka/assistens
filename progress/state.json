@@ -824,14 +824,15 @@
                                        "attempts":  1
                                    },
                         "PA-076":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T12:32:49.7236883+00:00",
+                                       "completed_at":  "2026-10-19T12:35:55.9254444+00:00",
                                        "evidence":  [
-
+                                                        "Core ToolAccessContext immutable explicit risk categories bound to Run/Conversation; ToolRegistry enforces ceiling after boundary before existing authorizer. Model/tool args cannot elevate; unknown denies. Added Navigation enum without renumbering old values; generic computer input stays Write and screenshot ExternalDisclosure. FDD005 scoped PASS; reverse001/004/003/007/006 preserved, exact-action approvals remain untested Draft.",
+                                                        "Verification: ToolAccessContextTests3+ToolAccessPolicyTests6passed; scripts/verify.ps1 locked restore/build0warnings/errors;91unit+527integration+3localfake=621passed; actual diff and scenario links reviewed; doctor/diff pass."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-077":  {
                                        "status":  "pending",
@@ -1324,6 +1325,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-075",
-    "updated_at":  "2026-10-19T12:32:47.7811415+00:00"
+    "last_task_id":  "PA-076",
+    "updated_at":  "2026-10-19T12:35:55.9344453+00:00"
 }

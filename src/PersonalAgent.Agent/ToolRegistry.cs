@@ -2,6 +2,7 @@ using Json.Schema;
 using Microsoft.Extensions.AI;
 using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Application;
+using PersonalAgent.Core.Security;
 using System.Collections.Frozen;
 using System.Diagnostics;
 using System.Text.Json;
@@ -15,12 +16,15 @@ public sealed partial class ToolRegistry
     private readonly FrozenDictionary<string, Entry> entries;
     private readonly Func<ToolDescriptor, ToolExecutionContext, CancellationToken, ValueTask<bool>> authorize;
     private readonly Func<Guid, RunStepAccess, CancellationToken, Task> boundary;
+    private readonly ToolAccessContext? accessContext;
 
     public ToolRegistry(IEnumerable<IAgentTool> tools,
         Func<Guid, RunStepAccess, CancellationToken, Task> waitAtBoundary,
-        Func<ToolDescriptor, ToolExecutionContext, CancellationToken, ValueTask<bool>>? authorize = null)
+        Func<ToolDescriptor, ToolExecutionContext, CancellationToken, ValueTask<bool>>? authorize = null,
+        ToolAccessContext? accessContext = null)
     {
         boundary = waitAtBoundary;
+        this.accessContext = accessContext;
         this.authorize = authorize ?? ((descriptor, _, _) => ValueTask.FromResult(
             descriptor.Source.Kind == ToolSourceKind.Local && descriptor.RiskLevel == ToolRiskLevel.ReadOnly
             && descriptor.IsReadOnly && !descriptor.RequiresDesktop));
@@ -54,7 +58,7 @@ public sealed partial class ToolRegistry
                 (!allowed.Contains(observationId, StringComparer.Ordinal) || !entries[observationId].Descriptor.IsReadOnly
                  || entries[observationId].Descriptor.ObservationToolId is not null))
                 throw new ModelProviderException("ObservationToolUnavailable", "A tool requires an explicitly allowed read-only observation tool before it can execute.");
-        return new(this, request.RunId, request.ConversationId, allowed.Select(id => entries[id]).ToArray());
+        return new(this, request.RunId, request.ConversationId, allowed.Select(id => entries[id]).ToArray(), accessContext);
     }
 
     public sealed record Invocation(ToolDescriptor Descriptor, ToolResult Result, IReadOnlyList<AIContent> Contents);
@@ -63,6 +67,7 @@ public sealed partial class ToolRegistry
     {
         private readonly ToolRegistry registry;
         private readonly Guid runId, conversationId;
+        private readonly ToolAccessContext? accessContext;
         private readonly FrozenDictionary<string, Entry> allowed;
         private readonly SemaphoreSlim invocation = new(1, 1);
         private readonly HashSet<string> seenCallIds = new(StringComparer.Ordinal);
@@ -70,9 +75,10 @@ public sealed partial class ToolRegistry
         public bool RequiresDesktop => allowed.Values.Any(entry => entry.Descriptor.RequiresDesktop);
         internal bool RequiresObservationAfter(string toolId) => allowed[toolId].Descriptor.ObservationToolId is not null;
 
-        internal BoundTools(ToolRegistry registry, Guid runId, Guid conversationId, Entry[] allowed)
+        internal BoundTools(ToolRegistry registry, Guid runId, Guid conversationId, Entry[] allowed, ToolAccessContext? accessContext)
         {
             this.registry = registry; this.runId = runId; this.conversationId = conversationId;
+            this.accessContext = accessContext;
             this.allowed = allowed.ToFrozenDictionary(entry => entry.Descriptor.Id, StringComparer.Ordinal);
             Functions = Array.AsReadOnly(allowed.Select(entry => (AIFunction)new Function(this, entry.Descriptor)).ToArray());
         }
@@ -143,7 +149,8 @@ public sealed partial class ToolRegistry
             var context = new ToolExecutionContext(runId, conversationId, callId);
             await registry.boundary(runId, new(descriptor.RequiresDesktop, descriptor.IsReadOnly && descriptor.RiskLevel == ToolRiskLevel.ReadOnly, descriptor.IndependentOfDesktop), ct).ConfigureAwait(false);
             ct.ThrowIfCancellationRequested();
-            if (descriptor.RiskLevel == ToolRiskLevel.Unknown || !await registry.authorize(descriptor, context, ct).ConfigureAwait(false))
+            if (descriptor.RiskLevel == ToolRiskLevel.Unknown || accessContext is not null && !accessContext.Allows(descriptor, context)
+                || !await registry.authorize(descriptor, context, ct).ConfigureAwait(false))
                 return Rejected("ToolPermissionDenied", "The tool is not authorized for this run.");
             ct.ThrowIfCancellationRequested();
             var result = await entry.Tool.ExecuteAsync(new(arguments.Clone()), context, ct).ConfigureAwait(false);
