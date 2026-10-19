@@ -2,6 +2,38 @@
   "version": 2,
   "dependencies": {
     "net10.0-windows7.0": {
+      "Google.Protobuf": {
+        "type": "Transitive",
+        "resolved": "3.30.2",
+        "contentHash": "Y2aOVLIt75yeeEWigg9V9YnjsEm53sADtLGq0gLhwaXpk3iu8tYSoauolyhenagA2sWno2TQ2WujI0HQd6s1Vw=="
+      },
+      "Humanizer.Core": {
+        "type": "Transitive",
+        "resolved": "3.0.10",
+        "contentHash": "yZIhtw8sYuvsONzQbZxWpR60tMWYHXoo0DL6nyOqSFiU5POjBTSEyWFpTQtJEZuy+oqiYTXKXY/Mjx7KnqIQFw=="
+      },
+      "Json.More.Net": {
+        "type": "Transitive",
+        "resolved": "3.0.1",
+        "contentHash": "fRctF2J2SILYG6wqP21drmeEODmCVkVQ/b3MndDu2fT1swfySyUgq7ePCk+aENGlDcIm05fyfjh9vcuqDEfv3w=="
+      },
+      "JsonPointer.Net": {
+        "type": "Transitive",
+        "resolved": "7.0.3",
+        "contentHash": "It/10weZ3oA+BGL+Gqyw9M6wsi4Tc16vWwU+u7x6LBwty57Y3aUh7bfcn2VWAzgVTAfGuCPb5KUpsH6IFjR08A==",
+        "dependencies": {
+          "Humanizer.Core": "3.0.10",
+          "Json.More.Net": "3.0.1"
+        }
+      },
+      "Microsoft.Agents.AI.Abstractions": {
+        "type": "Transitive",
+        "resolved": "1.25.0",
+        "contentHash": "HuJ8dlKcippI6ZREvRhcc1h2EkK//EEyjJcZSjKN56aNedjUZrGrgF10i3BoMzo1wFceM1L0y6QbxVsWjgfP2g==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.10.1"
+        }
+      },
       "Microsoft.Data.Sqlite.Core": {
         "type": "Transitive",
         "resolved": "10.0.12",
@@ -48,10 +80,52 @@
           "SQLitePCLRaw.core": "2.1.12"
         }
       },
+      "Microsoft.Extensions.AI.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.10.1",
+        "contentHash": "Kz6ezQfRb9x2TkIWyaXkVAfpvyoAlEDfC59klPrdr2XD5WM4HNw+PREAZ+Fo43GPldtX+E0i1aYzMFQ/zXYMLg=="
+      },
+      "Microsoft.Extensions.AI.Evaluation": {
+        "type": "Transitive",
+        "resolved": "10.10.0",
+        "contentHash": "YXdqOSHl8X1/Vkmuu6QoV330FQ7aiYtNDqIUIiICSDd0HMx0No9D/ZWo0ocOPXd9bk00YQQfyK5HKcgRnRmQbQ==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.10.0"
+        }
+      },
+      "Microsoft.Extensions.Compliance.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.10.0",
+        "contentHash": "Sh3ujDRJpCMNY4x+43ljCROt4qBOoWfsL8l816RPYZS1S+Tw277r5002rbB15Sh6hFcCT8mGYBO7NtpfSYrQ0Q=="
+      },
       "Microsoft.Extensions.DependencyModel": {
         "type": "Transitive",
         "resolved": "10.0.12",
         "contentHash": "rDPQVTxh/zMTDF7wHlRqL/jjZbwjAP6315ydBxj51pZW7qkAwGwjoSiMutxYI91xmOE3ZXjAGHbYRqzyJV7Urw=="
+      },
+      "Microsoft.Extensions.VectorData.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.10.0",
+        "contentHash": "bZdR7QbdLLqmc9xPJIiD5U6H678xyv8eMATjQ0SmH7OZyi+/12G/nFAGCE6DNG22q76YNwkXo+V7GMyUckjjgw==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.10.0"
+        }
+      },
+      "Microsoft.ML.Tokenizers": {
+        "type": "Transitive",
+        "resolved": "2.0.0",
+        "contentHash": "+b8lT4cLLO/sBR2hjvE/qG6qrZG15h7/PBvnIrzTh4xDaAxdHUY6449rC+1pHzQUsBiCHZVbj+VMn+xS0sL7TA==",
+        "dependencies": {
+          "Google.Protobuf": "3.30.2"
+        }
+      },
+      "OpenAI": {
+        "type": "Transitive",
+        "resolved": "2.13.0",
+        "contentHash": "fKgWod3UNE+wPkJuLCiWC7FKh3YSEIHa6QK9gKxCVZ4UYsV9+Gwzg4cEDnvVaIiwc00RTwEuhiOn1Rbk4nLjtw==",
+        "dependencies": {
+          "System.ClientModel": "1.14.0"
+        }
       },
       "SQLitePCLRaw.bundle_e_sqlite3": {
         "type": "Transitive",
@@ -80,6 +154,35 @@
           "SQLitePCLRaw.core": "2.1.12"
         }
       },
+      "System.ClientModel": {
+        "type": "Transitive",
+        "resolved": "1.14.0",
+        "contentHash": "yhIJHDW3Hh5kcvhHv3ww1T8qvya06Nlwo/SR/rke4/fHXtyKiqQV/9b/VDhnVI7QUcMnpfvh4pIEFhNsTDLeKQ==",
+        "dependencies": {
+          "System.Memory.Data": "10.0.3"
+        }
+      },
+      "System.Memory.Data": {
+        "type": "Transitive",
+        "resolved": "10.0.3",
+        "contentHash": "MaGhRfGunmrj/nHjtsi9XkhlYJ/ERGWrbA+BiSKNtGnAjc9XlG5EhAvak6VRcX5LYzPF6pBO8nJ613dTgzabig=="
+      },
+      "System.Numerics.Tensors": {
+        "type": "Transitive",
+        "resolved": "10.0.12",
+        "contentHash": "17brFrnQHV/XMMazXNqFq4GkvzWy8yzDPo5Gb8TT8zJtMFbUqDycOCyPCp9F+eMc4L75kcCKRZqaeBHMwLCL9Q=="
+      },
+      "personalagent.agent": {
+        "type": "Project",
+        "dependencies": {
+          "Anthropic": "[12.58.0, )",
+          "JsonSchema.Net": "[9.4.1, )",
+          "Microsoft.Agents.AI": "[1.25.0, )",
+          "Microsoft.Extensions.AI": "[10.10.0, )",
+          "Microsoft.Extensions.AI.OpenAI": "[10.10.0, )",
+          "PersonalAgent.Core": "[1.0.0, )"
+        }
+      },
       "personalagent.computer": {
         "type": "Project",
         "dependencies": {
@@ -96,6 +199,39 @@
           "PersonalAgent.Core": "[1.0.0, )"
         }
       },
+      "Anthropic": {
+        "type": "CentralTransitive",
+        "requested": "[12.58.0, )",
+        "resolved": "12.58.0",
+        "contentHash": "lOI9NaI5cjWDm0HnuM/yVr1/+RtMAjdJyvxUV2/yAiG4iIQRZJhzpeiK4fDigqz4+kWfaRa+40+zU3lR2hY9HQ==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.5.1"
+        }
+      },
+      "JsonSchema.Net": {
+        "type": "CentralTransitive",
+        "requested": "[9.4.1, )",
+        "resolved": "9.4.1",
+        "contentHash": "7Nh0XyIse3a5nsc1nJJTECZVjxqHVE5jANGEPpQc2H+/M7u2sLueL93X6ZUuJLkLYy/pYzFmJhKYEpVIctaUZw==",
+        "dependencies": {
+          "JsonPointer.Net": "7.0.3"
+        }
+      },
+      "Microsoft.Agents.AI": {
+        "type": "CentralTransitive",
+        "requested": "[1.25.0, )",
+        "resolved": "1.25.0",
+        "contentHash": "4tlAYXt8d52vkq9mFb4brThwV+UdRt8mvzW2taNuzg1J3I/GDzzzJekjeRDFWnLiIIfxcTHG6roRDT8Ee3HVqg==",
+        "dependencies": {
+          "Microsoft.Agents.AI.Abstractions": "1.25.0",
+          "Microsoft.Extensions.AI": "10.10.0",
+          "Microsoft.Extensions.AI.Abstractions": "10.10.1",
+          "Microsoft.Extensions.AI.Evaluation": "10.10.0",
+          "Microsoft.Extensions.Compliance.Abstractions": "10.10.0",
+          "Microsoft.Extensions.VectorData.Abstractions": "10.10.0",
+          "Microsoft.ML.Tokenizers": "2.0.0"
+        }
+      },
       "Microsoft.EntityFrameworkCore.Sqlite": {
         "type": "CentralTransitive",
         "requested": "[10.0.12, )",
@@ -106,6 +242,26 @@
           "Microsoft.Extensions.DependencyModel": "10.0.12",
           "SQLitePCLRaw.bundle_e_sqlite3": "2.1.12",
           "SQLitePCLRaw.core": "2.1.12"
+        }
+      },
+      "Microsoft.Extensions.AI": {
+        "type": "CentralTransitive",
+        "requested": "[10.10.0, )",
+        "resolved": "10.10.0",
+        "contentHash": "XKvtDUD3KySkvA5UpS+UF67M5rcqiXjAQchTZZ26WnavVKXxwlUTVdK/Ju0tc/25+16AVUdNl8cnVVGX/tx03A==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.10.0",
+          "System.Numerics.Tensors": "10.0.12"
+        }
+      },
+      "Microsoft.Extensions.AI.OpenAI": {
+        "type": "CentralTransitive",
+        "requested": "[10.10.0, )",
+        "resolved": "10.10.0",
+        "contentHash": "Z5uwqIJ0tGp50P+ark1/qb7wFa6inIRKvaR3L9Frtf7M9uGIil/cz4k9S7va8HMrXzE/xjIJqd6A9cJ7WlMpgg==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.10.0",
+          "OpenAI": "2.13.0"
         }
       }
     }

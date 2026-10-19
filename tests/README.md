@@ -936,3 +936,35 @@ and SQLite pause checkpoint satisfy PA-048's attended takeover/resume criterion.
 This does not substitute multi-display/locked-session/live-model acceptance or
 full model-driven FDD-002 S2. Original WindowsSmoke without --takeover remains
 available. Full observed evidence is retained in progress/LOG.md.
+
+### PA-059 attended live OpenAI read-only acceptance
+
+```powershell
+dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --live-openai
+```
+
+Uses the saved `openai-live` OpenAI profile and DPAPI key from the normal app.
+Opening the fixture performs no API/capture/input/hotkey operation. Close another
+Personal Agent instance using Ctrl+Shift+F10. Keep the whole fixture visible on one
+monitor. START explicitly permits bounded paid requests and native capture of
+this own test window; no mouse/keyboard input is available to the model.
+The shared production GDI helper copies only the visible own-window rectangle
+onto a black monitor canvas. Other desktop pixels are not copied/uploaded.
+
+1. Click START and wait for `PA059 CAPTURED` (a real model requested the tool).
+2. Press and release Ctrl+Shift+F10. Wait for `PA059 PAUSE OK`.
+3. Click RESUME. The window title changes; the held pre-pause image is discarded
+   and a fresh native frame from a new desktop generation is sent to the model.
+4. Return the `PA059 LIVE OK` or failure line without credentials. The check
+   requires the model's answer to match the title found only in image pixels,
+   stable API/capture counts while paused, zero native input and a reopened
+   SQLite history record containing both the final result and pause confirmation.
+
+Only the screenshot tool is registered. All production registry/MAF/provider,
+Core runner/desktop lease/hotkey and SQLite paths are reused. The fixture adds
+an explicit attended hold inside that read-only tool so the hotkey has a
+repeatable test point. This is not evidence of arbitrary GUI input automation,
+fully automatic model pause recovery or corporate workflows. Synthetic history
+is kept in the temporary directory printed by the window; no image files or
+keys are written. Cancel/close stops the run without retries. Before an attended
+`LIVE OK` result, PA-059 and full E2E-01 remain unverified.
