@@ -639,14 +639,14 @@
                                        "attempts":  1
                                    },
                         "PA-059":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-19T07:21:18.1306149+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Live E2E-01 requires user-provided configured OpenAI profile/model and authorized API credit plus attended synthetic-window/hotkey session. App currently deliberately uses FakeAgentRuntime, no live profile selected; PA-048 native takeover and PA-058 deterministic contracts do not establish live model-to-GUI/history acceptance. No credentials assumed or paid call initiated.",
+                                       "attempts":  1
                                    },
                         "PA-060":  {
                                        "status":  "pending",
@@ -1309,6 +1309,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-058",
-    "updated_at":  "2026-10-19T07:20:35.9854631+00:00"
+    "last_task_id":  "PA-059",
+    "updated_at":  "2026-10-19T07:21:18.6611075+00:00"
 }
