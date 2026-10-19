@@ -714,14 +714,15 @@
                                        "attempts":  1
                                    },
                         "PA-066":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T07:45:58.5101326+00:00",
+                                       "completed_at":  "2026-10-19T07:50:32.0214045+00:00",
                                        "evidence":  [
-
+                                                        "Core neutral McpConnectionConfig and scoped secret references; SDK-isolated IMcpTransportProvider/McpConnectionFactory with owner approval/default deny, immutable snapshots, bounded initialization, sanitized failures and idempotent owned cleanup. App registers only factory, concrete transports follow067/068. Two configured IDs connect through test-only provider to actual local MCP server without Core-specific changes. FDD004 scoped connection PASS; full tool/model flows Draft/untested.",
+                                                        "Verification: dotnet test IntegrationTests --filter McpConnectionConfig --no-restore:13passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+454integration+3fake-flow=545passed; diff/doctor passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-067":  {
                                        "status":  "pending",
@@ -1314,6 +1315,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-065",
-    "updated_at":  "2026-10-19T07:45:33.7917121+00:00"
+    "last_task_id":  "PA-066",
+    "updated_at":  "2026-10-19T07:50:32.0313932+00:00"
 }

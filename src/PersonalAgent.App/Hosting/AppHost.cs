@@ -8,6 +8,7 @@ using PersonalAgent.Core.Persistence;
 using PersonalAgent.Core.Computer;
 using PersonalAgent.Core.Security;
 using PersonalAgent.Persistence;
+using PersonalAgent.Mcp;
 using System.IO;
 
 namespace PersonalAgent.App;
@@ -26,6 +27,7 @@ public static class AppHost
             services.AddSingleton<HealthViewModel>();
             services.AddSingleton<DashboardViewModel>();
             services.AddSingleton<ModelProfilesViewModel>();
+            services.AddSingleton<McpConnectionFactory>();
             services.AddSingleton<ControlPanelViewModel>();
             services.AddSingleton<ControlWindow>();
             services.AddSingleton<IDesktopAccessCoordinator>(_ => new DesktopAccessCoordinator());

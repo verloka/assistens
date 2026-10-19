@@ -23,6 +23,13 @@ dotnet test --no-build
 Run a focused group with `dotnet test --filter DesktopHostTests` or
 `dotnet test --filter HealthScreenTests`.
 
+PA-066: `--filter McpConnectionConfig` verifies generic configured connections,
+owner-approval/default denial, immutable settings/allowlists, scoped secret
+references, connection cancellation/timeouts and sanitized failed-handshake
+cleanup. Two IDs use the same factory and actual loopback SDK server through a
+test-only transport provider. Production stdio/HTTP providers follow PA-067/068;
+the App registers the factory without opening a connection or exposing tools.
+
 - `PersonalAgent.UnitTests`: module boundary and reference cycle checks.
 - `PersonalAgent.IntegrationTests`: actual Generic Host and SDK loading; host
   probes/fakes (`ProbeService`, `CancellableWorker`, recording logger) cover

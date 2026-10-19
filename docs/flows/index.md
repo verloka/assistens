@@ -20,7 +20,7 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 
 ## Unmapped Entry Points
 
-- `src/PersonalAgent.App/MainWindow.xaml` includes host diagnostics and the PA-015 local task Dashboard. Its submit/pause/resume/cancel actions map to FDD-001 (with pause semantics referencing FDD-002); the configured runtime is a local fake with no model/computer/MCP/channel calls. No separate diagnostic flow is warranted.
+- `src/PersonalAgent.App/MainWindow.xaml` includes host diagnostics and the task Dashboard. Submit/pause/resume/cancel, ModelsPanel and explicit conversation continuation map to FDD-001 (with pause referencing FDD-002 and neutral follow-up referencing FDD-006). Startup uses the local fake; explicit saved-profile selection routes text tasks to OpenAI/Anthropic. Computer/MCP/channel tools are not exposed through this path. No separate diagnostic flow is warranted.
 - After implementing each milestone, inspect new WPF actions, Telegram commands, scheduled triggers, MCP tools and background workers. Record any entry point not covered by an indexed flow here before closing the task.
 
 ## Coverage Notes
