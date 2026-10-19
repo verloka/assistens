@@ -122,6 +122,21 @@ namespace PersonalAgent.Persistence.Migrations
                     b.ToTable("Conversations", (string)null);
                 });
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.McpConnectionRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProfileJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("McpConnections", (string)null);
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.ModelProfileRow", b =>
                 {
                     b.Property<string>("Id")

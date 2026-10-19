@@ -27,6 +27,7 @@ public static class AppHost
             services.AddSingleton<HealthViewModel>();
             services.AddSingleton<DashboardViewModel>();
             services.AddSingleton<ModelProfilesViewModel>();
+            services.AddSingleton<McpConnectionsViewModel>();
             services.AddSingleton<McpConnectionFactory>();
             services.AddSingleton<IMcpTransportProvider, StdioMcpTransportProvider>();
             services.AddSingleton<IMcpTransportProvider, HttpMcpTransportProvider>();
@@ -58,6 +59,7 @@ public static class AppHost
                 services.AddSingleton<IRunRepository>(provider => new SqliteRunRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IConversationRepository>(provider => new SqliteConversationRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IModelProfileRepository>(provider => new SqliteModelProfileRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddSingleton<IMcpConnectionRepository>(provider => new SqliteMcpConnectionRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddHostedService<RunHistoryService>();
             }
             services.AddHostedService<TaskRunnerService>();

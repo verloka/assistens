@@ -8,6 +8,7 @@ namespace PersonalAgent.Mcp;
 public sealed class McpConnectionFactory(IEnumerable<IMcpTransportProvider> providers)
 {
     private readonly IReadOnlyDictionary<McpTransportKind, IMcpTransportProvider> available = providers.ToDictionary(provider => provider.Transport);
+    public static McpConnectionConfig ValidateConfiguration(McpConnectionConfig configuration) => Snapshot(configuration);
 
     public async Task<McpClientConnection> ConnectAsync(McpConnectionConfig configuration, CancellationToken cancellationToken = default)
     {

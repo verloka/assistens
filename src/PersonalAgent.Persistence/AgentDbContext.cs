@@ -14,6 +14,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<ConversationMessageRow> ConversationMessages => Set<ConversationMessageRow>();
     public DbSet<AgentSessionRow> AgentSessions => Set<AgentSessionRow>();
     public DbSet<ModelProfileRow> ModelProfiles => Set<ModelProfileRow>();
+    public DbSet<McpConnectionRow> McpConnections => Set<McpConnectionRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -21,6 +22,10 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         profiles.ToTable("ModelProfiles");
         profiles.HasKey(row => row.Id);
         profiles.Property(row => row.ProfileJson).IsRequired();
+        var connections = model.Entity<McpConnectionRow>();
+        connections.ToTable("McpConnections");
+        connections.HasKey(row => row.Id);
+        connections.Property(row => row.ProfileJson).IsRequired();
         var utcTicks = new ValueConverter<DateTimeOffset, long>(value => value.UtcTicks, ticks => new DateTimeOffset(ticks, TimeSpan.Zero));
         var conversations = model.Entity<ConversationRow>();
         conversations.ToTable("Conversations");

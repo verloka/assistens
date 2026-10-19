@@ -20,6 +20,8 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 
 ## Unmapped Entry Points
 
+- `src/PersonalAgent.App/McpConnectionsWindow.xaml` is opened by the MainWindow MCP header and maps to FDD-004: persisted owner destination/credential configuration, explicit connect/discovery, tool schema/classification/allowlist review, disconnect/remove. Loading saved settings does not connect. Per-run approval remains FDD-005 and default model task tool integration follows PA-074. Actual XAML/SDK/SQLite/DPAPI evidence: McpConnectionsUiTests; no separate flow needed.
+
 - `src/PersonalAgent.App/MainWindow.xaml` includes host diagnostics and the task Dashboard. Submit/pause/resume/cancel, ModelsPanel and explicit conversation continuation map to FDD-001 (with pause referencing FDD-002 and neutral follow-up referencing FDD-006). Startup uses the local fake; explicit saved-profile selection routes text tasks to OpenAI/Anthropic. Computer/MCP/channel tools are not exposed through this path. No separate diagnostic flow is warranted.
 - After implementing each milestone, inspect new WPF actions, Telegram commands, scheduled triggers, MCP tools and background workers. Record any entry point not covered by an indexed flow here before closing the task.
 

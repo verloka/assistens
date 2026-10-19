@@ -1,0 +1,68 @@
+<Window x:Class="PersonalAgent.App.McpConnectionsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Personal Agent - MCP Connections" Width="900" Height="820" MinWidth="650" MinHeight="550"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="True">
+    <Window.Resources><BooleanToVisibilityConverter x:Key="Visible" /></Window.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+        <StackPanel>
+            <TextBlock Text="MCP Connections" FontSize="22" FontWeight="SemiBold" />
+            <ComboBox x:Name="McpSelector" ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" DisplayMemberPath="Label"
+                      IsEnabled="{Binding CanEdit}" Margin="0,8" />
+            <TextBlock x:Name="McpMessage" Text="{Binding Message}" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding ConnectionStatus}" FontWeight="SemiBold" />
+            <StackPanel IsEnabled="{Binding CanEdit}">
+                <TextBlock Text="Connection name" /><TextBox x:Name="McpName" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Text="Transport" /><ComboBox x:Name="McpTransport" ItemsSource="{Binding Transports}" SelectedItem="{Binding Transport}" />
+                <GroupBox Header="Streamable HTTP" Visibility="{Binding IsHttp, Converter={StaticResource Visible}}" Padding="8" Margin="0,8">
+                    <StackPanel>
+                        <TextBlock Text="Approved server endpoint (HTTPS)" /><TextBox x:Name="McpEndpoint" Text="{Binding Endpoint, UpdateSourceTrigger=PropertyChanged}" />
+                        <CheckBox x:Name="McpLoopback" Content="Allow HTTP only for a server on this computer" IsChecked="{Binding AllowLoopbackHttp}" Margin="0,4" />
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Header="Local stdio process" Visibility="{Binding IsStdio, Converter={StaticResource Visible}}" Padding="8" Margin="0,8">
+                    <StackPanel>
+                        <TextBlock Text="Absolute executable path" /><TextBox x:Name="McpExecutable" Text="{Binding Command, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Text="Arguments as a JSON string array (saved in clear; put secrets below)" />
+                        <TextBox x:Name="McpArguments" Text="{Binding ArgumentsJson, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Text="Working directory (optional)" /><TextBox x:Name="McpWorkingDirectory" Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Text="Environment name for the protected credential" />
+                        <TextBox x:Name="McpEnvironmentName" Text="{Binding CredentialEnvironmentName, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                </GroupBox>
+                <TextBlock Text="Protected credential (HTTP bearer or stdio environment; blank keeps the saved value for the same destination)" TextWrapping="Wrap" />
+                <PasswordBox x:Name="McpCredential" PasswordChanged="CredentialChanged" />
+                <CheckBox x:Name="McpRemoveCredential" Content="Remove saved credential bindings" IsChecked="{Binding RemoveCredential}" Margin="0,4" />
+                <CheckBox x:Name="McpEnabled" Content="Enable this connection" IsChecked="{Binding Enabled}" Margin="0,4" />
+                <CheckBox x:Name="McpApproved" Content="I approve this exact executable/arguments or server URL" IsChecked="{Binding Approved}" Margin="0,4" />
+                <TextBlock Text="{Binding SaveState}" TextWrapping="Wrap" />
+                <WrapPanel Margin="0,8">
+                    <Button x:Name="NewMcp" Content="New" Command="{Binding NewCommand}" Padding="10,5" Margin="0,0,8,0" />
+                    <Button x:Name="SaveMcp" Content="Save settings" Command="{Binding SaveCommand}" Padding="10,5" Margin="0,0,8,0" />
+                    <Button x:Name="TestMcp" Content="Connect and discover (saved)" Command="{Binding ConnectCommand}" Padding="10,5" />
+                </WrapPanel>
+            </StackPanel>
+            <WrapPanel Margin="0,0,0,12">
+                <Button x:Name="DisconnectMcp" Content="Disconnect" Command="{Binding DisconnectCommand}" Padding="10,5" Margin="0,0,8,0" />
+                <Button x:Name="RemoveMcp" Content="Remove connection" Command="{Binding RemoveCommand}" Padding="10,5" />
+            </WrapPanel>
+            <TextBlock Text="Discovered tools — server descriptions and hints are untrusted. Select tools and classify their risk yourself." TextWrapping="Wrap" />
+            <DataGrid x:Name="McpTools" ItemsSource="{Binding Tools}" SelectedItem="{Binding SelectedTool}" AutoGenerateColumns="False" CanUserAddRows="False"
+                      Height="170" IsEnabled="{Binding CanEdit}" Margin="0,8">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Header="Allow" Binding="{Binding Allowed, UpdateSourceTrigger=PropertyChanged}" />
+                    <DataGridTextColumn Header="Tool" Binding="{Binding Name}" IsReadOnly="True" Width="*" />
+                    <DataGridTemplateColumn Header="Owner risk" Width="160">
+                        <DataGridTemplateColumn.CellTemplate><DataTemplate>
+                            <ComboBox ItemsSource="{Binding DataContext.Risks, RelativeSource={RelativeSource AncestorType=Window}}" SelectedItem="{Binding Risk, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate></DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridCheckBoxColumn Header="Independent read" Binding="{Binding IndependentOfDesktop, UpdateSourceTrigger=PropertyChanged}" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Text="{Binding SelectedTool.Description}" TextWrapping="Wrap" />
+            <TextBox x:Name="McpToolSchema" Text="{Binding SelectedTool.Schema, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="110" VerticalScrollBarVisibility="Auto" />
+            <Button x:Name="SaveMcpTools" Content="Save tool selection and reviewed versions" Command="{Binding SaveToolsCommand}" HorizontalAlignment="Left" Padding="10,5" Margin="0,8" />
+        </StackPanel>
+    </ScrollViewer>
+</Window>

@@ -781,13 +781,14 @@
                                        "attempts":  1
                                    },
                         "PA-072":  {
-                                       "status":  "in_progress",
+                                       "status":  "done",
                                        "started_at":  "2026-10-19T12:08:59.9818137+00:00",
-                                       "completed_at":  null,
+                                       "completed_at":  "2026-10-19T12:20:32.8685367+00:00",
                                        "evidence":  [
-
+                                                        "MCP header and actual XAML connection editor; neutral persisted profile/repository/McpConnections migration; protected bearer/stdio references, owner destination approval, saved-only connect/discovery, version-pinned risk/tool selection, disconnect/remove; two actual HTTP servers added by config only and real stdio fixture; startup no network; FDD004 scoped all Draft",
+                                                        "Verification: McpConnectionsUiTests:4passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+513integration+3localfake=604passed; diff/doctor passed"
                                                     ],
-                                       "note":  "Work started",
+                                       "note":  "Acceptance verified",
                                        "attempts":  2
                                    },
                         "PA-073":  {
@@ -1322,5 +1323,5 @@
                                    }
                     },
     "last_task_id":  "PA-072",
-    "updated_at":  "2026-10-19T12:08:59.9948128+00:00"
+    "updated_at":  "2026-10-19T12:20:32.8790622+00:00"
 }

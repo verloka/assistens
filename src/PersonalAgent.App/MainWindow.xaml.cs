@@ -17,13 +17,25 @@ namespace PersonalAgent.App;
 public partial class MainWindow : Window
 {
     private ModelProfilesWindow? models;
-    public MainWindow(PersonalAgent.App.ViewModels.HealthViewModel viewModel)
+    private McpConnectionsWindow? mcp;
+    private readonly PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections;
+    public MainWindow(PersonalAgent.App.ViewModels.HealthViewModel viewModel, PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections = null)
     {
         InitializeComponent();
         DataContext = viewModel;
+        this.mcpConnections = mcpConnections;
     }
 
     private void OpenModelsClicked(object sender, RoutedEventArgs e) => OpenModels();
+    private void OpenMcpClicked(object sender, RoutedEventArgs e) => OpenMcpConnections();
+    public void OpenMcpConnections()
+    {
+        if (mcpConnections is null) return;
+        if (mcp is not null) { mcp.Activate(); return; }
+        mcp = new McpConnectionsWindow(mcpConnections) { Owner = this };
+        mcp.Closed += (_, _) => mcp = null;
+        mcp.Show();
+    }
 
     public void OpenModels()
     {
