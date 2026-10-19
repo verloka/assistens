@@ -725,14 +725,15 @@
                                        "attempts":  1
                                    },
                         "PA-067":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T07:50:33.3442754+00:00",
+                                       "completed_at":  "2026-10-19T07:56:50.0400681+00:00",
                                        "evidence":  [
-
+                                                        "StdioMcpTransportProvider uses owner-approved explicit .exe/argv/cwd, direct hidden ProcessStartInfo no shell, pinned SDK StreamClientTransport, per-child protected-store credentials and curated environment. Stderr bounded drain logs count only; process and full child tree cleanup bounded. Actual local fixture list/call, literal shell characters, no ambient/raw-secret leak, process exit, handshake cancellation/timeout proven. FDD004 scoped PASS; full business/tool approval remains Draft/untested.",
+                                                        "Verification: dotnet test IntegrationTests --filter McpStdio --no-restore:8passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+462integration+3fake-flow=553passed; diff/doctor passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-068":  {
                                        "status":  "pending",
@@ -1315,6 +1316,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-066",
-    "updated_at":  "2026-10-19T07:50:32.0313932+00:00"
+    "last_task_id":  "PA-067",
+    "updated_at":  "2026-10-19T07:56:50.0496043+00:00"
 }

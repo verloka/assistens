@@ -30,6 +30,13 @@ cleanup. Two IDs use the same factory and actual loopback SDK server through a
 test-only transport provider. Production stdio/HTTP providers follow PA-067/068;
 the App registers the factory without opening a connection or exposing tools.
 
+PA-067: `--filter McpStdio` runs the actual local MCP child through direct argv
+and the pinned SDK stream transport. Tests cover literal shell characters,
+explicit executable/working-directory approval, scoped credentials without
+ambient-secret inheritance or raw stderr logging, real tool list/call, process
+exit, and cancellation/timeout cleanup. The no-protocol child is a test-only
+fixture mode. No shell wrapper, model or corporate service is used.
+
 - `PersonalAgent.UnitTests`: module boundary and reference cycle checks.
 - `PersonalAgent.IntegrationTests`: actual Generic Host and SDK loading; host
   probes/fakes (`ProbeService`, `CancellableWorker`, recording logger) cover

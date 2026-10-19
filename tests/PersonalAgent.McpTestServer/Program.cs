@@ -9,6 +9,17 @@ public static class Program
     {
         // This executable is a test fixture only. Stdout belongs to the MCP protocol.
         Console.Error.WriteLine($"MCP_TEST_PID={Environment.ProcessId}");
+        if (args.Contains("--fixture-no-protocol", StringComparer.Ordinal))
+        {
+            await Task.Delay(Timeout.InfiniteTimeSpan);
+            return;
+        }
+        var fixtureCredential = Environment.GetEnvironmentVariable("MCP_FIXTURE_SECRET");
+        if (fixtureCredential is not null)
+        {
+            Console.Error.WriteLine("Synthetic stderr credential: " + fixtureCredential);
+            Console.Error.WriteLine("Synthetic argv: " + string.Join(";", args));
+        }
         var builder = Host.CreateApplicationBuilder(args);
         builder.Logging.ClearProviders();
         builder.Logging.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
@@ -33,5 +44,11 @@ public static class Program
 public sealed class EchoTool
 {
     [McpServerTool(Name = "echo"), Description("Echoes a diagnostic message in memory; no external effects.")]
-    public static string Echo(string message) => $"Echo: {message}";
+    public static string Echo(string message) => message == "__fixture_environment__"
+        ? System.Text.Json.JsonSerializer.Serialize(new
+        {
+            AmbientPresent = Environment.GetEnvironmentVariable("PERSONAL_AGENT_TEST_AMBIENT_SECRET") is not null,
+            ScopedPresent = Environment.GetEnvironmentVariable("MCP_FIXTURE_SECRET") is not null,
+            Arguments = Environment.GetCommandLineArgs().Skip(1).ToArray()
+        }) : $"Echo: {message}";
 }
