@@ -60,6 +60,7 @@ public static class AppHost
                 services.AddSingleton<IConversationRepository>(provider => new SqliteConversationRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IModelProfileRepository>(provider => new SqliteModelProfileRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IMcpConnectionRepository>(provider => new SqliteMcpConnectionRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddSingleton<IApprovalRepository>(provider => new SqliteApprovalRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddHostedService<RunHistoryService>();
             }
             services.AddHostedService<TaskRunnerService>();

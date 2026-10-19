@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PersonalAgent.Core.Domain;
+using PersonalAgent.Core.Security;
 using PersonalAgent.Persistence.Entities;
 
 namespace PersonalAgent.Persistence;
@@ -15,6 +16,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<AgentSessionRow> AgentSessions => Set<AgentSessionRow>();
     public DbSet<ModelProfileRow> ModelProfiles => Set<ModelProfileRow>();
     public DbSet<McpConnectionRow> McpConnections => Set<McpConnectionRow>();
+    public DbSet<ApprovalRequestRow> ApprovalRequests => Set<ApprovalRequestRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -27,6 +29,22 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         connections.HasKey(row => row.Id);
         connections.Property(row => row.ProfileJson).IsRequired();
         var utcTicks = new ValueConverter<DateTimeOffset, long>(value => value.UtcTicks, ticks => new DateTimeOffset(ticks, TimeSpan.Zero));
+        var approvals = model.Entity<ApprovalRequestRow>();
+        approvals.ToTable("ApprovalRequests", table =>
+        {
+            table.HasCheckConstraint("CK_ApprovalRequests_Version", "Version >= 0 AND RunVersion >= 0 AND PayloadSchemaVersion > 0");
+            table.HasCheckConstraint("CK_ApprovalRequests_Expiry", "ExpiresAtUtc > CreatedAtUtc");
+            table.HasCheckConstraint("CK_ApprovalRequests_Status", "Status IN ('Pending','Approved','Rejected','Expired')");
+        });
+        approvals.HasKey(row => row.Id);
+        approvals.HasOne<TaskRunRow>().WithMany().HasForeignKey(row => row.RunId).OnDelete(DeleteBehavior.Restrict);
+        approvals.HasIndex(row => new { row.RunId, row.ToolCallId }).IsUnique();
+        approvals.HasIndex(row => new { row.OwnerSource, row.OwnerId, row.Status, row.ExpiresAtUtc });
+        approvals.Property(row => row.Status).HasConversion<string>();
+        approvals.Property(row => row.Version).IsConcurrencyToken().ValueGeneratedNever();
+        approvals.Property(row => row.CreatedAtUtc).HasConversion(utcTicks);
+        approvals.Property(row => row.ExpiresAtUtc).HasConversion(utcTicks);
+        approvals.Property(row => row.DecidedAtUtc).HasConversion(utcTicks);
         var conversations = model.Entity<ConversationRow>();
         conversations.ToTable("Conversations");
         conversations.HasKey(row => row.Id);

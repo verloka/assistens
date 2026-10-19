@@ -2,6 +2,7 @@ using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using PersonalAgent.Core.Agents;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace PersonalAgent.Mcp;
 
@@ -20,6 +21,7 @@ public sealed class McpConnectionFactory(IEnumerable<IMcpTransportProvider> prov
             throw Error("McpTransportUnavailable", "The configured MCP transport is unavailable.");
         using var timeout = new CancellationTokenSource(snapshot.ConnectTimeout);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
+        var deadline = Stopwatch.StartNew();
         IClientTransport? transport = null;
         McpClient? client = null;
         try
@@ -37,7 +39,10 @@ public sealed class McpConnectionFactory(IEnumerable<IMcpTransportProvider> prov
             client = null; transport = null;
             return connection;
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        // SDK deadline/disposal can surface IOException/McpException before the outer timer callback runs.
+        catch (Exception) when (cancellationToken.IsCancellationRequested) { throw new OperationCanceledException(cancellationToken); }
+        catch (Exception error) when (timeout.IsCancellationRequested || deadline.Elapsed >= snapshot.ConnectTimeout || error is TimeoutException)
+        { throw Error("McpConnectionTimedOut", "The MCP connection timed out; no tool call was retried."); }
         catch (OperationCanceledException) { throw Error("McpConnectionTimedOut", "The MCP connection timed out; no tool call was retried."); }
         catch (McpConnectionException) { throw; }
         catch (Exception) { throw Error("McpConnectionFailed", "The MCP connection failed; no automatic retry was performed."); }

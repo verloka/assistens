@@ -1,8 +1,9 @@
 # Agent checkpoint
-- Last completed task: PA-077 (tool permission rules per run/connection).
-- Current task: none; next PA-078 durable pending approvals.
-- Modified files: Core ToolPermissionPolicy/ToolDescriptor version; MCP discovery/execution version sharing; unit/integration policy tests; FDD004/005; progress.
-- Verified build/test: scripts/verify.ps1 locked restore/build0warnings/errors;98unit+528integration+3localfake=629passed. Targeted policy7unit+1actual SDK integration passed. Doctor/diff/FDD actual semantic review passed.
-- Decisions: explicit run tool/source/risk/version allow/deny intersects immutable category context and owner connection grants. Deny wins, no inheritance/wildcards. Sensitive scope RequiresApproval is not consent. Existing MCP current-version/connection allowlist gates retained, default production tool gate closed. All flows Draft; full approval business scenarios untested.
-- Runtime blockers:075 missing approved corporate endpoint/credential/org authorization/test ticket;065 Claude deferred;026/030 multi-monitor hardware.059 actual OpenAI acceptance done.
-- Next instruction: taskctl next/start078; inspect existing SQLite/version/CAS conventions and Run WaitingForApproval. Add minimal Core durable approval contract + one SQLite table, exact validated ToolCallId/payload/run/owner/expiry/version binding and replay rejection; no write dispatch yet (079/081), no unsolicited architecture.
+- Last completed task: PA-078 (durable pending approvals).
+- Current task: none; next PA-079 human approval wait/continuation.
+- Modified files: Core approval model/repository contract; SQLite row/repository/migration20261019124100/snapshot; App DI; unit/integration approval tests; minimal MCP deadline regression +2tests; FDD004/005; tracker.
+- Verified build/test: final scripts/verify.ps1 locked restore/build0warnings/errors;101unit+537integration+3localfake=641passed. Approval3unit+7SQLite, deadline2+actual child timeout/cancel2 passed. EF no pending model changes; doctor/diff/FDD actual diff reviewed.
+- Decisions: exact canonical action hash includes displayed destination/description and ToolCallId/Run/Conversation/version; unique Run+call prevents payload replacement. Atomic owner/hash/revision/expiry/current waiting-run checks; one decision winner, no dispatch/automatic replay or resume. Unknown payload/corruption denied. Full approvals S1-S3 still untested; all Draft.
+- Regression: initial whole-suite stdio timeout returned generic failure; fixed deadline/caller classification and final whole suite passed. Cleanup/no retry retained.
+- Runtime blockers:075 no approved corporate endpoint/credential/org authorization/test ticket;065 Claude deferred;026/030 hardware.059 real OpenAI read-only already done; no setup request.
+- Next instruction: taskctl next/start079. Existing authorizer callback lacks arguments: add minimal shared validated-invocation approval hook without bypassing default risk/allowlist/boundary checks. Add coordinator WaitingForApproval transitions and exact revision recheck, release/invalidate desktop while awaiting human, deny stale GUI observations after wait. Owner decision repository exists; WPF dialog080 and durable dispatch/OutcomeUnknown081 separate. Preserve cancellation/hotkey/fresh capture.

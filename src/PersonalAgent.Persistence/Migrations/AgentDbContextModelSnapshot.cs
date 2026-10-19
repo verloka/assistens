@@ -54,6 +54,75 @@ namespace PersonalAgent.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ApprovalRequestRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ActionHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ActionJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("DecidedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ExpiresAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OwnerSource")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PayloadSchemaVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("RunVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ToolCallId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RunId", "ToolCallId")
+                        .IsUnique();
+
+                    b.HasIndex("OwnerSource", "OwnerId", "Status", "ExpiresAtUtc");
+
+                    b.ToTable("ApprovalRequests", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ApprovalRequests_Expiry", "ExpiresAtUtc > CreatedAtUtc");
+
+                            t.HasCheckConstraint("CK_ApprovalRequests_Status", "Status IN ('Pending','Approved','Rejected','Expired')");
+
+                            t.HasCheckConstraint("CK_ApprovalRequests_Version", "Version >= 0 AND RunVersion >= 0 AND PayloadSchemaVersion > 0");
+                        });
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.ConversationMessageRow", b =>
                 {
                     b.Property<Guid>("Id")
@@ -328,6 +397,15 @@ namespace PersonalAgent.Persistence.Migrations
                     b.HasOne("PersonalAgent.Persistence.Entities.ConversationRow", null)
                         .WithMany()
                         .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ApprovalRequestRow", b =>
+                {
+                    b.HasOne("PersonalAgent.Persistence.Entities.TaskRunRow", null)
+                        .WithMany()
+                        .HasForeignKey("RunId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

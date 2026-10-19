@@ -846,14 +846,15 @@
                                        "attempts":  1
                                    },
                         "PA-078":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T12:39:08.4241084+00:00",
+                                       "completed_at":  "2026-10-19T12:45:48.1139458+00:00",
                                        "evidence":  [
-
+                                                        "Core exact PendingToolAction canonical hash/owner/request revision/Run revision/TTL model and IApprovalRepository; SQLite ApprovalRequests migration20261019124100, unique Run+ToolCallId, atomic decision CAS including current WaitingForApproval Run. Reopen, deny/expiry, owner/payload/tool/version/replay refusal, racing decisions one winner. Unknown schema/corruption fail closed. No dispatch/automatic resume. Regression deadline classification fixed with caller precedence, elapsed timeout and bounded existing cleanup; no retry. FDD005/004 scoped PASS; full action approval remains Draft/untested.",
+                                                        "Verification: ApprovalRequestTests3+ApprovalRepositoryTests7passed; reproduced regression then McpConnectionDeadlineTests2+actual stdio cancellation/timeout2passed; final scripts/verify.ps1 locked restore/build0warnings/errors;101unit+537integration+3localfake=641passed. EF no pending model changes; doctor/diff/FDD reviewed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-079":  {
                                        "status":  "pending",
@@ -1326,6 +1327,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-077",
-    "updated_at":  "2026-10-19T12:39:06.4774495+00:00"
+    "last_task_id":  "PA-078",
+    "updated_at":  "2026-10-19T12:45:48.1234663+00:00"
 }
