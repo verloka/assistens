@@ -835,14 +835,15 @@
                                        "attempts":  1
                                    },
                         "PA-077":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T12:35:57.8465018+00:00",
+                                       "completed_at":  "2026-10-19T12:39:06.4684287+00:00",
                                        "evidence":  [
-
+                                                        "Core ToolPermissionPolicy snapshots exact run tool/source/risk/version allow/deny and intersects immutable risk context with existing owner McpToolPermission. Deny precedence/default deny/new-version isolation; sensitive scope RequiresApproval, not consent. MCP descriptor shares existing declaration version, null omitted for legacy/local; execution cross-checks. Actual local SDK/registry denies unknown hinted write, revoked/missing grant, changed version and scope-only write. FDD004/005 scoped PASS; full approvals Draft/untested.",
+                                                        "Verification: ToolPermissionPolicyTests7+McpRunPermissionTests1passed; scripts/verify.ps1 locked restore/build0warnings/errors;98unit+528integration+3localfake=629passed; doctor/diff and semantic FDD review passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-078":  {
                                        "status":  "pending",
@@ -1325,6 +1326,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-076",
-    "updated_at":  "2026-10-19T12:35:55.9344453+00:00"
+    "last_task_id":  "PA-077",
+    "updated_at":  "2026-10-19T12:39:06.4774495+00:00"
 }

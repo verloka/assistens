@@ -79,7 +79,7 @@ public sealed class McpToolDiscovery
             var version = Fingerprint(tool, schema);
             tools.Add(new(tool.Name, version, new(id,
                 string.IsNullOrWhiteSpace(tool.Description) ? "Untrusted MCP tool: " + tool.Name : tool.Description,
-                schema, new(ToolSourceKind.Mcp, connectionId.ToString("N")), ToolRiskLevel.Unknown)));
+                schema, new(ToolSourceKind.Mcp, connectionId.ToString("N")), ToolRiskLevel.Unknown) { Version = version }));
         }
         return tools.OrderBy(tool => tool.Descriptor.Id, StringComparer.Ordinal).ToList().AsReadOnly();
     }

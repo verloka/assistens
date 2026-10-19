@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using PersonalAgent.Core.Domain;
 
 namespace PersonalAgent.Core.Agents;
@@ -8,7 +9,11 @@ public sealed record ToolSource(ToolSourceKind Kind, string Id);
 public enum ToolRiskLevel { Unknown, ReadOnly, Write, Destructive, ExternalDisclosure, Navigation }
 public sealed record ToolDescriptor(string Id, string Description, JsonElement JsonSchema, ToolSource Source,
     ToolRiskLevel RiskLevel, bool RequiresDesktop = false, bool IsReadOnly = false, bool IndependentOfDesktop = false,
-    string? ObservationToolId = null);
+    string? ObservationToolId = null)
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Version { get; init; }
+}
 public sealed record ToolArguments(JsonElement Value);
 public sealed record ToolExecutionContext(Guid RunId, Guid ConversationId, string ToolCallId);
 public enum ToolResultStatus { Success, Failed, Blocked, OutcomeUnknown }

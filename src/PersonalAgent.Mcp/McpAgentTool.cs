@@ -15,7 +15,8 @@ public sealed class McpAgentTool : IAgentTool
     public McpAgentTool(McpClientConnection connection, McpDiscoveredTool declaration, McpToolPermission permission)
     {
         if (permission.ConnectionId != connection.Configuration.Id || permission.ToolId != declaration.Descriptor.Id
-            || permission.Version != declaration.Version || permission.RiskLevel == ToolRiskLevel.Unknown || !Enum.IsDefined(permission.RiskLevel)
+            || permission.Version != declaration.Version || declaration.Descriptor.Version != declaration.Version
+            || permission.RiskLevel == ToolRiskLevel.Unknown || !Enum.IsDefined(permission.RiskLevel)
             || declaration.Descriptor.Source != new ToolSource(ToolSourceKind.Mcp, connection.Configuration.Id.ToString("N"))
             || !connection.Configuration.AllowedTools.Contains(declaration.ServerName, StringComparer.Ordinal)
             || !connection.IsToolCurrent(declaration))

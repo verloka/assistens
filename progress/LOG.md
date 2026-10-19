@@ -639,3 +639,10 @@ Append only: date, task ID, changes, tests, evidence, blockers, next action. No 
 - Checks: unit3+actual-MAF integration6 new tests passed, including spoofed risk/approved fields and permissive callback that cannot elevate readonly access. scripts/verify.ps1 locked restore/build0warnings/errors;91unit+527integration+3localfake=621passed. Doctor/diff pass.
 - FDD005 explicit context validation recorded before code; scoped PASS, reverse001/004/003/007 and006 preserved. Complete exact-action approval S1-S3 NOT TESTED, all Draft.077 owns per-tool run/connection rules;078..081 durable approvals.
 - Blockers unchanged:075 approved corporate access absent,065 Claude deferred,026/030 multi-monitor. Next077.
+
+### 2026-10-19T15:39:06.6372849+03:00 — PA-077 — done
+- Reused ToolAccessContext, McpToolPermission, discovery fingerprints/connection namespace and common registry callback. Added neutral immutable per-run exact tool/source/risk/version allow/deny rules intersecting reviewed connection grants; explicit deny wins. New tools/classifications/versions and other run/source identities never inherit permission.
+- Existing MCP declaration version now accompanies ToolDescriptor; local/legacy null omitted and existing numeric enums unchanged. McpAgentTool rejects descriptor/declaration version disagreement. Existing transport allowlist and current-version gates remain enforced.
+- Sensitive scopes return RequiresApproval; scope alone never produces exact-action consent. Actual SDK test denies new server-hinted tool, missing/revoked grants, re-reviewed connection version without new run rule and write scope without approval; two reviewed reads execute, no writes.
+- Checks: new unit7/integration1 passed; scripts/verify.ps1 locked restore/build0warnings/errors;98unit+528integration+3localfake=629passed. Doctor/diff pass. FDD004/005 actual diff/scenario/dependency review scoped PASS; reverse001/003/007 and006 safety preserved. Full durable approval S1-S3 NOT TESTED, all Draft.
+- Default App task tools remain closed.075 corporate access absent,065 Claude deferred,026/030 hardware unchanged. Next078 durable pending action model/storage.
