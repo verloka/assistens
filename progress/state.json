@@ -649,14 +649,15 @@
                                        "attempts":  1
                                    },
                         "PA-060":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T07:21:20.0272167+00:00",
+                                       "completed_at":  "2026-10-19T07:26:39.7024780+00:00",
                                        "evidence":  [
-
+                                                        "AnthropicModelProvider using official pinned Anthropic12.58.0 MEAI bridge, existing IModelProvider/IAgentRuntime; fixed endpoint, protected credential, retry0/telemetry off, sanitized errors and SDK ownership. App DI exposes provider without enabling live default. Actual SDK/Maf/host/SQLite streaming and reported usage tested locally; FDD-001 scoped PASS, full live outcomes untested/Draft.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter AnthropicModelProvider --no-restore:18passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+413integration+3fake-flow=504passed; git diff --check and taskctl doctor passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-061":  {
                                        "status":  "pending",
@@ -1309,6 +1310,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-059",
-    "updated_at":  "2026-10-19T07:21:18.6611075+00:00"
+    "last_task_id":  "PA-060",
+    "updated_at":  "2026-10-19T07:26:39.7124801+00:00"
 }

@@ -32,6 +32,7 @@ public static class AppHost
             services.AddSingleton<ISecretStore>(_ => new WindowsDpapiSecretStore(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PersonalAgent", "secrets")));
             services.AddSingleton<IModelProvider, OpenAiModelProvider>();
+            services.AddSingleton<AnthropicModelProvider>();
             services.AddSingleton<TakeControlHotkeyService>();
             services.AddSingleton<ITaskCommands>(provider => provider.GetRequiredService<TaskRunCoordinator>());
             services.AddSingleton<IAgentRuntime>(provider => new FakeAgentRuntime(

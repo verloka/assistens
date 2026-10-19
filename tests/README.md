@@ -39,6 +39,14 @@ and MVP release gate remain unverified until their own backlog tasks are complet
 
 ## MAF runtime adapter (PA-049)
 
+PA-060: `--filter AnthropicModelProvider` exercises official `Anthropic` 12.58.0
+with the existing pinned MAF/MEAI packages. Eighteen local HTTP/SDK cases cover
+fixed endpoint and protected credential, alias resolution, profile validation,
+auth/rate/server errors without retry, cancellation, owned-client cleanup, and
+streaming through the real host/runner/SQLite with reported usage. The injected
+test transport remains caller-owned. No live Claude request or GUI is performed.
+SDK reference: https://github.com/anthropics/anthropic-sdk-csharp
+
 PA-058: `--filter AgentContract` runs seven deterministic contracts through the
 actual MAF runtime, registry, Task Runner and SQLite: correlated sequential calls,
 three malformed second-call variants, cancellation of a timed-out in-flight tool,
