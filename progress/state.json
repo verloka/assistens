@@ -890,14 +890,15 @@
                                        "attempts":  1
                                    },
                         "PA-082":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T13:10:46.4635856+00:00",
+                                       "completed_at":  "2026-10-19T13:18:46.7530380+00:00",
                                        "evidence":  [
-
+                                                        "Extended existing immutable RunToolPermission with exact scalar destination constraints at bounded reviewed JSON object pointers; deep snapshot, absent/array/duplicate/unlisted targets denied. Scope-only preflight cannot authorize recipient; shared registry argument-aware policy rechecks before approval/dispatch, existing privileged prompt/roles unchanged. Actual SDK/MAF hostile mail/tool/schema/image claims cannot add recipient/channel/secret-read tool; intended header credential absent from model/result. Dynamic recipient adapters must bind reviewed pointers, fixed routes remain trusted adapter configuration, default App tools closed. FDD005/006 scoped PASS, all Draft.",
+                                                        "Verification: DestinationPolicyTests2+DestinationInjectionTests4passed; final scripts/verify.ps1 locked restore/build0warnings/errors;103unit+569integration+3localfake=675passed; doctor/diff/FDD semantic review passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-083":  {
                                        "status":  "pending",
@@ -1330,6 +1331,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-081",
-    "updated_at":  "2026-10-19T13:10:44.4484174+00:00"
+    "last_task_id":  "PA-082",
+    "updated_at":  "2026-10-19T13:18:46.7630599+00:00"
 }

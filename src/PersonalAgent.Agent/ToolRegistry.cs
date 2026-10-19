@@ -20,16 +20,19 @@ public sealed partial class ToolRegistry
     private readonly ToolAccessContext? accessContext;
     private readonly IToolInvocationAuthorizer? invocationAuthorizer;
     private readonly IToolCallRepository? toolCalls;
+    private readonly ToolPermissionPolicy? permissions;
 
     public ToolRegistry(IEnumerable<IAgentTool> tools,
         Func<Guid, RunStepAccess, CancellationToken, Task> waitAtBoundary,
         Func<ToolDescriptor, ToolExecutionContext, CancellationToken, ValueTask<bool>>? authorize = null,
-        ToolAccessContext? accessContext = null, IToolInvocationAuthorizer? invocationAuthorizer = null, IToolCallRepository? toolCalls = null)
+        ToolAccessContext? accessContext = null, IToolInvocationAuthorizer? invocationAuthorizer = null, IToolCallRepository? toolCalls = null,
+        ToolPermissionPolicy? permissions = null)
     {
         boundary = waitAtBoundary;
         this.accessContext = accessContext;
         this.invocationAuthorizer = invocationAuthorizer;
         this.toolCalls = toolCalls;
+        this.permissions = permissions;
         this.authorize = authorize ?? ((descriptor, _, _) => ValueTask.FromResult(
             descriptor.Source.Kind == ToolSourceKind.Local && descriptor.RiskLevel == ToolRiskLevel.ReadOnly
             && descriptor.IsReadOnly && !descriptor.RequiresDesktop));
@@ -155,6 +158,7 @@ public sealed partial class ToolRegistry
             await registry.boundary(runId, new(descriptor.RequiresDesktop, descriptor.IsReadOnly && descriptor.RiskLevel == ToolRiskLevel.ReadOnly, descriptor.IndependentOfDesktop), ct).ConfigureAwait(false);
             ct.ThrowIfCancellationRequested();
             if (descriptor.RiskLevel == ToolRiskLevel.Unknown || accessContext is not null && !accessContext.Allows(descriptor, context)
+                || registry.permissions?.Evaluate(descriptor, new(arguments), context) == ToolPermissionDecision.Denied
                 || !await registry.authorize(descriptor, context, ct).ConfigureAwait(false))
                 return Rejected("ToolPermissionDenied", "The tool is not authorized for this run.");
             ct.ThrowIfCancellationRequested();
@@ -167,6 +171,7 @@ public sealed partial class ToolRegistry
                 await registry.boundary(runId, new(descriptor.RequiresDesktop, descriptor.IsReadOnly && descriptor.RiskLevel == ToolRiskLevel.ReadOnly, descriptor.IndependentOfDesktop), ct).ConfigureAwait(false);
                 ct.ThrowIfCancellationRequested();
                 if (accessContext is not null && !accessContext.Allows(descriptor, context)
+                    || registry.permissions?.Evaluate(descriptor, new(arguments), context) == ToolPermissionDecision.Denied
                     || !await registry.authorize(descriptor, context, ct).ConfigureAwait(false))
                     return Rejected("ToolPermissionDenied", "The tool is no longer authorized for this run.");
                 dispatchAuthorization = await registry.invocationAuthorizer.ValidateDispatchAsync(descriptor, new(arguments.Clone()), context, ct).ConfigureAwait(false);

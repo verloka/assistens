@@ -21,6 +21,7 @@ Status: Draft
 
 ## Validations
 - Sender/recipient allowlists, secrets/privacy policy, output size, channel-specific formatting and correlation IDs.
+- Model-facing tools with dynamic recipients must bind trusted exact destination constraints to their validated arguments. A trusted fixed-route adapter retains its configured route; external content cannot choose a new outbound channel or obtain protected-store credentials.
 
 ## Invariants
 - Communication channel does not contain task business logic.
@@ -41,6 +42,7 @@ Status: Draft
 - S4: Given a new channel implementation, when configured, then it can deliver without modifying Core orchestration. [untested]
 
 ## Implementation References
+- PA-082 foundation: [test: tests/PersonalAgent.IntegrationTests/DestinationInjectionTests.cs] verifies that hostile email/MCP/image data cannot add a new outbound channel, recipient or protected-store read tool through the actual registry/MAF path. Exact destination argument constraints belong to the trusted per-run policy; transport credentials remain scoped to the approved endpoint and absent from model messages. This is not notification/outbox delivery; complete S1-S4 remain untested/Draft.
 - PA-063 adds bounded neutral context at the shared submission boundary for an explicit conversation ID. Manual Dashboard continuation (including a provider switch) reuses the logical conversation but creates a new run/client/MAF session; saved opaque provider state and tool bodies are never loaded for transfer. [test: tests/PersonalAgent.IntegrationTests/ModelProfilesTests.cs] verifies actual UI/SQLite with scripted providers, prior summary/messages as untrusted data and context limits. This covers a local part of S2; Telegram routing, delivery and full S1-S4 remain untested/Draft.
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §§11–13; backlog PR-12, PR-13.
 
