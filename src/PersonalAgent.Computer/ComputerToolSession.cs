@@ -110,6 +110,19 @@ public sealed class ComputerToolSession : IAsyncDisposable
             new(value.GetProperty("imageX").GetInt32(), value.GetProperty("imageY").GetInt32()), lease!.Generation);
     }
 
+    // Approval waits return desktop ownership without retaining a frame or queued coordinates.
+    public async Task YieldDesktopAsync(CancellationToken ct = default)
+    {
+        await serial.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            frame = null; observationId = null; evaluated = false;
+            if (lease is not null) await access.ReleaseAsync(lease, ct).ConfigureAwait(false);
+            lease = null; controller = null;
+        }
+        finally { serial.Release(); }
+    }
+
     public async ValueTask DisposeAsync()
     {
         await serial.WaitAsync().ConfigureAwait(false);

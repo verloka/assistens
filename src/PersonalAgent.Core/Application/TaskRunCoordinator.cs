@@ -299,6 +299,23 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             lock (sync) if (TaskRunStateMachine.IsTerminal(Find(runId).Run.Status) || Find(runId).Executing) return false;
         }
     }
+    public Task<TaskRun> BeginToolApprovalAsync(Guid runId, long expectedVersion, string toolId, CancellationToken ct = default) =>
+        ChangeAsync(runId, change =>
+        {
+            if (change.Run.Status != RunStatus.Running || change.Run.PauseScope is not null)
+                throw new InvalidOperationException("The run cannot request approval in its current state.");
+            Move(change, RunStatus.WaitingForApproval, "Waiting for explicit action approval");
+            AddEvent(change, RunEventType.ApprovalRequested, "An exact pending action requires owner approval", toolId);
+        }, ct, expectedVersion: expectedVersion);
+
+    public Task<TaskRun> EndToolApprovalAsync(Guid runId, long expectedVersion, CancellationToken ct = default) =>
+        ChangeAsync(runId, change =>
+        {
+            if (change.Run.Status != RunStatus.WaitingForApproval || change.Run.PauseScope is not null)
+                throw new InvalidOperationException("The pending approval is no longer current.");
+            Move(change, RunStatus.Running, "Action approval decision received; policy will be rechecked");
+        }, ct, expectedVersion: expectedVersion);
+
     internal Task RecordProgressAsync(AgentEvent value) => ChangeAsync(value.RunId, change =>
     {
         if (TaskRunStateMachine.IsTerminal(change.Run.Status)) return;

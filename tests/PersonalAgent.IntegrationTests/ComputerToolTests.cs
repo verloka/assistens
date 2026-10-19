@@ -12,6 +12,29 @@ namespace PersonalAgent.IntegrationTests;
 
 public sealed class ComputerToolTests
 {
+    [Fact]
+    public async Task ApprovalYieldReleasesLeaseAndInvalidatesCoordinatesUntilFreshCaptureAndEvaluation()
+    {
+        var access = new DesktopAccessCoordinator(_ => true); var native = new Native(); var runId = Guid.NewGuid();
+        await using var session = new ComputerToolSession(runId, access, lease => new WindowsComputerController(access, lease, native, native, native.GetMonitors));
+        var binding = Registry(session).Bind(Request(runId));
+        var captured = await binding.InvokeAsync("computer_screenshot", "before", Json(new { }), default);
+        var generation = access.Snapshot.Generation;
+        var old = captured.Result.StructuredData!.Value.GetProperty("observationId").GetString()!;
+        session.ConfirmModelObservation(); await session.YieldDesktopAsync();
+        Assert.Null(access.Snapshot.OwnerRunId); Assert.Equal(1, native.Captures); Assert.Empty(native.Inputs);
+        var stale = await binding.InvokeAsync("computer_click", "stale", Arguments("computer_click", old), default);
+        Assert.Equal("StaleDesktopContext", stale.Result.ErrorCode); Assert.Null(access.Snapshot.OwnerRunId); Assert.Empty(native.Inputs);
+        var fresh = await binding.InvokeAsync("computer_screenshot", "after", Json(new { }), default);
+        var current = fresh.Result.StructuredData!.Value.GetProperty("observationId").GetString()!;
+        Assert.NotEqual(old, current); Assert.True(access.Snapshot.Generation > generation);
+        var unevaluated = await binding.InvokeAsync("computer_click", "unevaluated", Arguments("computer_click", current), default);
+        Assert.Equal("ScreenReevaluationRequired", unevaluated.Result.ErrorCode); Assert.Empty(native.Inputs);
+        session.ConfirmModelObservation();
+        var result = await binding.InvokeAsync("computer_click", "fresh-click", Arguments("computer_click", current), default);
+        Assert.Equal(ToolResultStatus.Success, result.Result.Status); Assert.Single(native.Inputs);
+    }
+
     private static readonly string[] Ids = ["computer_screenshot", "computer_click", "computer_scroll", "computer_type", "computer_press_key"];
     private static JsonElement Json(object value) => JsonSerializer.SerializeToElement(value);
     private static AgentRequest Request(Guid runId) => new() { RunId = runId, ConversationId = Guid.NewGuid(), Instructions = "Own synthetic target", ModelProfileId = "local", AllowedToolIds = Ids };

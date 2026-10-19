@@ -17,14 +17,16 @@ public sealed partial class ToolRegistry
     private readonly Func<ToolDescriptor, ToolExecutionContext, CancellationToken, ValueTask<bool>> authorize;
     private readonly Func<Guid, RunStepAccess, CancellationToken, Task> boundary;
     private readonly ToolAccessContext? accessContext;
+    private readonly IToolInvocationAuthorizer? invocationAuthorizer;
 
     public ToolRegistry(IEnumerable<IAgentTool> tools,
         Func<Guid, RunStepAccess, CancellationToken, Task> waitAtBoundary,
         Func<ToolDescriptor, ToolExecutionContext, CancellationToken, ValueTask<bool>>? authorize = null,
-        ToolAccessContext? accessContext = null)
+        ToolAccessContext? accessContext = null, IToolInvocationAuthorizer? invocationAuthorizer = null)
     {
         boundary = waitAtBoundary;
         this.accessContext = accessContext;
+        this.invocationAuthorizer = invocationAuthorizer;
         this.authorize = authorize ?? ((descriptor, _, _) => ValueTask.FromResult(
             descriptor.Source.Kind == ToolSourceKind.Local && descriptor.RiskLevel == ToolRiskLevel.ReadOnly
             && descriptor.IsReadOnly && !descriptor.RequiresDesktop));
@@ -152,6 +154,20 @@ public sealed partial class ToolRegistry
             if (descriptor.RiskLevel == ToolRiskLevel.Unknown || accessContext is not null && !accessContext.Allows(descriptor, context)
                 || !await registry.authorize(descriptor, context, ct).ConfigureAwait(false))
                 return Rejected("ToolPermissionDenied", "The tool is not authorized for this run.");
+            ct.ThrowIfCancellationRequested();
+            if (registry.invocationAuthorizer is not null)
+            {
+                if (!await registry.invocationAuthorizer.AuthorizeAsync(descriptor, new(arguments.Clone()), context, ct).ConfigureAwait(false))
+                    return Rejected("ToolPermissionDenied", "The action was denied, expired or no longer matches its approval.");
+                // Human wait never lends authority across a pause, cancellation or changed run policy.
+                await registry.boundary(runId, new(descriptor.RequiresDesktop, descriptor.IsReadOnly && descriptor.RiskLevel == ToolRiskLevel.ReadOnly, descriptor.IndependentOfDesktop), ct).ConfigureAwait(false);
+                ct.ThrowIfCancellationRequested();
+                if (accessContext is not null && !accessContext.Allows(descriptor, context)
+                    || !await registry.authorize(descriptor, context, ct).ConfigureAwait(false))
+                    return Rejected("ToolPermissionDenied", "The tool is no longer authorized for this run.");
+                if (!await registry.invocationAuthorizer.ValidateDispatchAsync(descriptor, new(arguments.Clone()), context, ct).ConfigureAwait(false))
+                    return Rejected("ToolPermissionDenied", "The approved action expired or changed before dispatch.");
+            }
             ct.ThrowIfCancellationRequested();
             var result = await entry.Tool.ExecuteAsync(new(arguments.Clone()), context, ct).ConfigureAwait(false);
             ct.ThrowIfCancellationRequested();

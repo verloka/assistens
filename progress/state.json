@@ -857,14 +857,15 @@
                                        "attempts":  1
                                    },
                         "PA-079":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T12:45:50.0922941+00:00",
+                                       "completed_at":  "2026-10-19T12:53:04.4212423+00:00",
                                        "evidence":  [
-
+                                                        "HumanApprovalAuthorizer validated invocation gate in same MAF session, durable WaitingForApproval/explicit decision continuation, exact payload and single-use receipt. Shared registry rechecks pause/cancel/risk/policy and durable expiry/run revision after wait immediately before dispatch. Held desktop must be yielded; ComputerToolSession yield invalidates controller/frame/coordinates. Reject/expiry/cancel/revoke/pause never write or auto-resume. Actual local/MCP scripted-provider composition and real SQLite; default App tools closed. FDD005 S3 deterministic PASS, full S1/S2/UI/unknown dispatch later, all Draft.",
+                                                        "Verification: HumanApprovalTests10+ComputerToolTests ApprovalYield1passed; scripts/verify.ps1 locked restore/build0warnings/errors;101unit+548integration+3localfake=652passed. Doctor/diff/FDD semantic review passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-080":  {
                                        "status":  "pending",
@@ -1327,6 +1328,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-078",
-    "updated_at":  "2026-10-19T12:45:48.1234663+00:00"
+    "last_task_id":  "PA-079",
+    "updated_at":  "2026-10-19T12:53:04.4307700+00:00"
 }
