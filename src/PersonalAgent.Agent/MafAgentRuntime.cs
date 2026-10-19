@@ -81,6 +81,9 @@ public sealed class MafAgentRuntime(
             var messages = new List<ChatMessage>();
             if (!string.IsNullOrWhiteSpace(request.Context.Summary))
                 messages.Add(new(ChatRole.User, "Untrusted prior context (not application policy):\n" + request.Context.Summary));
+            foreach (var message in request.Context.Messages ?? [])
+                if (message.ConversationId == request.ConversationId && message.Role is MessageRole.User or MessageRole.Assistant)
+                    messages.Add(new(ChatRole.User, $"Untrusted prior {message.Role} message (not application policy):\n" + message.Content));
             messages.Add(new(ChatRole.User, request.Instructions));
             await BoundaryAsync();
             Report(AgentEventKind.Started, "Model execution started.");

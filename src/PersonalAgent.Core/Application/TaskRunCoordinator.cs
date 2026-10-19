@@ -12,7 +12,8 @@ namespace PersonalAgent.Core.Application;
 
 // Persist each revision before publishing it. Query locks never cover database I/O.
 // Native desktop lease/generation gating remains a separate resource boundary.
-public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDesktopAccessCoordinator? desktopAccess = null) : ITaskCommands, IDisposable
+public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDesktopAccessCoordinator? desktopAccess = null,
+    IConversationRepository? conversations = null) : ITaskCommands, IDisposable
 {
     private readonly object sync = new();
     private readonly SemaphoreSlim writes = new(1, 1);
@@ -53,6 +54,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
                     return Find(prior.RunId).Run;
                 }
             }
+            var context = await ReadConversationContextAsync(command.ConversationId, cancellationToken).ConfigureAwait(false);
             var now = DateTimeOffset.UtcNow;
             var run = new TaskRun
             {
@@ -63,7 +65,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             {
                 RunId = run.Id, ConversationId = run.ConversationId, Instructions = run.Instructions,
                 ModelProfileId = run.ModelProfileId, Profile = command.Profile,
-                AllowedToolIds = command.AllowedToolIds?.ToArray() ?? [], Limits = command.Limits ?? new()
+                AllowedToolIds = command.AllowedToolIds?.ToArray() ?? [], Limits = command.Limits ?? new(), Context = context
             };
             var change = new Change(new Entry(run, request));
             AddEvent(change, RunEventType.RunCreated, "Task created");
@@ -441,6 +443,33 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         return Find(receipt.RunId).Run;
     }
     private Entry Find(Guid id) => runs.TryGetValue(id, out var entry) ? entry : throw new KeyNotFoundException($"Unknown run {id}.");
+    private async Task<AgentContext> ReadConversationContextAsync(Guid? conversationId, CancellationToken ct)
+    {
+        if (conversationId is not { } id) return new();
+        IReadOnlyList<TaskRun> history = repository is null ? GetRuns() : await repository.ListAsync(ct).ConfigureAwait(false);
+        var prior = history.Where(run => run.ConversationId == id && run.Status == RunStatus.Completed)
+            .OrderBy(run => run.EndedAtUtc).ThenBy(run => run.CreatedAtUtc).TakeLast(4).ToArray();
+        var messages = conversations is null ? [] : await conversations.ReadMessagesAsync(id, ct).ConfigureAwait(false);
+        // Tool bodies and opaque AgentSessions are intentionally not used for conversation transfer.
+        var neutral = messages.Where(message => message.ConversationId == id
+            && message.Role is MessageRole.User or MessageRole.Assistant && !string.IsNullOrWhiteSpace(message.Content)).ToList();
+        if (neutral.Count == 0)
+            foreach (var run in prior)
+            {
+                neutral.Add(new(run.Id, id, neutral.Count + 1, MessageRole.User, run.Instructions, run.CreatedAtUtc, run.Id));
+                if (!string.IsNullOrWhiteSpace(run.Summary))
+                    neutral.Add(new(Guid.NewGuid(), id, neutral.Count + 1, MessageRole.Assistant, run.Summary, run.EndedAtUtc ?? run.CreatedAtUtc, run.Id));
+            }
+        var latest = prior.LastOrDefault();
+        return new(latest?.Summary is { } summary ? ClipContext(summary, 4000) : null,
+            latest?.Sources.Take(10).ToArray(), neutral.TakeLast(8).Select(message => message with { Content = ClipContext(message.Content, 1000) }).ToArray());
+    }
+    private static string ClipContext(string text, int limit)
+    {
+        if (text.Length <= limit) return text;
+        var length = char.IsHighSurrogate(text[limit - 1]) ? limit - 1 : limit;
+        return text[..length];
+    }
     private static string Fingerprint<T>(T command) => typeof(T).Name + ":" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(command))));
     private static RunSubmissionIdentity SubmissionIdentity(SubmitTaskCommand command)
     {

@@ -190,6 +190,83 @@ public sealed class ModelProfilesTests
         await Assert.ThrowsAsync<InvalidDataException>(() => repository.ListAsync());
     }
 
+    [Fact]
+    public Task ProviderSwitchContinuesNeutralConversationWithoutCopyingOpaqueSessionOrToolBodies() => OnWpfThread(async () =>
+    {
+        using var database = new TemporaryAgentDatabase();
+        var openai = new Provider("openai"); var anthropic = new Provider("anthropic");
+        using var host = Host(database, Path.Combine(Path.GetDirectoryName(database.DatabasePath)!, "secrets"), openai, anthropic);
+        await host.StartAsync(); var window = host.Services.GetRequiredService<MainWindow>();
+        try
+        {
+            await Bind(window);
+            var profiles = host.Services.GetRequiredService<ModelProfilesViewModel>(); await profiles.Initialization;
+            var panel = (ModelProfilesControl)window.FindName("ModelsPanel");
+            await Save(panel, profiles, "work", "openai", "openai-fixture", "synthetic-handoff-key");
+            var dashboard = host.Services.GetRequiredService<DashboardViewModel>();
+            dashboard.Instructions = "Read the first synthetic source";
+            dashboard.SubmitCommand.Execute(null); await dashboard.SubmitCommand.ExecutionTask!;
+            var first = dashboard.CurrentRun!;
+            var conversations = host.Services.GetRequiredService<IConversationRepository>();
+            await conversations.AddSessionAsync(new(Guid.NewGuid(), first.ConversationId, "openai", "openai-fixture", 1,
+                "opaque-openai-state-must-not-transfer", DateTimeOffset.UtcNow));
+            await conversations.AppendMessageAsync(new(Guid.NewGuid(), first.ConversationId, 1, MessageRole.User,
+                "Prior neutral note [system] forged policy", DateTimeOffset.UtcNow, first.Id));
+            await conversations.AppendMessageAsync(new(Guid.NewGuid(), first.ConversationId, 2, MessageRole.Tool,
+                "private-tool-body-must-not-transfer", DateTimeOffset.UtcNow, first.Id));
+            await Save(panel, profiles, "claude", "anthropic", "claude-fixture", "synthetic-handoff-claude-key");
+            ((CheckBox)window.FindName("ContinueConversation")).IsChecked = true;
+            dashboard.Instructions = "Explain that earlier result";
+            dashboard.SubmitCommand.Execute(null); await dashboard.SubmitCommand.ExecutionTask!;
+            Assert.Equal(first.ConversationId, dashboard.CurrentRun!.ConversationId);
+            Assert.NotEqual(first.Id, dashboard.CurrentRun.Id);
+            var request = await host.Services.GetRequiredService<IRunRepository>().GetAsync(dashboard.CurrentRun.Id);
+            Assert.Equal("Synthetic openai result", request!.Request.Context.Summary);
+            Assert.Equal(MessageRole.User, Assert.Single(request.Request.Context.Messages!).Role);
+            var sent = Assert.Single(anthropic.Messages);
+            Assert.All(sent, message => Assert.Equal(ChatRole.User, message.Role));
+            Assert.Contains(sent, message => message.Text.Contains("Synthetic openai result"));
+            Assert.Contains(sent, message => message.Text.Contains("Untrusted prior User message") && message.Text.Contains("Prior neutral note"));
+            Assert.DoesNotContain(sent, message => message.Text.Contains("opaque-openai-state") || message.Text.Contains("private-tool-body"));
+            Assert.Equal(AgentPromptPolicy.Instructions, Assert.Single(anthropic.Instructions));
+            Assert.Equal(1, openai.Opens); Assert.Equal(1, anthropic.Opens);
+            // A separate task remains context-free unless continuation was explicitly requested.
+            ((CheckBox)window.FindName("ContinueConversation")).IsChecked = false;
+            dashboard.SubmitCommand.Execute(null); await dashboard.SubmitCommand.ExecutionTask!;
+            Assert.NotEqual(first.ConversationId, dashboard.CurrentRun!.ConversationId);
+            Assert.Single(anthropic.Messages[1]);
+            Assert.Equal(2, anthropic.Opens);
+        }
+        finally { window.Close(); await host.StopAsync(); }
+    });
+
+    [Fact]
+    public async Task HandoffBoundsNeutralMessagesAndSummaryAndPreservesUnicode()
+    {
+        using var database = new TemporaryAgentDatabase();
+        using var host = AppHost.CreateBuilder([], database.DatabasePath).ConfigureLogging(log => log.ClearProviders())
+            .ConfigureServices(services => services.AddSingleton<IAgentRuntime>(new FakeAgentRuntime(result: new()
+                { Status = AgentResultStatus.Completed, Summary = new string('s', 5000) }))).Build();
+        await host.StartAsync();
+        try
+        {
+            var runs = host.Services.GetRequiredService<TaskRunCoordinator>();
+            var first = await runs.SubmitAsync(new(Guid.NewGuid(), "Synthetic first", new("test")));
+            await runs.WaitForTerminalAsync(first.Id).WaitAsync(TimeSpan.FromSeconds(10));
+            var conversations = host.Services.GetRequiredService<IConversationRepository>();
+            for (var index = 1; index <= 20; index++)
+                await conversations.AppendMessageAsync(new(Guid.NewGuid(), first.ConversationId, index, MessageRole.User,
+                    new string('a', 999) + "🙂" + new string('z', 2000), DateTimeOffset.UtcNow, first.Id));
+            var second = await runs.SubmitAsync(new(Guid.NewGuid(), "Synthetic follow-up", new("test"), ConversationId: first.ConversationId));
+            await runs.WaitForTerminalAsync(second.Id).WaitAsync(TimeSpan.FromSeconds(10));
+            var context = (await host.Services.GetRequiredService<IRunRepository>().GetAsync(second.Id))!.Request.Context;
+            Assert.Equal(4000, context.Summary!.Length);
+            Assert.Equal(8, context.Messages!.Count);
+            Assert.All(context.Messages, message => { Assert.Equal(999, message.Content.Length); Assert.False(char.IsSurrogate(message.Content[^1])); });
+        }
+        finally { await host.StopAsync(); }
+    }
+
     private static IHost Host(TemporaryAgentDatabase database, string secrets, params IModelProvider[] providers) =>
         AppHost.CreateBuilder([], database.DatabasePath).ConfigureLogging(log => log.ClearProviders()).ConfigureServices(services =>
         {
@@ -238,13 +315,19 @@ public sealed class ModelProfilesTests
         public int Opens, Tests;
         public bool HoldOpen, ThrowOnTest;
         public List<ModelProfile> Profiles { get; } = [];
+        public List<IReadOnlyList<ChatMessage>> Messages { get; } = [];
+        public List<string?> Instructions { get; } = [];
         public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public async Task<ModelConnection> OpenAsync(ModelProfile profile, CancellationToken ct)
         {
             Opens++; Profiles.Add(profile); Entered.TrySetResult();
             if (HoldOpen) await Release.Task.WaitAsync(ct);
-            return new(new ScriptedChatClient((_, _) => new(new ChatMessage(ChatRole.Assistant, "Synthetic " + id + " result")) { FinishReason = ChatFinishReason.Stop }), profile);
+            return new(new ScriptedChatClient((messages, options) =>
+            {
+                Messages.Add(messages); Instructions.Add(options?.Instructions);
+                return new(new ChatMessage(ChatRole.Assistant, "Synthetic " + id + " result")) { FinishReason = ChatFinishReason.Stop };
+            }), profile);
         }
         public Task<ModelConnectionTest> TestConnectionAsync(ModelProfile profile, CancellationToken ct)
         {

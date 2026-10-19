@@ -41,6 +41,7 @@ Status: Draft
 - S4: Given a new channel implementation, when configured, then it can deliver without modifying Core orchestration. [untested]
 
 ## Implementation References
+- PA-063 adds bounded neutral context at the shared submission boundary for an explicit conversation ID. Manual Dashboard continuation (including a provider switch) reuses the logical conversation but creates a new run/client/MAF session; saved opaque provider state and tool bodies are never loaded for transfer. [test: tests/PersonalAgent.IntegrationTests/ModelProfilesTests.cs] verifies actual UI/SQLite with scripted providers, prior summary/messages as untrusted data and context limits. This covers a local part of S2; Telegram routing, delivery and full S1-S4 remain untested/Draft.
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §§11–13; backlog PR-12, PR-13.
 
 - Neutral history/session foundation (PA-020): `src/PersonalAgent.Core/Domain/ConversationModels.cs`, `src/PersonalAgent.Core/Persistence/IConversationRepository.cs` and `src/PersonalAgent.Persistence/SqliteConversationRepository.cs` store ordered messages and immutable provider/model/schema-tagged session checkpoints. `tests/PersonalAgent.IntegrationTests/PersistenceConversationTests.cs` verifies real SQLite reopen, schema/provider/model mismatch refusal, duplicate message constraints and cross-conversation run validation. This is storage scaffolding, not inbound routing, provider session resume, delivery or complete S1-S4 coverage; all remain `[untested]`.

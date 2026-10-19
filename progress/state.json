@@ -682,14 +682,15 @@
                                        "attempts":  1
                                    },
                         "PA-063":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T07:37:27.5317679+00:00",
+                                       "completed_at":  "2026-10-19T07:42:25.5377442+00:00",
                                        "evidence":  [
-
+                                                        "Explicit manual conversation continuation builds bounded neutral summary/User-Assistant messages at submit; snapshots durable request; new profile/run/client/MAF session, no opaque AgentSessions or tool bodies loaded. ModelProfilesTests proves OpenAI-to-Claude UI handoff, untrusted roles/policy, explicit new-task isolation and bounded Unicode. FDD001/006 scoped PASS; full live/Telegram/delivery remains Draft/untested.",
+                                                        "Verification: dotnet test IntegrationTests --filter ProviderSwitchContinuesNeutral|HandoffBounds --no-restore:2passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+431integration+3fake-flow=522passed; diff/doctor passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-064":  {
                                        "status":  "pending",
@@ -1312,6 +1313,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-062",
-    "updated_at":  "2026-10-19T07:37:25.5658394+00:00"
+    "last_task_id":  "PA-063",
+    "updated_at":  "2026-10-19T07:42:25.5477309+00:00"
 }

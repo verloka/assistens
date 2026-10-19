@@ -38,6 +38,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public ModelProfilesViewModel? Profiles { get; }
+    public bool ContinueConversation { get; set; }
     public ObservableCollection<RunEvent> Events { get; } = [];
     public ObservableCollection<TaskRun> History { get; } = [];
     public TaskRun? SelectedHistory
@@ -89,6 +90,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         {
             var profile = Profiles?.Selected?.Profile;
             currentRun = await commands.SubmitAsync(new(Guid.NewGuid(), Instructions, new TaskOrigin("desktop"),
+                ConversationId: ContinueConversation ? currentRun?.ConversationId : null,
                 ModelProfileId: profile?.Id ?? "fake", Profile: profile), lifetime.Token);
             Refresh();
             await WatchAsync(currentRun.Id);

@@ -39,6 +39,14 @@ and MVP release gate remain unverified until their own backlog tasks are complet
 
 ## MAF runtime adapter (PA-049)
 
+PA-063: ModelProfilesTests also covers the actual Continue selected conversation
+checkbox across an OpenAI-to-Claude scripted-provider switch. A new run/client/MAF
+session receives only bounded neutral User/Assistant messages and the last
+completed summary, as untrusted user-role data; opaque AgentSessions and tool
+bodies are excluded. An explicit new task gets no earlier context. Context is
+snapshotted into the durable request, limited to 4000 summary characters plus
+eight messages of at most 1000 characters, preserving surrogate pairs.
+
 PA-062: `--filter ModelProfiles` covers actual profile XAML, create/update/select,
 explicit Test saved profile, DPAPI credentials and SQLite migration/reopen using
 scripted providers. Running and queued runs retain submitted profile snapshots;

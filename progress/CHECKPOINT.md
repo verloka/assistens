@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-062 (model profile UI/SQLite/DPAPI and next-run provider routing).
-- Current task: none; next PA-063 neutral conversation handoff on provider switch.
-- Modified files: Core optional profile snapshot/repository contract; coordinator; Agent/ProfileAgentRuntime; App ModelsPanel/ViewModel/Dashboard/DI/XAML; SQLite profile repository/row/additive migration; ModelProfilesTests plus default-runtime/schema regression assertions; FDD001/index/test README; progress state/log/checkpoint.
-- Verified build/test: ModelProfiles5passed; earlier targeted ModelProfiles|Dashboard|Persistence|ModelProvider91passed. scripts/verify.ps1 locked restore/build0warnings/errors;88unit+429integration+3fake-flow=520passed. Final pricing reset adjustment rebuilt and ModelProfiles5passed. Diff/doctor passed.
-- Runtime blockers / waiting on user:026/030 multi-monitor hardware;059 requires configured OpenAI/API credit/access and attended live GUI E2E. No live API/native action initiated. PA-048 remains done.
-- Decisions: startup Local demo; saved keys are DPAPI references only. Explicit saved-profile API test; no auto test/call on save. Immutable submitted profile prevents editing/switching active or queued runs. Registered providers supply UI choices. Cloud text path uses existing MAF runtime; no configured computer/MCP tools yet. Existing no-snapshot hash unchanged. FDD scoped PASS, complete business outcomes remain Draft/NOT TESTED.
-- Next instruction: run taskctl next and inspect in_progress first; proceed063.
+- Last completed task: PA-063 (explicit neutral conversation handoff when selecting another provider).
+- Current task: none; next PA-064 shared cross-provider adapter contract matrix.
+- Modified files: AgentContext optional Messages; coordinator bounded neutral context; MafAgentRuntime untrusted prior messages; Dashboard/XAML explicit continuation; ModelProfilesTests; FDD001/006/test README; progress state/log/checkpoint.
+- Verified build/test: ProviderSwitchContinuesNeutral|HandoffBounds2passed. scripts/verify.ps1 locked restore/build0warnings/errors;88unit+431integration+3fake-flow=522passed. Diff/doctor passed.
+- Runtime blockers / waiting on user:026/030 multi-monitor;059 live OpenAI configured access/API authorization and attended GUI E2E. No live calls/native effects. PA-048 done.
+- Decisions: context is durable neutral summary/messages only, bounded4000+8x1000chars, tool bodies/opaque sessions excluded; new client/MAF session per run. Continuation is explicit; new tasks stay isolated. FDD scoped001/006PASS, full business outcomes remain Draft/NOT TESTED.
+- Next instruction: run taskctl next and inspect in_progress first; proceed064.

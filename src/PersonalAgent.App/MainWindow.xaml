@@ -56,6 +56,8 @@
                 </Grid.RowDefinitions>
                 <StackPanel>
                     <local:ModelProfilesControl x:Name="ModelsPanel" DataContext="{Binding Profiles}" />
+                    <CheckBox x:Name="ContinueConversation" Content="Continue the selected task conversation"
+                              IsChecked="{Binding ContinueConversation}" Margin="0,0,0,8" />
                     <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,0,0,8" />
                 </StackPanel>
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
