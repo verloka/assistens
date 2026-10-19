@@ -22,7 +22,8 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
         ArgumentException.ThrowIfNullOrWhiteSpace(run.Instructions);
         ArgumentException.ThrowIfNullOrWhiteSpace(run.ModelProfileId);
         ArgumentException.ThrowIfNullOrWhiteSpace(run.Origin.Source);
-        if (run.Status is not (RunStatus.Created or RunStatus.Queued) || run.StartedAtUtc is not null || run.EndedAtUtc is not null ||
+        if (run.Status is not (RunStatus.Created or RunStatus.Queued or RunStatus.Skipped) || run.StartedAtUtc is not null
+            || (run.Status == RunStatus.Skipped ? run.EndedAtUtc is null || run.EndedAtUtc < run.CreatedAtUtc : run.EndedAtUtc is not null) ||
             run.RunVersion != (run.Status == RunStatus.Created ? 0 : 1))
             throw new ArgumentException("Only a new unstarted attempt can be created.");
         if (request.Instructions != run.Instructions || request.ModelProfileId != run.ModelProfileId)

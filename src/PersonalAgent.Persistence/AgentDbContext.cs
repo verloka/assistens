@@ -36,11 +36,15 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         {
             table.HasCheckConstraint("CK_Schedules_Version", "Version >= 0 AND PayloadSchemaVersion > 0");
             table.HasCheckConstraint("CK_Schedules_Mode", "Mode IN ('Once','Interval','Daily','Weekdays')");
+            table.HasCheckConstraint("CK_Schedules_Misfire", "MisfirePolicy IN ('RunOnce','Skip','CatchUp') AND MaxCatchUpRuns BETWEEN 1 AND 10");
         });
         schedules.HasKey(row => row.Id);
         schedules.HasOne<TaskDefinitionRow>().WithMany().HasForeignKey(row => row.TaskDefinitionId).OnDelete(DeleteBehavior.Restrict);
         schedules.HasIndex(row => new { row.Enabled, row.NextRunAtUtc });
         schedules.Property(row => row.Mode).HasConversion<string>();
+        schedules.Property(row => row.MisfirePolicy).HasConversion<string>().HasDefaultValue(MisfirePolicy.RunOnce);
+        schedules.Property(row => row.MaxCatchUpRuns).HasDefaultValue(3);
+        schedules.Property(row => row.CatchUpUntilUtc).HasConversion(utcTicks);
         schedules.Property(row => row.Version).IsConcurrencyToken().ValueGeneratedNever();
         schedules.Property(row => row.CreatedAtUtc).HasConversion(utcTicks);
         schedules.Property(row => row.UpdatedAtUtc).HasConversion(utcTicks);

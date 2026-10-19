@@ -5,6 +5,8 @@ namespace PersonalAgent.Core.Domain;
 
 [JsonConverter(typeof(JsonStringEnumConverter<ScheduleMode>))]
 public enum ScheduleMode { Once, Interval, Daily, Weekdays }
+[JsonConverter(typeof(JsonStringEnumConverter<MisfirePolicy>))]
+public enum MisfirePolicy { RunOnce, Skip, CatchUp }
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record ScheduleRecurrence
@@ -37,6 +39,12 @@ public sealed record ScheduleRecurrence
         if (document.RootElement.ValueKind != JsonValueKind.Object
             || document.RootElement.EnumerateObject().Select(value => value.Name).Distinct(StringComparer.Ordinal).Count() != document.RootElement.EnumerateObject().Count())
             throw new ArgumentException("Recurrence must be an unambiguous object.");
+        if (document.RootElement.TryGetProperty(nameof(OnceAtUtc), out var once) && once.ValueKind == JsonValueKind.String)
+        {
+            var value = once.GetString()!; var time = value.IndexOf('T');
+            if (!value.EndsWith('Z') && (time < 0 || Math.Max(value.LastIndexOf('+'), value.LastIndexOf('-')) <= time))
+                throw new ArgumentException("One-time instants require an explicit UTC offset.");
+        }
         return (JsonSerializer.Deserialize<ScheduleRecurrence>(json) ?? throw new ArgumentException("Missing recurrence configuration.")).Snapshot();
     }
 }
@@ -53,6 +61,10 @@ public sealed record ScheduleDefinition
     public required DateTimeOffset CreatedAtUtc { get; init; }
     public required DateTimeOffset UpdatedAtUtc { get; init; }
     public DateTimeOffset? NextRunAtUtc { get; init; }
+    public MisfirePolicy MisfirePolicy { get; init; } = MisfirePolicy.RunOnce;
+    public int MaxCatchUpRuns { get; init; } = 3;
+    public int? CatchUpRemaining { get; init; }
+    public DateTimeOffset? CatchUpUntilUtc { get; init; }
 }
 public sealed record ScheduledTask(TaskDefinition Task, ScheduleDefinition Schedule);
 public sealed class ScheduleVersionConflictException() : InvalidOperationException("The schedule changed; reload its current version before saving.");

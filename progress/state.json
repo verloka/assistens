@@ -934,14 +934,15 @@
                                        "attempts":  1
                                    },
                         "PA-086":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T13:41:04.5714861+00:00",
+                                       "completed_at":  "2026-10-19T13:53:15.3840649+00:00",
                                        "evidence":  [
-
+                                                        "ScheduleMisfires and persistent bounded recovery window; durable initially-Skipped occurrence without queue; migration20261019134343 preserves RunOnce/3 defaults; ScheduleMisfireTests cover Kyiv gap/fold, missed intervals, restart/edit budget; FDD003 S2-S6 scoped PASS, all flows Draft.",
+                                                        "Verification: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: locked restore, build0warnings/errors,121unit+602integration+3localfake=726passed; dotnet ef migrations has-pending-model-changes --project src/PersonalAgent.Persistence --no-build: no changes; taskctl doctor/diff check passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-087":  {
                                        "status":  "pending",
@@ -1334,6 +1335,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-085",
-    "updated_at":  "2026-10-19T13:41:01.9639912+00:00"
+    "last_task_id":  "PA-086",
+    "updated_at":  "2026-10-19T13:53:15.3936260+00:00"
 }

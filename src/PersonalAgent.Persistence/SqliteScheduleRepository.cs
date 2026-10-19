@@ -30,11 +30,14 @@ public sealed class SqliteScheduleRepository(IDbContextFactory<AgentDbContext> f
             throw new ArgumentException("Choose a future time for an enabled one-time schedule.");
         if (row is null) db.Schedules.Add(row = new() { Id = draft.Schedule.Id, TaskDefinitionId = draft.Task.Id, CreatedAtUtc = now });
         else row.Version = checked(row.Version + 1);
+        if (!sameCadence || row.MisfirePolicy != draft.Schedule.MisfirePolicy || row.MaxCatchUpRuns != draft.Schedule.MaxCatchUpRuns)
+        { row.CatchUpRemaining = null; row.CatchUpUntilUtc = null; }
         if (task is null) db.TaskDefinitions.Add(task = new() { Id = draft.Task.Id, CreatedAtUtc = now });
         task.Name = draft.Task.Name; task.Instructions = draft.Task.Instructions; task.ModelProfileId = draft.Task.ModelProfileId;
         task.Enabled = draft.Task.Enabled; task.UpdatedAtUtc = now;
         row.Mode = recurrence.Mode; row.RecurrenceJson = json; row.TimeZoneId = draft.Schedule.TimeZoneId;
         row.Enabled = draft.Schedule.Enabled; row.UpdatedAtUtc = now; row.NextRunAtUtc = next;
+        row.MisfirePolicy = draft.Schedule.MisfirePolicy; row.MaxCatchUpRuns = draft.Schedule.MaxCatchUpRuns;
         try { await db.SaveChangesAsync(ct); await transaction.CommitAsync(ct); }
         catch (DbUpdateConcurrencyException) { throw new ScheduleVersionConflictException(); }
         return Read(row, task);
@@ -74,12 +77,13 @@ public sealed class SqliteScheduleRepository(IDbContextFactory<AgentDbContext> f
         var scheduled = await GetAsync(scheduleId, ct);
         if (scheduled is null || !scheduled.Task.Enabled || !scheduled.Schedule.Enabled || scheduled.Schedule.Version != expectedVersion
             || scheduled.Schedule.NextRunAtUtc != occurrenceUtc) return false;
-        var next = ScheduleCalculator.Next(scheduled.Schedule.Recurrence, scheduled.Schedule.TimeZoneId, scheduled.Schedule.CreatedAtUtc, observedAtUtc);
+        var advance = ScheduleMisfires.Advance(scheduled.Schedule, occurrenceUtc, observedAtUtc);
         await using var db = await factory.CreateDbContextAsync(ct);
         var count = await db.Schedules.Where(row => row.Id == scheduleId && row.Version == expectedVersion && row.Enabled && row.NextRunAtUtc == occurrenceUtc
             && db.TaskDefinitions.Any(task => task.Id == row.TaskDefinitionId && task.Enabled)
             && db.TaskRuns.Any(run => run.TaskDefinitionId == row.TaskDefinitionId && run.SubmissionSource == ScheduleOccurrenceIdentity.PersistedSource && run.SubmissionKey == key.Value))
-            .ExecuteUpdateAsync(set => set.SetProperty(row => row.NextRunAtUtc, next).SetProperty(row => row.Version, row => row.Version + 1)
+            .ExecuteUpdateAsync(set => set.SetProperty(row => row.NextRunAtUtc, advance.NextRunAtUtc).SetProperty(row => row.Version, row => row.Version + 1)
+                .SetProperty(row => row.CatchUpRemaining, advance.CatchUpRemaining).SetProperty(row => row.CatchUpUntilUtc, advance.CatchUpUntilUtc)
                 .SetProperty(row => row.UpdatedAtUtc, observedAtUtc.ToUniversalTime()), ct);
         return count == 1;
     }
@@ -90,6 +94,7 @@ public sealed class SqliteScheduleRepository(IDbContextFactory<AgentDbContext> f
             || string.IsNullOrWhiteSpace(task.Name) || task.Name.Length > 256 || string.IsNullOrWhiteSpace(task.Instructions) || task.Instructions.Length > 16_384
             || string.IsNullOrWhiteSpace(task.ModelProfileId) || task.ModelProfileId.Length > 256) throw new ArgumentException("Invalid scheduled task identity or configuration.");
         schedule.Recurrence.Snapshot(); ScheduleCalculator.ResolveTimeZone(schedule.TimeZoneId);
+        ScheduleMisfires.Validate(schedule);
     }
     private static ScheduledTask Read(ScheduleRow row, TaskDefinitionRow task)
     {
@@ -98,10 +103,14 @@ public sealed class SqliteScheduleRepository(IDbContextFactory<AgentDbContext> f
         var result = new ScheduledTask(new() { Id = task.Id, Name = task.Name, Instructions = task.Instructions, ModelProfileId = task.ModelProfileId,
                 Enabled = task.Enabled, CreatedAtUtc = task.CreatedAtUtc, UpdatedAtUtc = task.UpdatedAtUtc },
             new() { Id = row.Id, TaskDefinitionId = row.TaskDefinitionId, Recurrence = recurrence, TimeZoneId = row.TimeZoneId, Enabled = row.Enabled,
-                Version = row.Version, CreatedAtUtc = row.CreatedAtUtc, UpdatedAtUtc = row.UpdatedAtUtc, NextRunAtUtc = row.NextRunAtUtc });
+                Version = row.Version, CreatedAtUtc = row.CreatedAtUtc, UpdatedAtUtc = row.UpdatedAtUtc, NextRunAtUtc = row.NextRunAtUtc,
+                MisfirePolicy = row.MisfirePolicy, MaxCatchUpRuns = row.MaxCatchUpRuns, CatchUpRemaining = row.CatchUpRemaining, CatchUpUntilUtc = row.CatchUpUntilUtc });
         Validate(result);
         if (row.Mode != recurrence.Mode || row.UpdatedAtUtc < row.CreatedAtUtc
             || !row.Enabled && row.NextRunAtUtc is not null
+            || (row.CatchUpRemaining is null) != (row.CatchUpUntilUtc is null)
+            || row.CatchUpRemaining is { } remaining && (row.MisfirePolicy != MisfirePolicy.CatchUp || remaining < 1 || remaining >= row.MaxCatchUpRuns
+                || row.NextRunAtUtc is null || row.NextRunAtUtc > row.CatchUpUntilUtc)
             || row.NextRunAtUtc is { } next && (next.UtcTicks == 0 || ScheduleCalculator.Next(recurrence, row.TimeZoneId, row.CreatedAtUtc, next.AddTicks(-1)) != next))
             throw new InvalidDataException("Persisted schedule cadence or next occurrence is inconsistent.");
         return result;

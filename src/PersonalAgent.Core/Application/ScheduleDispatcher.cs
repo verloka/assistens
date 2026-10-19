@@ -37,14 +37,16 @@ public sealed class ScheduleDispatcher(IScheduleRepository schedules, ITaskComma
                     {
                         if (await schedules.HasActiveRunAsync(scheduled.Schedule.Id, ct).ConfigureAwait(false))
                         { results.Add(new(scheduled.Schedule.Id, occurrence, null, "ScheduleRunActive")); continue; }
-                        var profile = scheduled.Task.ModelProfileId == "fake" || profiles is null ? null
+                        var skip = ScheduleMisfires.ShouldSkip(scheduled.Schedule, occurrence, now);
+                        var profile = skip || scheduled.Task.ModelProfileId == "fake" || profiles is null ? null
                             : (await profiles.ListAsync(ct).ConfigureAwait(false)).SingleOrDefault(value => value.Id == scheduled.Task.ModelProfileId);
                         try
                         {
                             var run = await commands.SubmitAsync(new(Guid.NewGuid(), scheduled.Task.Instructions, new("schedule"),
                                 ModelProfileId: scheduled.Task.ModelProfileId, Profile: profile,
                                 ExternalKey: ScheduleOccurrenceIdentity.Create(scheduled.Schedule.Id, occurrence), TaskDefinitionId: scheduled.Task.Id,
-                                ScheduleClaim: new(scheduled.Schedule.Id, scheduled.Schedule.Version, occurrence)), ct).ConfigureAwait(false);
+                                ScheduleClaim: new(scheduled.Schedule.Id, scheduled.Schedule.Version, occurrence),
+                                SkipReason: skip ? "Scheduled occurrence skipped by its misfire policy." : null), ct).ConfigureAwait(false);
                             runId = run.Id;
                         }
                         catch (RunSubmissionConflictException)

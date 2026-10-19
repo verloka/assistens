@@ -34,6 +34,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         (command.Limits ?? new()).Validate();
         if (command.ConversationId == Guid.Empty) throw new ArgumentException("Conversation ID cannot be empty.");
         if (command.TaskDefinitionId == Guid.Empty) throw new ArgumentException("Task definition ID cannot be empty.");
+        if (command.SkipReason is { } skipReason && (string.IsNullOrWhiteSpace(skipReason) || skipReason.Length > 512)) throw new ArgumentException("Invalid skip reason.");
         if (command.ScheduleClaim is { } claim && (command.TaskDefinitionId is null || claim.ExpectedVersion < 0
             || command.ExternalKey != ScheduleOccurrenceIdentity.Create(claim.ScheduleId, claim.OccurrenceUtc)))
             throw new ArgumentException("Scheduled admission must match the exact task and occurrence trigger.");
@@ -73,7 +74,12 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             };
             var change = new Change(new Entry(run, request));
             AddEvent(change, RunEventType.RunCreated, "Task created");
-            Move(change, RunStatus.Queued, "Task queued");
+            if (command.SkipReason is { } reason)
+            {
+                change.Run = change.Run with { Summary = reason };
+                Move(change, RunStatus.Skipped, reason);
+            }
+            else Move(change, RunStatus.Queued, "Task queued");
             if (repository is not null)
             {
                 var conversation = new Conversation { Id = run.ConversationId, Title = run.Instructions, CreatedAtUtc = now, UpdatedAtUtc = now };
@@ -107,7 +113,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
                 Commit(change);
                 receipts.Add(command.CommandId, (fingerprint, run.Id));
                 submissions.Add((identity.Source, identity.Key), (identity.IntentHash, run.Id));
-                queue.Writer.TryWrite(run.Id);
+                if (change.Run.Status == RunStatus.Queued) queue.Writer.TryWrite(run.Id);
                 return change.Entry.Run;
             }
         }
@@ -505,6 +511,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         // Preserve the exact legacy hash when no profile snapshot was provided.
         if (command.Profile is not null) intent += "\nProfile:" + JsonSerializer.Serialize(command.Profile);
         if (command.TaskDefinitionId is { } definitionId) intent += "\nTaskDefinitionId:" + definitionId.ToString("D");
+        if (command.SkipReason is not null) intent += "\nSkip:" + command.SkipReason;
         return new RunSubmissionIdentity(command.ExternalKey is null ? "command" : "external/" + command.ExternalKey.Source,
             command.ExternalKey?.Value ?? command.CommandId.ToString("D"), Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(intent))), command.ScheduleClaim);
     }

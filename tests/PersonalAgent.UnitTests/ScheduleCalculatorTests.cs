@@ -48,6 +48,7 @@ public sealed class ScheduleCalculatorTests
     [InlineData("{\"Mode\":\"Interval\",\"Mode\":\"Interval\",\"EveryMinutes\":10}")]
     [InlineData("{\"Mode\":\"Weekdays\",\"LocalTime\":\"09:00:00\",\"Days\":[1,1]}")]
     [InlineData("{\"Mode\":\"Interval\",\"EveryMinutes\":10,\"Days\":null}")]
+    [InlineData("{\"Mode\":\"Once\",\"OnceAtUtc\":\"2026-10-20T12:00:00\"}")]
     public void ParserRejectsInvalidConflictingUnknownOrAmbiguousConfigurations(string input) =>
         Assert.ThrowsAny<Exception>(() => ScheduleRecurrence.Parse(input));
 

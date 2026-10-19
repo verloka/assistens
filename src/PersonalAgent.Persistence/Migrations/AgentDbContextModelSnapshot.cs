@@ -269,11 +269,28 @@ namespace PersonalAgent.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("CatchUpRemaining")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("CatchUpUntilUtc")
+                        .HasColumnType("INTEGER");
+
                     b.Property<long>("CreatedAtUtc")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("Enabled")
                         .HasColumnType("INTEGER");
+
+                    b.Property<int>("MaxCatchUpRuns")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(3);
+
+                    b.Property<string>("MisfirePolicy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("RunOnce");
 
                     b.Property<string>("Mode")
                         .IsRequired()
@@ -311,6 +328,8 @@ namespace PersonalAgent.Persistence.Migrations
 
                     b.ToTable("Schedules", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Schedules_Misfire", "MisfirePolicy IN ('RunOnce','Skip','CatchUp') AND MaxCatchUpRuns BETWEEN 1 AND 10");
+
                             t.HasCheckConstraint("CK_Schedules_Mode", "Mode IN ('Once','Interval','Daily','Weekdays')");
 
                             t.HasCheckConstraint("CK_Schedules_Version", "Version >= 0 AND PayloadSchemaVersion > 0");

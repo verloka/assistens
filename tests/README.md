@@ -1077,5 +1077,14 @@ eight ticks create one Run, missed intervals coalesce, active runs do not overla
 disable/edit wins before admission, and a committed run survives a lost schedule
 advance without another execution on restart. The existing unique external-key
 store supplies occurrence identity; no extra occurrence subsystem is added.
-No GUI lease/tool grant comes from scheduling. Explicit DST/misfire and
-editor/countdown/idle acceptance are subsequent tasks.
+No GUI lease/tool grant comes from scheduling. Editor/countdown/idle acceptance
+remains separate; explicit DST/misfire checks are described below.
+
+PA-086 adds ScheduleMisfireTests in UnitTests and IntegrationTests: installed
+Europe/Kyiv spring gap/fall fold, wall-clock versus elapsed UTC cadence, default
+RunOnce, zero-runtime persisted Skip, and a CatchUp budget that survives name edits
+and kernel/SQLite reopen. CatchUp permits 1..10 runs per batch (default3), requires
+at least hourly intervals or calendar cadence, and cannot reset its budget on
+every wake. Skip allows one minute of ordinary tick jitter. The migration keeps
+existing schedules at RunOnce and their original UTC occurrence. These checks use
+controlled clocks/local runtimes and perform no GUI, external API or notification.
