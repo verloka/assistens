@@ -704,14 +704,14 @@
                                        "attempts":  1
                                    },
                         "PA-065":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-19T07:45:33.3065052+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "E2E-10 needs user-configured real Claude and OpenAI profiles with authorized API access/credit and observed context switch. PA-062 UI and PA-063/064 scripted actual-SDK contracts are implemented, but no user-supplied live profile/access or paid-call authorization is available in this session. No live call initiated; synthetic evidence cannot satisfy live acceptance.",
+                                       "attempts":  1
                                    },
                         "PA-066":  {
                                        "status":  "pending",
@@ -1314,6 +1314,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-064",
-    "updated_at":  "2026-10-19T07:45:31.9880250+00:00"
+    "last_task_id":  "PA-065",
+    "updated_at":  "2026-10-19T07:45:33.7917121+00:00"
 }

@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-064 (shared actual SDK cross-provider contract matrix).
-- Current task: none; next PA-065 live Claude/provider-switch E2E.
-- Modified files: ProvidersContractTests.cs; FDD001/test README; progress state/log/checkpoint.
-- Verified build/test: dotnet test --filter Providers --no-build:12matching integration passed, unit/E2E no matches. scripts/verify.ps1 locked restore/build0warnings/errors;88unit+441integration+3fake-flow=532passed. Diff/doctor passed.
-- Runtime blockers / waiting on user:026/030 multi-monitor;059 live OpenAI API/profile and attended GUI acceptance.065 requires live Claude plus OpenAI context-switch access. No live provider/native actions. PA-048 done.
-- Decisions: exact same assertions for both providers, only wire codec differs. Actual SDK/MAF/controller with fake native; no production changes. Full FDD business scenarios Draft/NOT TESTED.
-- Next instruction: run taskctl next and inspect in_progress first; inspect065 live access; if unavailable block concretely and continue independent066.
+- Last completed task: PA-064 at6a213a3;532tests passed.
+- Current task: none; PA-065 blocked on live Claude/OpenAI access, next independent066.
+- Modified files: progress/state.json, LOG.md and CHECKPOINT.md for065 blocker.
+- Verified build/test: scripts/verify.ps1 at064 locked restore/build0warnings/errors;88unit+441integration+3fake-flow=532passed. dotnet test --filter Providers --no-build12matching integration passed.
+- Runtime blockers / waiting on user:026/030 multi-monitor hardware;059 live OpenAI GUI/attended acceptance;065 live Claude/OpenAI E2E-10 access/API credit authorization. Optional question pending whether to configure protected profiles now or continue independent MCP. No live calls or native effects.
+- Decisions: local SDK/contracts do not prove live model outcomes. Continue independent work under user's original instruction; keep all FDD Drafts.
+- Next instruction: run taskctl next; inspect in_progress first; next066 MCP connection configuration.
