@@ -995,3 +995,22 @@ synthetic title does not appear in request instructions. This completes PA-059's
 live read-only acceptance; full autonomous app opening/input and notification
 business scenarios remain separate. AttendedPauseTests verifies the fixture's
 Pausing-state handoff and explicit boundary/resume, using no native/API calls.
+
+### PA-074 deterministic hybrid MCP + GUI
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter FullyQualifiedName~HybridMcpGuiTests
+```
+
+Five account-free cases compose actual MainWindow/XAML commands, Core runner,
+MAF, common tool registry, loopback Jira MCP, WindowsComputerController and SQLite.
+A scripted model and in-memory Teams/native adapters supply synthetic GUI pixels
+and record input; no real screen is read and no native input is sent.
+Both GUI → MCP and MCP → GUI retain one run, correlated calls, typed source links
+and reopened history. The latter uses a fixture warning/admission/idle policy and
+actual pause/Resume commands: MCP holds no desktop lease and GUI waits for explicit
+fixture consent. Cancel at that point touches no desktop. Remote error/timeout
+after GUI keeps XAML and durable Blocked results consistent, releases the lease
+and does not replay the read. This covers deterministic E2E-02/E2E-05 composition;
+physical idle detection, corporate accounts and notification delivery remain
+separate. Default production model tool exposure remains closed.

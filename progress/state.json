@@ -803,14 +803,15 @@
                                        "attempts":  1
                                    },
                         "PA-074":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T12:23:37.0079928+00:00",
+                                       "completed_at":  "2026-10-19T12:32:12.0667539+00:00",
                                        "evidence":  [
-
+                                                        "HybridMcpGuiTests actual App/XAML/Core/MAF/common registry/local SDK/controller/SQLite: both tool orders, single Run, typed provenance and reopen, late fixture warning/idle admission with actual Resume, cancellation, remote error/timeout and lease release without replay. FDD004 S3 local PASS; full physical/corporate/notification acceptance separate; all Draft. Default task tool exposure unchanged.",
+                                                        "Verification: HybridMcpGuiTests:5passed; scripts/verify.ps1 locked restore/build0warnings/errors,88unit+521integration+3localfake=612passed; FDD actual diff reviewed; git diff --check and doctor passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-075":  {
                                        "status":  "pending",
@@ -1323,6 +1324,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-073",
-    "updated_at":  "2026-10-19T12:23:17.6070728+00:00"
+    "last_task_id":  "PA-074",
+    "updated_at":  "2026-10-19T12:32:12.0777534+00:00"
 }
