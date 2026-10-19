@@ -39,6 +39,13 @@ and MVP release gate remain unverified until their own backlog tasks are complet
 
 ## MAF runtime adapter (PA-049)
 
+PA-061: `--filter AnthropicCapability` runs eleven actual SDK cases for capability
+preflight, tool_use/result correlation, base64 PNGs and fresh post-click geometry,
+cache-inclusive usage, incomplete/refused stop reasons, and synthetic capability
+probes (including failed vision). WindowsComputerController uses fake native I/O;
+no screen or live model is accessed. Existing shared runtime contracts already
+support these mappings, so this slice adds evidence without production changes.
+
 PA-060: `--filter AnthropicModelProvider` exercises official `Anthropic` 12.58.0
 with the existing pinned MAF/MEAI packages. Eighteen local HTTP/SDK cases cover
 fixed endpoint and protected credential, alias resolution, profile validation,

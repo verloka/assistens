@@ -193,8 +193,13 @@ public sealed class AnthropicModelProviderTests
     internal sealed class Handler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> send) : HttpMessageHandler
     {
         public int Calls;
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
-        { Calls++; return send(request, ct); }
+        public Exception? Failure;
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            Calls++;
+            try { return await send(request, ct); }
+            catch (Exception exception) { Failure = exception; throw; }
+        }
     }
     internal sealed class Secrets(string? value = SyntheticKey, bool throws = false) : ISecretStore
     {

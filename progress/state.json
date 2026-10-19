@@ -660,14 +660,15 @@
                                        "attempts":  1
                                    },
                         "PA-061":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T07:26:41.0025500+00:00",
+                                       "completed_at":  "2026-10-19T07:29:18.4314190+00:00",
                                        "evidence":  [
-
+                                                        "AnthropicCapabilityTests: actual pinned SDK supports tool_use/result correlation, base64 PNG fresh observation geometry, model selection, cache-inclusive usage, stop reasons and synthetic capability probes; existing neutral gates reject incompatible Claude profile before secrets/network. No production code duplication. FDD scoped PASS; live/native business E2E untested/Draft.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --filter AnthropicCapability --no-restore:11passed; scripts/verify.ps1 locked restore/build0warnings/errors;88unit+424integration+3fake-flow=515passed; git diff --check and taskctl doctor passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-062":  {
                                        "status":  "pending",
@@ -1310,6 +1311,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-060",
-    "updated_at":  "2026-10-19T07:26:39.7124801+00:00"
+    "last_task_id":  "PA-061",
+    "updated_at":  "2026-10-19T07:29:18.4404300+00:00"
 }
