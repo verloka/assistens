@@ -693,14 +693,15 @@
                                        "attempts":  1
                                    },
                         "PA-064":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T07:42:26.9091140+00:00",
+                                       "completed_at":  "2026-10-19T07:45:31.9780243+00:00",
                                        "evidence":  [
-
+                                                        "ProvidersContractTests: ten new parameterized actual OpenAI/Anthropic SDK cases with identical assertions for computer screenshot/click/fresh PNG/result, usage, registry metadata and event correlation, cancellation, step/token limits and malformed arguments without retry; only synthetic wire codecs differ. FDD scoped PASS; no production changes or live E2E claim.",
+                                                        "Verification: dotnet test --filter Providers --no-build:12matching integration tests passed; no matching unit/E2E tests. scripts/verify.ps1 locked restore/build0warnings/errors;88unit+441integration+3fake-flow=532passed. Diff/doctor passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-065":  {
                                        "status":  "pending",
@@ -1313,6 +1314,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-063",
-    "updated_at":  "2026-10-19T07:42:25.5477309+00:00"
+    "last_task_id":  "PA-064",
+    "updated_at":  "2026-10-19T07:45:31.9880250+00:00"
 }

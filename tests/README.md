@@ -39,6 +39,14 @@ and MVP release gate remain unverified until their own backlog tasks are complet
 
 ## MAF runtime adapter (PA-049)
 
+PA-064: `dotnet test --filter Providers --no-build` runs the shared provider
+contract matrix (ten new parameterized cases plus matching existing provider/UI
+tests). OpenAI and Anthropic use identical assertions for the screenshot/click/
+fresh-PNG/result sequence, correlated events/source metadata/usage, cancellation,
+step/token limits and malformed arguments without retry. Only the synthetic HTTP
+wire codec differs; both actual SDKs, MAF and real controller/fake native I/O are
+used. No live account, desktop input or model-semantic acceptance is claimed.
+
 PA-063: ModelProfilesTests also covers the actual Continue selected conversation
 checkbox across an OpenAI-to-Claude scripted-provider switch. A new run/client/MAF
 session receives only bounded neutral User/Assistant messages and the last
