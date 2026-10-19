@@ -18,6 +18,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<McpConnectionRow> McpConnections => Set<McpConnectionRow>();
     public DbSet<ApprovalRequestRow> ApprovalRequests => Set<ApprovalRequestRow>();
     public DbSet<ToolCallRow> ToolCalls => Set<ToolCallRow>();
+    public DbSet<ScheduleRow> Schedules => Set<ScheduleRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -30,6 +31,20 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         connections.HasKey(row => row.Id);
         connections.Property(row => row.ProfileJson).IsRequired();
         var utcTicks = new ValueConverter<DateTimeOffset, long>(value => value.UtcTicks, ticks => new DateTimeOffset(ticks, TimeSpan.Zero));
+        var schedules = model.Entity<ScheduleRow>();
+        schedules.ToTable("Schedules", table =>
+        {
+            table.HasCheckConstraint("CK_Schedules_Version", "Version >= 0 AND PayloadSchemaVersion > 0");
+            table.HasCheckConstraint("CK_Schedules_Mode", "Mode IN ('Once','Interval','Daily','Weekdays')");
+        });
+        schedules.HasKey(row => row.Id);
+        schedules.HasOne<TaskDefinitionRow>().WithMany().HasForeignKey(row => row.TaskDefinitionId).OnDelete(DeleteBehavior.Restrict);
+        schedules.HasIndex(row => new { row.Enabled, row.NextRunAtUtc });
+        schedules.Property(row => row.Mode).HasConversion<string>();
+        schedules.Property(row => row.Version).IsConcurrencyToken().ValueGeneratedNever();
+        schedules.Property(row => row.CreatedAtUtc).HasConversion(utcTicks);
+        schedules.Property(row => row.UpdatedAtUtc).HasConversion(utcTicks);
+        schedules.Property(row => row.NextRunAtUtc).HasConversion(utcTicks);
         var calls = model.Entity<ToolCallRow>();
         calls.ToTable("ToolCalls", table =>
         {

@@ -912,14 +912,15 @@
                                        "attempts":  1
                                    },
                         "PA-084":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-19T13:22:50.9606680+00:00",
+                                       "completed_at":  "2026-10-19T13:31:43.6969191+00:00",
                                        "evidence":  [
-
+                                                        "Core ScheduleDefinition/ScheduleRecurrence strict bounded parser and deterministic ScheduleCalculator for once/positive-minute interval/daily/selected weekdays with UTC+timezone and creation anchor. SQLite Schedules migration20261019132613 references existing TaskDefinitions; atomic versioned template/schedule save, computed NextRunAtUtc, due occurrence preserved on same-cadence edit, disable/re-enable keeps identity/anchor. Invalid/conflicting/unknown config/timezone/past enabled once refused without partial rows; concurrent version winner and unknown/corrupt stored data refusal. FDD003 scoped PASS; timer/queue/editor/DST-misfire matrix separate, all Draft.",
+                                                        "Verification: ScheduleCalculatorTests13+ScheduleRepositoryTests10passed; final scripts/verify.ps1 locked restore/build0warnings/errors;116unit+591integration+3localfake=710passed. EF no pending model changes; doctor/diff/FDD semantic review passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-085":  {
                                        "status":  "pending",
@@ -1332,6 +1333,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-083",
-    "updated_at":  "2026-10-19T13:22:49.0069650+00:00"
+    "last_task_id":  "PA-084",
+    "updated_at":  "2026-10-19T13:31:43.7069309+00:00"
 }

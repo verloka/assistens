@@ -22,6 +22,7 @@ Status: Draft
 
 ## Validations
 - Schedule enabled; timezone valid; occurrence unique; active/idle Windows state; user priority; execution and communication permissions.
+- Recurrence data supports only once, positive whole-minute interval, daily local time and explicit weekdays. Invalid or conflicting fields/timezones are refused before storage. Store UTC occurrence timestamps plus the chosen timezone; interval cadence is anchored to creation. Schedule edits use an expected version; saving unchanged cadence does not silently skip an already due occurrence.
 
 ## Invariants
 - A scheduled GUI task cannot silently steal the keyboard during active user work when idle policy is enabled.
@@ -44,6 +45,7 @@ Status: Draft
 
 ## Implementation References
 - Planned: `docs/DEVELOPMENT_PLAN_v1.1.md` §§9–10; backlog PR-11 and PR-14.
+- PA-084 foundation: ScheduleDefinition/ScheduleRecurrence parse bounded strict configuration for once, whole-minute interval, daily local time and selected weekdays; conflicting/unknown/duplicate fields and invalid timezone refuse storage. ScheduleCalculator returns the strict next UTC instant with immutable creation anchor for intervals. Local gap occurrences are skipped and folded wall time selects the earliest instant once; dedicated DST/misfire coverage follows086. SqliteScheduleRepository stores one Schedules table referencing existing TaskDefinitions, computes NextRunAtUtc, saves both in one versioned transaction, preserves due occurrences on unchanged-cadence edits, and supports disable/re-enable without deleting task/anchor. Unknown stored schema/corrupt next occurrence fails closed. [test: tests/PersonalAgent.UnitTests/ScheduleCalculatorTests.cs] [test: tests/PersonalAgent.IntegrationTests/ScheduleRepositoryTests.cs] verify calculator/parser, all modes/reopen, no partial invalid save, concurrent version winner, cadence preservation and shared template disable. No timer, queue, model/tool invocation or desktop access is introduced; scheduler085/editor087 and complete S1-S3 remain untested/Draft.
 
 - Submission deduplication foundation (PA-022): `SubmitTaskCommand.ExternalKey` accepts a namespaced trigger key; `TaskRunCoordinator` and `SqliteRunRepository` bind it to an execution-intent hash and a unique persisted run. `tests/PersonalAgent.IntegrationTests/PersistenceIdempotencyTests.cs` verifies competing occurrence keys, reopen/redelivery, payload conflicts and no repeated completed execution. Scheduler/timezone/countdown/outbox integration is not implemented; complete S1-S3 remain `[untested]`.
 

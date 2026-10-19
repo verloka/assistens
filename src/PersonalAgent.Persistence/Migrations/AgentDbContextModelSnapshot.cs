@@ -263,6 +263,60 @@ namespace PersonalAgent.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ScheduleRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("NextRunAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PayloadSchemaVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RecurrenceJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TaskDefinitionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UpdatedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskDefinitionId");
+
+                    b.HasIndex("Enabled", "NextRunAtUtc");
+
+                    b.ToTable("Schedules", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Schedules_Mode", "Mode IN ('Once','Interval','Daily','Weekdays')");
+
+                            t.HasCheckConstraint("CK_Schedules_Version", "Version >= 0 AND PayloadSchemaVersion > 0");
+                        });
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.TaskDefinitionRow", b =>
                 {
                     b.Property<Guid>("Id")
@@ -482,6 +536,15 @@ namespace PersonalAgent.Persistence.Migrations
                     b.HasOne("PersonalAgent.Persistence.Entities.TaskRunRow", null)
                         .WithMany()
                         .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ScheduleRow", b =>
+                {
+                    b.HasOne("PersonalAgent.Persistence.Entities.TaskDefinitionRow", null)
+                        .WithMany()
+                        .HasForeignKey("TaskDefinitionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
