@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-074 (deterministic hybrid MCP + GUI).
-- Current task: none; next PA-075 live corporate read smoke.
-- Modified files: HybridMcpGuiTests; tests README; FDD004 S3/index; progress state/log/checkpoint.
-- Verified build/test: scripts/verify.ps1 locked restore/build0warnings/errors;88unit+521integration+3localfake=612passed. Targeted HybridMcpGuiTests5passed. Actual diff/FDD scenario references/doctor/diff checks passed.
-- Decisions: one actual App/Core/MAF/registry/SQLite Run with local Jira MCP and synthetic Teams/native GUI, both orders; fixture consent/idle warning before late desktop use; actual Dashboard Resume; cancellation and UI/durable remote-error/timeout no replay. Production default task tool gate stays closed pending policy integration. No native input/capture or real corporate account in074; no physical idle or notification acceptance inferred. All flows Draft.
-- Runtime blockers:065 Claude explicitly deferred;026/030 multi-monitor hardware.075 requires approved corporate MCP endpoint/rights, none configured so far.059 actual attended OpenAI read-only acceptance already done (run E7ADDF79-827F-4C2C-8993-DE169FCFA985); no setup question pending.
-- Next instruction: run taskctl next, inspect in_progress first; inspect075 environment without exposing secrets, block with read-only setup instruction if unavailable, then continue independent076 security model.
+- Last completed task: PA-074; latest considered task075 blocked on corporate access.
+- Current task: none; next PA-076 security policy model.
+- Modified files: progress state/log/checkpoint only for075.
+- Verified build/test: previous074 scripts/verify.ps1 locked restore/build0warnings/errors;88unit+521integration+3localfake=612passed.075 read-only normal SQLite inspection found no MCP table/0saved connections; no live call attempted.
+- Runtime blockers:075 no approved Jira/ADO MCP endpoint/credentials/org authorization/test ticket. Configure exact trusted destination in MCP editor, protected credential there, read-only pinned tool; explicitly permit ticket read/model data handling, then verify typed real source/result/history with controlled acceptance. Never put credential in chat.065 Claude deferred;026/030 multi-monitor hardware.
+- Decisions: all flows Draft; fake/local hybrid acceptance does not substitute corporate smoke. Default task tool exposure closed until production policy integration.059 actual attended OpenAI read-only acceptance done; no repeated setup request.
+- Next instruction: taskctl next/start076; inspect existing ToolRiskLevel/ToolExecutionContext/ToolRegistry and MCP grants before adding minimal neutral policy model; follow FDD005 and reverse001/004/003/007/006, preserve existing boundaries.

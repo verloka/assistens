@@ -814,14 +814,14 @@
                                        "attempts":  1
                                    },
                         "PA-075":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-19T12:32:25.7241864+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "No approved corporate Jira/Azure DevOps MCP endpoint, protected credentials, organizational read authorization or test ticket provided. Read-only SQLite inspection: no McpConnections table,0saved connections. To unblock: configure trusted destination in MCP UI, supply protected credential there (never chat), explicitly authorize one read-only ticket and its model data handling, review/pin only read tool; run controlled smoke and verify typed source URL. No corporate calls/writes performed. Independent076 can proceed.",
+                                       "attempts":  1
                                    },
                         "PA-076":  {
                                        "status":  "pending",
@@ -1324,6 +1324,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-074",
-    "updated_at":  "2026-10-19T12:32:12.0777534+00:00"
+    "last_task_id":  "PA-075",
+    "updated_at":  "2026-10-19T12:32:47.7811415+00:00"
 }
