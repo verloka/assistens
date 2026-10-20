@@ -1110,14 +1110,15 @@
                                        "attempts":  1
                                    },
                         "PA-102":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T15:30:26.7103119+00:00",
+                                       "completed_at":  "2026-10-20T15:35:44.7390679+00:00",
                                        "evidence":  [
-
+                                                        "ChannelsAcceptanceTests adds only fake Discord adapter/DI and three controlled integration journeys. Actual hosted common task/SQLite/configurations/outbox routes duplicate Discord input to one runtime invocation and independent Discord plus scripted Telegram deliveries through DNS failure/restart/redelivery with unchanged result. Second adapter maps common owner/version pause/resume/cancel; foreign/stale actor refused and unsupported actions remove tokens. Actual Core/MAF/loopback MCP pending approval passes outbox DNS retry -\u003e sendMessage buttons -\u003e foreign/valid/duplicate callback getUpdates -\u003e durable offset13/restart -\u003e one acknowledged effect. git diff in Core/Computer/Agent is empty for PA-102. FDD006 S4/E2E09 controlled local PASS, reverse001/002/003/005/007 preserved and all Draft; no live channels/native/corporate/paid acceptance.",
+                                                        "Verification: dotnet test --filter Channels --no-restore -v minimal: 3 new integration cases passed; Unit/E2E projects report no matching cases (not treated as executed). dotnet test tests/PersonalAgent.IntegrationTests --no-build --filter Channel|Telegram|Notification -v minimal: 120 passed. Solution rebuilt successfully by requested command; baseline full verify895passed at PA-101, no production changes in102. Doctor/diff/scenario and test-reference checks pass."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-103":  {
                                        "status":  "pending",
@@ -1350,6 +1351,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-101",
-    "updated_at":  "2026-10-20T15:29:38.3176652+00:00"
+    "last_task_id":  "PA-102",
+    "updated_at":  "2026-10-20T15:35:44.7530553+00:00"
 }
