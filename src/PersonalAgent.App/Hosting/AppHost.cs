@@ -75,6 +75,7 @@ public static class AppHost
                 services.AddSingleton<IMcpConnectionRepository>(provider => new SqliteMcpConnectionRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IApprovalRepository>(provider => new SqliteApprovalRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IChannelBindingRepository>(provider => new SqliteChannelBindingRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
+                services.AddSingleton<IChannelCursorRepository>(provider => new SqliteChannelCursorRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<ChannelOwnershipPolicy>();
                 services.AddSingleton<IChannelAccessPolicy>(provider => provider.GetRequiredService<ChannelOwnershipPolicy>());
                 services.AddSingleton<ChannelOwnerCommands>();

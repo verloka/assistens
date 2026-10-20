@@ -20,6 +20,8 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 
 ## Unmapped Entry Points
 
+- `src/PersonalAgent.Channels.Telegram/TelegramPollingReceiver.cs` maps to FDD-006 S9/S10 and reverse FDD-001/003/007; owner/approval boundaries FDD-005 are preserved. Explicit long polling, durable receive cursor and common external-update identity cover duplicate/restart acceptance without a webhook. TelegramPollingTests exercises scripted HTTP with actual SQLite/App/owner policy, including failed acceptance and cursor persistence, bounded retries and cancellation. No automatic network worker, outbound write, action authorization or new tool grant; real Telegram remains untested. All Draft.
+
 - `src/PersonalAgent.Core/Application/ChannelMessageRouter.cs` maps to FDD-006 and reverse FDD-001/003/007 plus FDD-005 boundaries: versioned neutral adapter envelopes, bound channel/connection identity, explicit sender/route policy, common plain task submission/external dedup and capability-aware one-attempt outbound routing. App DI defaults to no adapters/no approved peer bindings; no network worker or model/tool grant is enabled. ChannelContractTests covers fake Telegram/second adapter with actual App/Core/SQLite; real Telegram/outbox/approval callbacks remain subsequent scope. All Draft.
 - `ChannelOwnershipPolicy`/`ChannelOwnerCommands` map to FDD-006/FDD-005: metadata-only Pending pairing, explicit local owner CAS review, exact peer allowlist and fresh owner authentication before task controls/approval. No body/token can approve a binding or supply actor identity. ChannelOwnershipTests uses real SQLite/Core/MAF/local MCP with synthetic peers; WPF review101 and Telegram callback099 remain separate, all Draft.
 

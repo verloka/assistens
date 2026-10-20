@@ -1033,14 +1033,15 @@
                                        "attempts":  1
                                    },
                         "PA-095":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T09:14:17.9201784+00:00",
+                                       "completed_at":  "2026-10-20T09:30:08.3772270+00:00",
                                        "evidence":  [
-
+                                                        "TelegramPollingReceiver; SQLite ChannelCursors migration20261020092502; TelegramPollingTests actual App/Core/SQLite with scripted HTTP; FDD006 S9/S10 scoped PASS, reverse001/003/005/007 preserved Draft",
+                                                        "Verification: scripts/verify.ps1: locked restore, build 0 warnings/errors,124 unit+685 integration+3 local fake=812 passed; targeted initial11 passed, final includes16 new; EF no pending model changes; doctor/diff pass"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-096":  {
                                        "status":  "pending",
@@ -1343,6 +1344,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-094",
-    "updated_at":  "2026-10-20T09:14:15.8329538+00:00"
+    "last_task_id":  "PA-095",
+    "updated_at":  "2026-10-20T09:30:08.3892250+00:00"
 }

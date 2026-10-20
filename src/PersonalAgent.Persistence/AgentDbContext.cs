@@ -21,9 +21,14 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<ToolCallRow> ToolCalls => Set<ToolCallRow>();
     public DbSet<ScheduleRow> Schedules => Set<ScheduleRow>();
     public DbSet<ChannelBindingRow> ChannelBindings => Set<ChannelBindingRow>();
+    public DbSet<ChannelCursorRow> ChannelCursors => Set<ChannelCursorRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        var cursors = model.Entity<ChannelCursorRow>();
+        cursors.ToTable("ChannelCursors", table => table.HasCheckConstraint("CK_ChannelCursors_Position", "NextSequence >= 0 AND Version >= 0 AND PayloadSchemaVersion > 0"));
+        cursors.HasKey(row => new { row.ChannelId, row.ConnectionId });
+        cursors.Property(row => row.Version).IsConcurrencyToken().ValueGeneratedNever();
         var profiles = model.Entity<ModelProfileRow>();
         profiles.ToTable("ModelProfiles");
         profiles.HasKey(row => row.Id);

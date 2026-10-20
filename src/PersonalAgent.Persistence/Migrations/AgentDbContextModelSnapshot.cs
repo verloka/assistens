@@ -185,6 +185,32 @@ namespace PersonalAgent.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ChannelCursorRow", b =>
+                {
+                    b.Property<string>("ChannelId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConnectionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("NextSequence")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PayloadSchemaVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("ChannelId", "ConnectionId");
+
+                    b.ToTable("ChannelCursors", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ChannelCursors_Position", "NextSequence >= 0 AND Version >= 0 AND PayloadSchemaVersion > 0");
+                        });
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.ConversationMessageRow", b =>
                 {
                     b.Property<Guid>("Id")
