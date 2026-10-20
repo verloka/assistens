@@ -9,6 +9,7 @@ using PersonalAgent.Core.Computer;
 using PersonalAgent.Core.Security;
 using PersonalAgent.Persistence;
 using PersonalAgent.Mcp;
+using PersonalAgent.Computer;
 using System.IO;
 using System.Security.Principal;
 
@@ -43,6 +44,7 @@ public static class AppHost
             services.AddSingleton<McpConnectionManager>();
             services.AddSingleton<ControlPanelViewModel>();
             services.AddSingleton<ControlWindow>();
+            services.AddSingleton<ISystemIdleSource, WindowsSystemIdleSource>();
             services.AddSingleton<IDesktopAccessCoordinator>(provider => new DesktopAccessCoordinator(beforeAcquire:
                 (id, ct) => provider.GetService<ScheduledDesktopGate>()?.WaitAsync(id, ct) ?? Task.CompletedTask));
             services.AddSingleton<TaskRunCoordinator>();

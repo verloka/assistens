@@ -117,6 +117,75 @@ public sealed class ScheduledDesktopTests
     }
 
     [Fact]
+    public async Task BusyInputKeepsDefaultPolicyClosedUntilIdleThresholdAndCountdownBothPermit()
+    {
+        var idle = new Idle { Snapshot = new(true, TimeSpan.Zero) };
+        await using var fixture = await Fixture.Create(ScheduledDesktopPolicy.StartWhenIdle, idle: idle);
+        var warning = await fixture.Warning(); fixture.Gate.Present(warning.Id); fixture.Clock.Advance(TimeSpan.FromSeconds(15));
+        await Task.Delay(350); fixture.NoGui();
+        idle.Snapshot = new(true, TimeSpan.FromSeconds(59)); await Task.Delay(350); fixture.NoGui();
+        idle.Snapshot = new(true, TimeSpan.FromSeconds(60)); await fixture.Finished(RunStatus.Completed);
+        Assert.True(idle.Reads > 1); Assert.Single(fixture.Native.Inputs);
+    }
+
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public async Task UnknownIdleOrReadFailureDoesNotAuthorizeAutomaticAccessAndLockedDesktopCannotBeOverridden(bool fail)
+    {
+        var idle = new Idle { Snapshot = new(true, null), Fail = fail };
+        await using var fixture = await Fixture.Create(ScheduledDesktopPolicy.StartWhenIdle, idle: idle);
+        var warning = await fixture.Warning(); fixture.Gate.Present(warning.Id); fixture.Clock.Advance(TimeSpan.FromMinutes(1));
+        await Task.Delay(350); fixture.NoGui();
+        idle.Fail = false; idle.Snapshot = new(false, TimeSpan.FromHours(1));
+        Assert.False(fixture.Gate.Decide(warning.Id, ScheduledDesktopDecision.StartNow)); fixture.NoGui();
+        idle.Snapshot = new(true, TimeSpan.Zero); // Deliberate Start now may override busy input on an available desktop.
+        Assert.True(fixture.Gate.Decide(warning.Id, ScheduledDesktopDecision.StartNow)); await fixture.Finished(RunStatus.Completed);
+    }
+
+    [Fact]
+    public async Task InputDuringAwaitedAdmissionWriteRequiresFreshWarningBeforeAutomaticGrant()
+    {
+        var idle = new Idle { Snapshot = new(true, TimeSpan.FromSeconds(60)) };
+        await using var fixture = await Fixture.Create(ScheduledDesktopPolicy.StartWhenIdle, idle: idle, blockAdmissionWrite: true);
+        var warning = await fixture.Warning(); fixture.Gate.Present(warning.Id); fixture.Clock.Advance(TimeSpan.FromSeconds(15));
+        await fixture.AdmissionWrite!.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5)); fixture.NoGui();
+        idle.Snapshot = new(true, TimeSpan.Zero); fixture.AdmissionWrite.Release.SetResult();
+        await Until(() => fixture.Gate.GetWarnings().SingleOrDefault()?.Id is { } id && id != warning.Id);
+        Assert.False(fixture.Gate.Decide(warning.Id, ScheduledDesktopDecision.StartNow)); fixture.NoGui();
+        idle.Snapshot = new(true, TimeSpan.FromSeconds(60)); await Task.Delay(350); fixture.NoGui();
+        var next = await fixture.Warning(); fixture.Gate.Present(next.Id); fixture.Clock.Advance(TimeSpan.FromSeconds(15));
+        await fixture.Finished(RunStatus.Completed);
+    }
+
+    [Fact]
+    public async Task LocallyAcceptedDeferDuringAutomaticAdmissionWriteIsNotLost()
+    {
+        var idle = new Idle { Snapshot = new(true, TimeSpan.FromSeconds(60)) };
+        await using var fixture = await Fixture.Create(ScheduledDesktopPolicy.StartWhenIdle, idle: idle, blockAdmissionWrite: true);
+        var warning = await fixture.Warning(); fixture.Gate.Present(warning.Id); fixture.Clock.Advance(TimeSpan.FromSeconds(15));
+        await fixture.AdmissionWrite!.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var version = fixture.Runs.GetRun(fixture.RunId).RunVersion;
+        Assert.True(fixture.Gate.Decide(warning.Id, ScheduledDesktopDecision.Defer)); fixture.AdmissionWrite.Release.SetResult();
+        await Until(() => fixture.Runs.GetRun(fixture.RunId) is { Status: RunStatus.WaitingForDesktop } current && current.RunVersion > version);
+        fixture.Clock.Advance(TimeSpan.FromMinutes(1)); await Task.Delay(350); fixture.NoGui();
+        Assert.True(fixture.Gate.GetWarnings().Single().Deferred);
+        Assert.True(fixture.Gate.Decide(warning.Id, ScheduledDesktopDecision.StartNow)); await fixture.Finished(RunStatus.Completed);
+    }
+
+    [Theory]
+    [InlineData(ScheduledDesktopDecision.SkipOnce)] [InlineData(ScheduledDesktopDecision.DisableSchedule)]
+    public async Task LocallyAcceptedSkipOrDisableDuringAutomaticAdmissionWriteHasNoGuiEffect(ScheduledDesktopDecision decision)
+    {
+        var idle = new Idle { Snapshot = new(true, TimeSpan.FromSeconds(60)) };
+        await using var fixture = await Fixture.Create(ScheduledDesktopPolicy.StartWhenIdle, idle: idle, blockAdmissionWrite: true);
+        var warning = await fixture.Warning(); fixture.Gate.Present(warning.Id); fixture.Clock.Advance(TimeSpan.FromSeconds(15));
+        await fixture.AdmissionWrite!.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(fixture.Gate.Decide(warning.Id, decision)); fixture.AdmissionWrite.Release.SetResult();
+        await fixture.Finished(RunStatus.Skipped); fixture.NoGui();
+        Assert.Equal(decision != ScheduledDesktopDecision.DisableSchedule, (await fixture.Schedules.GetAsync(fixture.Schedule.Schedule.Id))!.Schedule.Enabled);
+    }
+
+    [Fact]
     public async Task DesktopPolicyPersistsAndUnknownPolicyCannotPartiallyUpdateTask()
     {
         using var database = new TemporaryAgentDatabase(); await using (var db = database.Open()) await db.Database.MigrateAsync();
@@ -155,6 +224,29 @@ public sealed class ScheduledDesktopTests
         public override long TimestampFrequency => TimeSpan.TicksPerSecond;
         public void Advance(TimeSpan elapsed) => Interlocked.Add(ref ticks, elapsed.Ticks);
     }
+    private sealed class Idle : ISystemIdleSource
+    {
+        private SystemIdleSnapshot snapshot = new(true, null);
+        public SystemIdleSnapshot Snapshot { get => Volatile.Read(ref snapshot); set => Volatile.Write(ref snapshot, value); }
+        public volatile bool Fail;
+        public int Reads;
+        public SystemIdleSnapshot Read() { Interlocked.Increment(ref Reads); if (Fail) throw new InvalidOperationException("Synthetic native failure"); return Snapshot; }
+    }
+    private sealed class AdmissionWriteGate(IRunRepository inner) : IRunRepository
+    {
+        public TaskCompletionSource Entered = new(TaskCreationOptions.RunContinuationsAsynchronously), Release = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int held;
+        public Task CreateAsync(TaskRun run, Conversation conversation, AgentRequest request, IReadOnlyList<RunEvent> events, CancellationToken ct = default) => inner.CreateAsync(run, conversation, request, events, ct);
+        public Task<StoredRun> GetOrCreateAsync(TaskRun run, Conversation conversation, AgentRequest request, IReadOnlyList<RunEvent> events, RunSubmissionIdentity identity, CancellationToken ct = default) => inner.GetOrCreateAsync(run, conversation, request, events, identity, ct);
+        public Task<StoredRun?> GetAsync(Guid id, CancellationToken ct = default) => inner.GetAsync(id, ct);
+        public Task<IReadOnlyList<TaskRun>> ListAsync(CancellationToken ct = default) => inner.ListAsync(ct);
+        public async Task UpdateAsync(TaskRun run, long version, IReadOnlyList<RunEvent> events, AgentRunResult? result = null, CancellationToken ct = default)
+        {
+            if (run.Status == RunStatus.Running && (await inner.GetAsync(run.Id, ct))!.Run.Status == RunStatus.WaitingForDesktop && Interlocked.Exchange(ref held, 1) == 0)
+            { Entered.TrySetResult(); await Release.Task.WaitAsync(ct); }
+            await inner.UpdateAsync(run, version, events, result, ct);
+        }
+    }
     private sealed class Runtime(IServiceProvider services, bool immediateAcquire) : IAgentRuntime
     {
         public readonly ComputerToolTests.Native Native = new();
@@ -182,13 +274,16 @@ public sealed class ScheduledDesktopTests
         public IDesktopAccessCoordinator Desktop => Host.Services.GetRequiredService<IDesktopAccessCoordinator>();
         public ComputerToolTests.Native Native => runtime.Native;
         public ScheduledTask Schedule = null!; public Guid RunId; private Runtime runtime = null!;
+        public AdmissionWriteGate? AdmissionWrite;
         private CancellationTokenSource stop = new(); private Task runner = Task.CompletedTask;
-        public static async Task<Fixture> Create(ScheduledDesktopPolicy policy, bool immediateAcquire = false)
+        public static async Task<Fixture> Create(ScheduledDesktopPolicy policy, bool immediateAcquire = false, Idle? idle = null, bool blockAdmissionWrite = false)
         {
             var fixture = new Fixture(); await using (var db = fixture.Database.Open()) await db.Database.MigrateAsync();
             fixture.Host = AppHost.CreateBuilder([], fixture.Database.DatabasePath).ConfigureServices(services =>
             {
                 services.AddSingleton<TimeProvider>(fixture.Clock);
+                services.AddSingleton<ISystemIdleSource>(idle ?? new Idle());
+                if (blockAdmissionWrite) services.AddSingleton<IRunRepository>(fixture.AdmissionWrite = new(new SqliteRunRepository(fixture.Database)));
                 services.AddSingleton<IDesktopAccessCoordinator>(provider => new DesktopAccessCoordinator(_ => true,
                     (id, ct) => provider.GetRequiredService<ScheduledDesktopGate>().WaitAsync(id, ct)));
             }).Build();

@@ -15,7 +15,8 @@ public sealed class ScheduledDesktopWarningViewModel : INotifyPropertyChanged
     public string Status => Warning is null ? "Request ended. No desktop permission is granted by this window."
         : Warning.Deferred ? "Deferred. Choose Start now when ready, or skip this occurrence."
         : Warning.SecondsRemaining is null ? "Waiting for this warning to be displayed."
-        : $"Countdown: {Warning.SecondsRemaining} seconds. StartWhenIdle waits for idle evidence; AskEveryTime requires Start now.";
+        : !Warning.DesktopAvailable ? "Desktop unavailable. Start is blocked."
+        : $"Countdown: {Warning.SecondsRemaining} seconds. System input idle: {(Warning.InputIdleTime is { } idle ? $"{idle.TotalSeconds:0}s" : "unknown")} / {Warning.IdleThreshold?.TotalSeconds:0}s. AskEveryTime requires Start now.";
     public bool CanDecide => Warning?.Presented == true && !deciding;
     public AsyncCommand StartCommand { get; }
     public AsyncCommand SkipCommand { get; }
@@ -35,7 +36,7 @@ public sealed class ScheduledDesktopWarningViewModel : INotifyPropertyChanged
     {
         if (CanDecide && gate.Decide(requestId, decision)) deciding = decision != ScheduledDesktopDecision.Defer;
         Refresh(); return Task.CompletedTask;
-    }, () => CanDecide);
+    }, () => CanDecide && (decision != ScheduledDesktopDecision.StartNow || Warning!.DesktopAvailable));
     public void Presented() { gate.Present(requestId); Refresh(); }
     public void DeferOnClose() { gate.Decide(requestId, ScheduledDesktopDecision.Defer); Refresh(); }
     public void Refresh()

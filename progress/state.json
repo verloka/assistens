@@ -967,14 +967,15 @@
                                        "attempts":  1
                                    },
                         "PA-089":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T08:07:32.3715224+00:00",
+                                       "completed_at":  "2026-10-20T08:17:04.7484534+00:00",
                                        "evidence":  [
-
+                                                        "Neutral ISystemIdleSource/SystemIdleSnapshot and WindowsSystemIdleSource read active/default desktop metadata, GetLastInputInfo and GetTickCount64 only. Default StartWhenIdle requires60seconds plus presented countdown; unknown/failure denies automatic grant; unavailable desktop cannot be overridden. Post-storage idle/config recheck and locally accepted Skip/Defer/Disable veto preserved during delayed admission write. No agent-progress or in-run human detector conflation. FDD003 controlled S1/S11/S12 and002 scoped PASS;007/001/005/006 preserved, all Draft.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter ScheduledDesktopTests|WindowsSystemIdleTests:26 passed, including15new cases and actual read-only Win32 API probe (no capture/input/windows). Final powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: locked restore/build0warnings/errors;124unit+636integration+3localfake=763passed. Doctor/diff pass. Physical keyboard/focus, paid/corporate business E2E NOT TESTED."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-090":  {
                                        "status":  "pending",
@@ -1337,6 +1338,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-088",
-    "updated_at":  "2026-10-20T08:07:30.6484379+00:00"
+    "last_task_id":  "PA-089",
+    "updated_at":  "2026-10-20T08:17:04.7584561+00:00"
 }
