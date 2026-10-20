@@ -84,6 +84,9 @@ public static class AppHost
                 services.AddSingleton<IToolCallRepository>(provider => new SqliteToolCallRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IScheduleRepository>(provider => new SqliteScheduleRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
                 services.AddHostedService<RunHistoryService>();
+                services.AddSingleton<INotificationOutbox>(provider => new SqliteNotificationOutbox(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
+                services.AddSingleton<NotificationDispatcher>();
+                services.AddHostedService<NotificationDeliveryService>();
                 services.AddSingleton<ScheduleDispatcher>();
                 services.AddSingleton<ScheduledDesktopGate>();
                 services.AddHostedService<SchedulerService>();

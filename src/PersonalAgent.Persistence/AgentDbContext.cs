@@ -23,6 +23,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<ChannelBindingRow> ChannelBindings => Set<ChannelBindingRow>();
     public DbSet<ChannelCursorRow> ChannelCursors => Set<ChannelCursorRow>();
     public DbSet<ChannelActionRow> ChannelActions => Set<ChannelActionRow>();
+    public DbSet<NotificationOutboxRow> NotificationOutbox => Set<NotificationOutboxRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -43,6 +44,21 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         connections.HasKey(row => row.Id);
         connections.Property(row => row.ProfileJson).IsRequired();
         var utcTicks = new ValueConverter<DateTimeOffset, long>(value => value.UtcTicks, ticks => new DateTimeOffset(ticks, TimeSpan.Zero));
+        var outbox = model.Entity<NotificationOutboxRow>();
+        outbox.ToTable("NotificationOutbox", table =>
+        {
+            table.HasCheckConstraint("CK_NotificationOutbox_Version", "Attempts >= 0 AND Version >= 0 AND PayloadSchemaVersion > 0");
+            table.HasCheckConstraint("CK_NotificationOutbox_Status", "Status IN ('Pending','Sending','Delivered','Failed','OutcomeUnknown')");
+        });
+        outbox.HasKey(row => row.Id);
+        outbox.HasIndex(row => new { row.EventId, row.ChannelId, row.ConnectionId, row.DestinationId }).IsUnique();
+        outbox.HasIndex(row => new { row.Status, row.NextAttemptAtUtc });
+        outbox.Property(row => row.Status).HasConversion<string>();
+        outbox.Property(row => row.Version).IsConcurrencyToken().ValueGeneratedNever();
+        outbox.Property(row => row.CreatedAtUtc).HasConversion(utcTicks);
+        outbox.Property(row => row.UpdatedAtUtc).HasConversion(utcTicks);
+        outbox.Property(row => row.NextAttemptAtUtc).HasConversion(utcTicks);
+        outbox.Property(row => row.DeliveredAtUtc).HasConversion(utcTicks);
         var bindings = model.Entity<ChannelBindingRow>();
         bindings.ToTable("ChannelBindings", table =>
         {

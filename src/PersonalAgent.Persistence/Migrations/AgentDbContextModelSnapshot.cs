@@ -325,6 +325,75 @@ namespace PersonalAgent.Persistence.Migrations
                     b.ToTable("ModelProfiles", (string)null);
                 });
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.NotificationOutboxRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ChannelId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConnectionId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("DeliveredAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DestinationId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ErrorCode")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MessageJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("NextAttemptAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PayloadSchemaVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UpdatedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status", "NextAttemptAtUtc");
+
+                    b.HasIndex("EventId", "ChannelId", "ConnectionId", "DestinationId")
+                        .IsUnique();
+
+                    b.ToTable("NotificationOutbox", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_NotificationOutbox_Status", "Status IN ('Pending','Sending','Delivered','Failed','OutcomeUnknown')");
+
+                            t.HasCheckConstraint("CK_NotificationOutbox_Version", "Attempts >= 0 AND Version >= 0 AND PayloadSchemaVersion > 0");
+                        });
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.RunEventRow", b =>
                 {
                     b.Property<Guid>("Id")
