@@ -82,6 +82,23 @@ public sealed class SqliteScheduleRepository(IDbContextFactory<AgentDbContext> f
         if (scheduled is null || scheduled.Task.Id != row.TaskDefinitionId) throw new InvalidDataException("Scheduled run configuration is missing.");
         return scheduled;
     }
+    public async Task<ScheduledTask?> CoalescePendingAsync(Guid runId, long expectedScheduleVersion, DateTimeOffset observedAtUtc, CancellationToken ct = default)
+    {
+        var task = await GetForRunAsync(runId, ct);
+        if (task is null || task.Schedule.Version != expectedScheduleVersion || !task.Task.Enabled || !task.Schedule.Enabled
+            || task.Schedule.MisfirePolicy != MisfirePolicy.RunOnce || task.Schedule.NextRunAtUtc is not { } due || due > observedAtUtc) return null;
+        var next = ScheduleCalculator.Next(task.Schedule.Recurrence, task.Schedule.TimeZoneId, task.Schedule.CreatedAtUtc, observedAtUtc);
+        var prefix = ScheduleOccurrenceIdentity.Prefix(task.Schedule.Id);
+        await using var db = await factory.CreateDbContextAsync(ct);
+        var count = await db.Schedules.Where(row => row.Id == task.Schedule.Id && row.Version == expectedScheduleVersion && row.Enabled
+            && row.NextRunAtUtc == due && row.MisfirePolicy == MisfirePolicy.RunOnce
+            && db.TaskDefinitions.Any(template => template.Id == row.TaskDefinitionId && template.Enabled)
+            && db.TaskRuns.Any(run => run.Id == runId && run.TaskDefinitionId == row.TaskDefinitionId && run.Status == RunStatus.WaitingForDesktop
+                && run.SubmissionSource == ScheduleOccurrenceIdentity.PersistedSource && run.SubmissionKey!.StartsWith(prefix)))
+            .ExecuteUpdateAsync(set => set.SetProperty(row => row.NextRunAtUtc, next).SetProperty(row => row.Version, row => row.Version + 1)
+                .SetProperty(row => row.UpdatedAtUtc, observedAtUtc.ToUniversalTime()), ct);
+        return count == 1 ? task with { Schedule = task.Schedule with { NextRunAtUtc = next, Version = checked(expectedScheduleVersion + 1), UpdatedAtUtc = observedAtUtc.ToUniversalTime() } } : null;
+    }
     public async Task<Guid?> FindOccurrenceRunAsync(Guid scheduleId, DateTimeOffset occurrenceUtc, CancellationToken ct = default)
     {
         var key = ScheduleOccurrenceIdentity.Create(scheduleId, occurrenceUtc);

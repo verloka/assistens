@@ -186,6 +186,103 @@ public sealed class ScheduledDesktopTests
     }
 
     [Fact]
+    public async Task HeadlessWarningExpiresAtDefaultTtlAndCoalescesOverdueSlotsWithoutImmediateRequeue()
+    {
+        await using var fixture = await Fixture.Create(ScheduledDesktopPolicy.StartAfterCountdown);
+        var warning = await fixture.Warning(); Assert.Equal(TimeSpan.FromMinutes(30), warning.WaitRemaining);
+        fixture.Clock.Advance(TimeSpan.FromMinutes(30) - TimeSpan.FromSeconds(1)); await Task.Delay(350); fixture.NoGui();
+        Assert.Equal(warning.Id, fixture.Gate.GetWarnings().Single().Id);
+        fixture.Clock.Advance(TimeSpan.FromSeconds(1)); await fixture.Finished(RunStatus.Skipped); fixture.NoGui();
+        var stored = (await fixture.Host.Services.GetRequiredService<IRunRepository>().GetAsync(fixture.RunId))!;
+        Assert.Equal("DeferredExpired", stored.Run.ErrorCode); Assert.Contains("DeferredExpired", stored.Run.Reason);
+        Assert.False(fixture.Gate.Decide(warning.Id, ScheduledDesktopDecision.StartNow));
+        Assert.True((await fixture.Schedules.GetAsync(fixture.Schedule.Schedule.Id))!.Schedule.NextRunAtUtc > fixture.Clock.GetUtcNow());
+        Assert.Empty(await fixture.Host.Services.GetRequiredService<ScheduleDispatcher>().TickAsync());
+        Assert.Single(await fixture.Host.Services.GetRequiredService<IRunRepository>().ListAsync());
+    }
+
+    [Fact]
+    public async Task DeferAndConfigurationRefreshDoNotExtendOriginalDeadline()
+    {
+        await using var fixture = await Fixture.Create(ScheduledDesktopPolicy.StartWhenIdle);
+        var warning = await fixture.Warning(); fixture.Gate.Present(warning.Id); Assert.True(fixture.Gate.Decide(warning.Id, ScheduledDesktopDecision.Defer));
+        fixture.Clock.Advance(TimeSpan.FromMinutes(20));
+        var current = (await fixture.Schedules.GetAsync(fixture.Schedule.Schedule.Id))!;
+        await fixture.Schedules.SaveAsync(current with { Task = current.Task with { Name = "Owner rename during defer" } }, current.Schedule.Version);
+        await Until(() => fixture.Gate.GetWarnings().SingleOrDefault()?.Id is { } id && id != warning.Id);
+        var replacement = fixture.Gate.GetWarnings().Single(); Assert.Equal(TimeSpan.FromMinutes(10), replacement.WaitRemaining);
+        Assert.False(fixture.Gate.Decide(warning.Id, ScheduledDesktopDecision.StartNow));
+        fixture.Clock.Advance(TimeSpan.FromMinutes(10)); await fixture.Finished(RunStatus.Skipped); fixture.NoGui();
+        Assert.Equal("DeferredExpired", fixture.Runs.GetRun(fixture.RunId).ErrorCode);
+    }
+
+    [Fact]
+    public async Task ThirtyMissedTenMinuteChecksRemainOneWaitingRunAndOneWarningThenExecuteOneCurrentCheck()
+    {
+        var idle = new Idle { Snapshot = new(true, TimeSpan.Zero) };
+        await using var fixture = await Fixture.Create(ScheduledDesktopPolicy.StartWhenIdle, idle: idle,
+            options: new() { MaxDesktopWait = TimeSpan.FromHours(6) });
+        var warning = await fixture.Warning(); fixture.Gate.Present(warning.Id);
+        var dispatcher = fixture.Host.Services.GetRequiredService<ScheduleDispatcher>();
+        for (var index = 0; index < 30; index++)
+        {
+            fixture.Clock.Advance(TimeSpan.FromMinutes(10));
+            Assert.Equal("ScheduleRunActive", Assert.Single(await dispatcher.TickAsync()).ErrorCode);
+            Assert.Equal(warning.Id, fixture.Gate.GetWarnings().Single().Id);
+            Assert.Single(await fixture.Host.Services.GetRequiredService<IRunRepository>().ListAsync());
+        }
+        fixture.NoGui(); idle.Snapshot = new(true, TimeSpan.FromSeconds(60)); await fixture.Finished(RunStatus.Completed);
+        Assert.Single(fixture.Native.Inputs); Assert.Empty(await dispatcher.TickAsync());
+        var stored = (await fixture.Host.Services.GetRequiredService<IRunRepository>().GetAsync(fixture.RunId))!;
+        Assert.Single(stored.Events, value => value.Message.Contains("Waiting for scheduled desktop warning"));
+        Assert.Single(await fixture.Host.Services.GetRequiredService<IRunRepository>().ListAsync());
+        Assert.True((await fixture.Schedules.GetAsync(fixture.Schedule.Schedule.Id))!.Schedule.NextRunAtUtc > fixture.Clock.GetUtcNow());
+    }
+
+    [Fact]
+    public async Task ExpiryDuringAwaitedAdmissionWriteCannotGrantDesktop()
+    {
+        var idle = new Idle { Snapshot = new(true, TimeSpan.FromSeconds(60)) };
+        await using var fixture = await Fixture.Create(ScheduledDesktopPolicy.StartWhenIdle, idle: idle, blockAdmissionWrite: true,
+            options: new() { MaxDesktopWait = TimeSpan.FromMinutes(1) });
+        var warning = await fixture.Warning(); fixture.Gate.Present(warning.Id); fixture.Clock.Advance(TimeSpan.FromSeconds(15));
+        await fixture.AdmissionWrite!.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5)); fixture.NoGui();
+        fixture.Clock.Advance(TimeSpan.FromSeconds(46)); fixture.AdmissionWrite.Release.SetResult();
+        await fixture.Finished(RunStatus.Skipped); fixture.NoGui(); Assert.Equal("DeferredExpired", fixture.Runs.GetRun(fixture.RunId).ErrorCode);
+    }
+
+    [Fact]
+    public async Task CoalescingUsesVersionedPersistedWaitingIdentityAndDoesNotChangeExplicitMisfirePolicy()
+    {
+        using var database = new TemporaryAgentDatabase(); await using (var db = database.Open()) await db.Database.MigrateAsync();
+        var clock = new Clock(); var repo = new SqliteScheduleRepository(database, clock);
+        using var runs = new TaskRunCoordinator(new SqliteRunRepository(database));
+        var now = clock.GetUtcNow(); var task = new TaskDefinition { Id = Guid.NewGuid(), Name = "Coalescing fixture", Instructions = "Synthetic waiting run", ModelProfileId = "fake", CreatedAtUtc = now, UpdatedAtUtc = now };
+        var schedule = await repo.SaveAsync(new(task, new() { Id = Guid.NewGuid(), TaskDefinitionId = task.Id, Recurrence = new() { Mode = ScheduleMode.Interval, EveryMinutes = 10 }, TimeZoneId = "UTC", CreatedAtUtc = now, UpdatedAtUtc = now }));
+        clock.Advance(TimeSpan.FromMinutes(10)); await new ScheduleDispatcher(repo, runs, timeProvider: clock).TickAsync();
+        var runId = Assert.Single(runs.GetRuns()).Id; var runtime = new WaitingRuntime(runs);
+        using var stop = new CancellationTokenSource(); var running = new TaskRunner(runs, runtime).RunAsync(stop.Token);
+        try
+        {
+            await runtime.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5)); clock.Advance(TimeSpan.FromMinutes(10));
+            var current = (await repo.GetAsync(schedule.Schedule.Id))!;
+            Assert.Null(await repo.CoalescePendingAsync(Guid.NewGuid(), current.Schedule.Version, clock.GetUtcNow()));
+            var changed = await repo.SaveAsync(current with { Schedule = current.Schedule with { MisfirePolicy = MisfirePolicy.Skip } }, current.Schedule.Version);
+            Assert.Null(await repo.CoalescePendingAsync(runId, current.Schedule.Version, clock.GetUtcNow()));
+            Assert.Null(await repo.CoalescePendingAsync(runId, changed.Schedule.Version, clock.GetUtcNow()));
+            Assert.Equal(current.Schedule.NextRunAtUtc, (await repo.GetAsync(current.Schedule.Id))!.Schedule.NextRunAtUtc);
+            changed = await repo.SaveAsync(changed with { Schedule = changed.Schedule with { MisfirePolicy = MisfirePolicy.RunOnce } }, changed.Schedule.Version);
+            var attempts = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => repo.CoalescePendingAsync(runId, changed.Schedule.Version, clock.GetUtcNow())));
+            var coalesced = Assert.Single(attempts.OfType<ScheduledTask>()); Assert.True(coalesced.Schedule.NextRunAtUtc > clock.GetUtcNow());
+            runtime.Release.TrySetResult(); await runs.WaitForTerminalAsync(runId).WaitAsync(TimeSpan.FromSeconds(5));
+            var terminal = (await repo.GetAsync(changed.Schedule.Id))!; clock.Advance(TimeSpan.FromMinutes(10));
+            Assert.Null(await repo.CoalescePendingAsync(runId, terminal.Schedule.Version, clock.GetUtcNow()));
+            Assert.Equal(terminal.Schedule.NextRunAtUtc, (await repo.GetAsync(changed.Schedule.Id))!.Schedule.NextRunAtUtc);
+        }
+        finally { runtime.Release.TrySetResult(); stop.Cancel(); await running.WaitAsync(TimeSpan.FromSeconds(5)); }
+    }
+
+    [Fact]
     public async Task DesktopPolicyPersistsAndUnknownPolicyCannotPartiallyUpdateTask()
     {
         using var database = new TemporaryAgentDatabase(); await using (var db = database.Open()) await db.Database.MigrateAsync();
@@ -223,6 +320,17 @@ public sealed class ScheduledDesktopTests
         public override long GetTimestamp() => Interlocked.Read(ref ticks);
         public override long TimestampFrequency => TimeSpan.TicksPerSecond;
         public void Advance(TimeSpan elapsed) => Interlocked.Add(ref ticks, elapsed.Ticks);
+    }
+    private sealed class WaitingRuntime(TaskRunCoordinator runs) : IAgentRuntime
+    {
+        public TaskCompletionSource Entered = new(TaskCreationOptions.RunContinuationsAsynchronously), Release = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public async Task<AgentRunResult> ExecuteAsync(AgentRequest request, IProgress<AgentEvent> progress, CancellationToken ct)
+        {
+            await runs.BeginScheduledDesktopWaitAsync(request.RunId, runs.GetRun(request.RunId).RunVersion, ct); Entered.TrySetResult();
+            await Release.Task.WaitAsync(ct);
+            await runs.EndScheduledDesktopWaitAsync(request.RunId, runs.GetRun(request.RunId).RunVersion, false, ct);
+            return new() { Status = AgentResultStatus.Completed, Summary = "Synthetic waiting run completed without GUI" };
+        }
     }
     private sealed class Idle : ISystemIdleSource
     {
@@ -276,13 +384,15 @@ public sealed class ScheduledDesktopTests
         public ScheduledTask Schedule = null!; public Guid RunId; private Runtime runtime = null!;
         public AdmissionWriteGate? AdmissionWrite;
         private CancellationTokenSource stop = new(); private Task runner = Task.CompletedTask;
-        public static async Task<Fixture> Create(ScheduledDesktopPolicy policy, bool immediateAcquire = false, Idle? idle = null, bool blockAdmissionWrite = false)
+        public static async Task<Fixture> Create(ScheduledDesktopPolicy policy, bool immediateAcquire = false, Idle? idle = null, bool blockAdmissionWrite = false,
+            ScheduledDesktopOptions? options = null)
         {
             var fixture = new Fixture(); await using (var db = fixture.Database.Open()) await db.Database.MigrateAsync();
             fixture.Host = AppHost.CreateBuilder([], fixture.Database.DatabasePath).ConfigureServices(services =>
             {
                 services.AddSingleton<TimeProvider>(fixture.Clock);
                 services.AddSingleton<ISystemIdleSource>(idle ?? new Idle());
+                services.AddSingleton(options ?? new ScheduledDesktopOptions());
                 if (blockAdmissionWrite) services.AddSingleton<IRunRepository>(fixture.AdmissionWrite = new(new SqliteRunRepository(fixture.Database)));
                 services.AddSingleton<IDesktopAccessCoordinator>(provider => new DesktopAccessCoordinator(_ => true,
                     (id, ct) => provider.GetRequiredService<ScheduledDesktopGate>().WaitAsync(id, ct)));

@@ -989,14 +989,15 @@
                                        "attempts":  1
                                    },
                         "PA-091":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T08:23:30.4665236+00:00",
+                                       "completed_at":  "2026-10-20T08:35:32.3575680+00:00",
                                        "evidence":  [
-
+                                                        "MaxDesktopWait default30monotonic minutes spans missing presentation/defer/config refresh and rechecks after awaited admission. Expiry durably records Skipped/DeferredExpired with zero GUI; original shorter Run budgets unchanged. Versioned SQLite CoalescePendingAsync binds exact persisted waiting run and current schedule; RunOnce overdue future slots move beyond now before permission/skip, preserving explicit Skip/CatchUp. Existing active-run gate and stable warning ID prevent tick spam; presenter trims ended IDs. FDD003 S14/S15 controlled PASS;007/001/002/004/005/006 preserved, all Draft.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter ScheduledDesktopTests|SchedulerTests:29passed including5new cases. Thirty missed ten-minute ticks hold1Run/1warning then1action/no immediate old requeue;8coalescing CAS writers1winner; default headless expiry, unchanged deadline after edit, expiry across delayed realSQLite write and stale/Skip/unrelated/terminal refusals. Final powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 locked restore/build0warnings/errors;124unit+647integration+3localfake=774passed. No physical/paid/corporate/notification acceptance claimed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-092":  {
                                        "status":  "pending",
@@ -1339,6 +1340,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-090",
-    "updated_at":  "2026-10-20T08:23:28.8730874+00:00"
+    "last_task_id":  "PA-091",
+    "updated_at":  "2026-10-20T08:35:32.3665614+00:00"
 }

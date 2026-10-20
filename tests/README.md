@@ -1097,3 +1097,26 @@ at least hourly intervals or calendar cadence, and cannot reset its budget on
 every wake. Skip allows one minute of ordinary tick jitter. The migration keeps
 existing schedules at RunOnce and their original UTC occurrence. These checks use
 controlled clocks/local runtimes and perform no GUI, external API or notification.
+
+### PA-087..091 schedule editor, admission and deferred checks
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter "SchedulesUiTests|ScheduledDesktopTests|WindowsSystemIdleTests|SchedulerTests|HybridMcpGuiTests"
+```
+
+The editor tests load unshown XAML and real SQLite. Admission tests use the actual
+runner/registry/controller with fake native boundaries: no capture/input before
+presented countdown plus configured idle/explicit permission, and no stale owner
+decision across cancel/configuration/takeover. WindowsSystemIdleTests includes an
+actual read-only GetLastInputInfo/GetTickCount64 metadata probe; it sends no input.
+
+PA-091 bounds a pending warning to30monotonic minutes by default, including
+unpresented/deferred warnings and configuration refreshes. A shorter existing Run
+budget can end earlier. Expiration records Skipped/DeferredExpired; crossing the
+deadline during an awaited admission write still cannot grant desktop. A controlled
+six-hour window holds thirty missed ten-minute intervals as one run/warning;
+after permission it executes one current check and advances overdue RunOnce slots
+without an immediate old follow-up. Eight coalescing writers have one version
+winner; explicit Skip, unrelated and terminal runs cannot be coalesced by this path.
+Physical focus/keyboard, notification delivery and corporate/live-model acceptance
+remain separate from these deterministic fixtures.

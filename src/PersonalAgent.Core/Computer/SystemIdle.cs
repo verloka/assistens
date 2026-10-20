@@ -11,8 +11,10 @@ public interface ISystemIdleSource
 public sealed record ScheduledDesktopOptions
 {
     public TimeSpan IdleThreshold { get; init; } = TimeSpan.FromSeconds(60);
+    public TimeSpan MaxDesktopWait { get; init; } = TimeSpan.FromMinutes(30);
     public void Validate()
     {
         if (IdleThreshold <= TimeSpan.Zero || IdleThreshold > TimeSpan.FromHours(24)) throw new ArgumentOutOfRangeException(nameof(IdleThreshold));
+        if (MaxDesktopWait <= TimeSpan.Zero || MaxDesktopWait > TimeSpan.FromHours(24)) throw new ArgumentOutOfRangeException(nameof(MaxDesktopWait));
     }
 }

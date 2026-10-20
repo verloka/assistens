@@ -20,6 +20,7 @@ public sealed class ScheduledDesktopWarnings(MainWindow owner, ScheduledDesktopG
     private void Tick(object? sender, EventArgs args)
     {
         var requests = gate.GetWarnings();
+        seen.RemoveWhere(id => !requests.Any(value => value.Id == id));
         if (displayed is { } id && !requests.Any(value => value.Id == id)) window?.Close();
         if (window?.DataContext is ScheduledDesktopWarningViewModel model) model.Refresh();
         if (window is null && requests.FirstOrDefault(value => !seen.Contains(value.Id)) is { } next) Show(next.Id);

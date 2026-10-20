@@ -7,7 +7,8 @@ namespace PersonalAgent.Core.Application;
 public enum ScheduledDesktopDecision { StartNow, SkipOnce, Defer, DisableSchedule }
 public sealed record ScheduledDesktopWarning(Guid Id, Guid RunId, Guid ScheduleId, string TaskName,
     ScheduledDesktopPolicy Policy, int? SecondsRemaining, bool Deferred, bool Presented,
-    bool DesktopAvailable = false, TimeSpan? InputIdleTime = null, TimeSpan? IdleThreshold = null);
+    bool DesktopAvailable = false, TimeSpan? InputIdleTime = null, TimeSpan? IdleThreshold = null,
+    TimeSpan? WaitRemaining = null, bool AcceptingDecisions = true);
 
 // Trusted local admission, never a model tool. A warning permits resource acquisition only;
 // native session/lease/generation checks and tool permissions remain mandatory.
@@ -25,7 +26,8 @@ public sealed class ScheduledDesktopGate(TaskRunCoordinator runs, IScheduleRepos
         lock (sync) return pending.Values.Select(entry => new ScheduledDesktopWarning(entry.Id, entry.Run.Id, entry.Task.Schedule.Id,
             entry.Task.Task.Name, entry.Task.Schedule.DesktopPolicy,
             entry.PresentedAt is { } at ? Math.Max(0, (int)Math.Ceiling(15 - clock.GetElapsedTime(at).TotalSeconds)) : null,
-            entry.Deferred, entry.PresentedAt is not null, entry.Idle.DesktopAvailable, entry.Idle.InputIdleTime, settings.IdleThreshold)).ToArray();
+            entry.Deferred, entry.PresentedAt is not null, entry.Idle.DesktopAvailable, entry.Idle.InputIdleTime, settings.IdleThreshold,
+            Remaining(entry.StartedAt), !entry.Closing)).ToArray();
     }
     public bool Present(Guid id)
     {
@@ -41,7 +43,7 @@ public sealed class ScheduledDesktopGate(TaskRunCoordinator runs, IScheduleRepos
         if (decision == ScheduledDesktopDecision.StartNow && !ReadIdle().DesktopAvailable) return false;
         lock (sync)
         {
-            if (!pending.TryGetValue(id, out var entry) || entry.PresentedAt is null || entry.Decision.Task.IsCompleted) return false;
+            if (!pending.TryGetValue(id, out var entry) || entry.Closing || entry.PresentedAt is null || entry.Decision.Task.IsCompleted) return false;
             var current = runs.GetRun(entry.Run.Id);
             if (current.RunVersion != entry.Run.RunVersion || current.Status != RunStatus.WaitingForDesktop || current.PauseScope is not null) return false;
             if (decision == ScheduledDesktopDecision.Defer) { entry.Deferred = true; return true; }
@@ -54,6 +56,7 @@ public sealed class ScheduledDesktopGate(TaskRunCoordinator runs, IScheduleRepos
         if (runs.GetRun(runId).Origin.Source != ScheduleOccurrenceIdentity.Source) return;
         settings.Validate();
         await serial.WaitAsync(ct).ConfigureAwait(false);
+        var waitStarted = clock.GetTimestamp();
         try
         {
             while (true)
@@ -67,7 +70,7 @@ public sealed class ScheduledDesktopGate(TaskRunCoordinator runs, IScheduleRepos
                 TaskRun waiting;
                 try { waiting = await runs.BeginScheduledDesktopWaitAsync(runId, current.RunVersion, ct).ConfigureAwait(false); }
                 catch (RunVersionConflictException) { continue; }
-                var entry = new Entry(waiting, task) { Idle = ReadIdle() };
+                var entry = new Entry(waiting, task, waitStarted) { Idle = ReadIdle() };
                 lock (sync) pending.Add(entry.Id, entry);
                 try
                 {
@@ -86,11 +89,17 @@ public sealed class ScheduledDesktopGate(TaskRunCoordinator runs, IScheduleRepos
                         ScheduledDesktopDecision? choice = null;
                         var automatic = false;
                         var idle = ReadIdle();
+                        var expired = Remaining(waitStarted) == TimeSpan.Zero;
                         lock (sync)
                         {
                             entry.Idle = idle;
                             if (entry.Decision.Task.IsCompletedSuccessfully) choice = entry.Decision.Task.Result;
-                            else if (!entry.Deferred && idle.DesktopAvailable
+                            if (expired)
+                            {
+                                choice = choice == ScheduledDesktopDecision.DisableSchedule ? choice : ScheduledDesktopDecision.SkipOnce;
+                                entry.Closing = true; // Decisions after the TTL winner are refused, never reported as accepted and ignored.
+                            }
+                            else if (choice is null && !entry.Deferred && idle.DesktopAvailable
                                 && (task.Schedule.DesktopPolicy == ScheduledDesktopPolicy.StartAfterCountdown
                                     || task.Schedule.DesktopPolicy == ScheduledDesktopPolicy.StartWhenIdle && IsIdle(idle))
                                 && entry.PresentedAt is { } at && clock.GetElapsedTime(at) >= TimeSpan.FromSeconds(15))
@@ -104,10 +113,22 @@ public sealed class ScheduledDesktopGate(TaskRunCoordinator runs, IScheduleRepos
                                 await runs.EndScheduledDesktopWaitAsync(runId, waiting.RunVersion, false, ct).ConfigureAwait(false);
                                 break;
                             }
+                            var observed = clock.GetUtcNow();
+                            if (task.Schedule.MisfirePolicy == MisfirePolicy.RunOnce && task.Schedule.NextRunAtUtc is { } due && due <= observed)
+                            {
+                                var coalesced = await schedules.CoalescePendingAsync(runId, task.Schedule.Version, observed, ct).ConfigureAwait(false);
+                                if (coalesced is null)
+                                {
+                                    await runs.EndScheduledDesktopWaitAsync(runId, waiting.RunVersion, false, ct).ConfigureAwait(false);
+                                    break;
+                                }
+                                task = configuration = coalesced;
+                                lock (sync) entry.Task = task;
+                            }
                             if (decision == ScheduledDesktopDecision.DisableSchedule)
-                            await schedules.SaveAsync(configuration with { Schedule = configuration.Schedule with { Enabled = false } }, task.Schedule.Version, ct).ConfigureAwait(false);
+                                await schedules.SaveAsync(configuration with { Schedule = configuration.Schedule with { Enabled = false } }, task.Schedule.Version, ct).ConfigureAwait(false);
                             var skip = decision is ScheduledDesktopDecision.SkipOnce or ScheduledDesktopDecision.DisableSchedule;
-                            var continued = await runs.EndScheduledDesktopWaitAsync(runId, waiting.RunVersion, skip, ct).ConfigureAwait(false);
+                            var continued = await runs.EndScheduledDesktopWaitAsync(runId, waiting.RunVersion, skip, ct, expired).ConfigureAwait(false);
                             if (skip) throw new OperationCanceledException("Scheduled desktop occurrence skipped.", new CancellationToken(true));
                             bool veto;
                             lock (sync)
@@ -115,7 +136,7 @@ public sealed class ScheduledDesktopGate(TaskRunCoordinator runs, IScheduleRepos
                                 veto = automatic && (entry.Deferred || entry.Decision.Task.IsCompletedSuccessfully && entry.Decision.Task.Result != ScheduledDesktopDecision.StartNow);
                                 if (entry.Decision.Task.IsCompletedSuccessfully && entry.Decision.Task.Result == ScheduledDesktopDecision.StartNow) automatic = false;
                             }
-                            if (veto)
+                            if (veto || Remaining(waitStarted) == TimeSpan.Zero)
                             {
                                 // Honor a locally accepted Skip/Defer/Disable received while the admission write was awaiting storage.
                                 waiting = await runs.BeginScheduledDesktopWaitAsync(runId, continued.RunVersion, ct).ConfigureAwait(false);
@@ -124,6 +145,12 @@ public sealed class ScheduledDesktopGate(TaskRunCoordinator runs, IScheduleRepos
                             }
                             var finalConfiguration = await schedules.GetForRunAsync(runId, ct).ConfigureAwait(false);
                             var finalIdle = ReadIdle();
+                            if (Remaining(waitStarted) == TimeSpan.Zero)
+                            {
+                                waiting = await runs.BeginScheduledDesktopWaitAsync(runId, continued.RunVersion, ct).ConfigureAwait(false);
+                                lock (sync) entry.Run = waiting;
+                                continue;
+                            }
                             if (finalConfiguration?.Schedule.Version != task.Schedule.Version || !finalIdle.DesktopAvailable
                                 || automatic && task.Schedule.DesktopPolicy == ScheduledDesktopPolicy.StartWhenIdle && !IsIdle(finalIdle))
                                 break; // Input/lock during the awaited store write requires a new presented warning.
@@ -140,6 +167,11 @@ public sealed class ScheduledDesktopGate(TaskRunCoordinator runs, IScheduleRepos
         finally { serial.Release(); }
     }
     private bool IsIdle(SystemIdleSnapshot idle) => idle.InputIdleTime is { } elapsed && elapsed >= settings.IdleThreshold;
+    private TimeSpan Remaining(long started)
+    {
+        var remaining = settings.MaxDesktopWait - clock.GetElapsedTime(started);
+        return remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;
+    }
     private SystemIdleSnapshot ReadIdle()
     {
         try
@@ -149,13 +181,15 @@ public sealed class ScheduledDesktopGate(TaskRunCoordinator runs, IScheduleRepos
         }
         catch (Exception) { return new(false, null); }
     }
-    private sealed class Entry(TaskRun run, ScheduledTask task)
+    private sealed class Entry(TaskRun run, ScheduledTask task, long startedAt)
     {
         public Guid Id { get; } = Guid.NewGuid();
         public TaskRun Run { get; set; } = run;
-        public ScheduledTask Task { get; } = task;
+        public ScheduledTask Task { get; set; } = task;
+        public long StartedAt { get; } = startedAt;
         public long? PresentedAt;
         public bool Deferred;
+        public bool Closing;
         public SystemIdleSnapshot Idle = new(false, null);
         public TaskCompletionSource<ScheduledDesktopDecision> Decision { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     }

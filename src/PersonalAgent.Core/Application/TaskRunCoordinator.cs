@@ -317,12 +317,15 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             Move(change, RunStatus.WaitingForDesktop, "Waiting for scheduled desktop warning and permission");
         }, ct, expectedVersion: expectedVersion);
 
-    public Task<TaskRun> EndScheduledDesktopWaitAsync(Guid runId, long expectedVersion, bool skip, CancellationToken ct = default) =>
+    public Task<TaskRun> EndScheduledDesktopWaitAsync(Guid runId, long expectedVersion, bool skip, CancellationToken ct = default, bool expired = false) =>
         ChangeAsync(runId, change =>
         {
             if (change.Run.Origin.Source != "schedule" || change.Run.Status != RunStatus.WaitingForDesktop || change.Run.PauseScope is not null)
                 throw new InvalidOperationException("Scheduled desktop admission is no longer current.");
-            Move(change, skip ? RunStatus.Skipped : RunStatus.Running, skip ? "Scheduled desktop occurrence skipped by owner" : "Scheduled desktop warning permitted acquisition; resource checks still apply");
+            if (expired && !skip) throw new ArgumentException("An expired desktop wait cannot authorize acquisition.");
+            if (expired) change.Run = change.Run with { ErrorCode = "DeferredExpired" };
+            Move(change, skip ? RunStatus.Skipped : RunStatus.Running, expired ? "DeferredExpired: scheduled desktop wait exceeded its maximum duration"
+                : skip ? "Scheduled desktop occurrence skipped by owner" : "Scheduled desktop warning permitted acquisition; resource checks still apply");
             if (skip) { change.DesktopDrain = desktopAccess?.PauseRunAsync(runId); change.Cancel = true; change.Wake = true; }
         }, ct, expectedVersion: expectedVersion);
 

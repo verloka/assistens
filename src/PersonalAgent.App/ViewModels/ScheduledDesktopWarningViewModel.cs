@@ -13,11 +13,11 @@ public sealed class ScheduledDesktopWarningViewModel : INotifyPropertyChanged
     public string TaskName => Warning?.TaskName ?? "No pending desktop request";
     public string Policy => Warning?.Policy.ToString() ?? "";
     public string Status => Warning is null ? "Request ended. No desktop permission is granted by this window."
-        : Warning.Deferred ? "Deferred. Choose Start now when ready, or skip this occurrence."
+        : Warning.Deferred ? $"Deferred. Choose Start now when ready, or skip this occurrence. Wait expires in {Warning.WaitRemaining?.TotalMinutes:0.0} minutes."
         : Warning.SecondsRemaining is null ? "Waiting for this warning to be displayed."
         : !Warning.DesktopAvailable ? "Desktop unavailable. Start is blocked."
-        : $"Countdown: {Warning.SecondsRemaining} seconds. System input idle: {(Warning.InputIdleTime is { } idle ? $"{idle.TotalSeconds:0}s" : "unknown")} / {Warning.IdleThreshold?.TotalSeconds:0}s. AskEveryTime requires Start now.";
-    public bool CanDecide => Warning?.Presented == true && !deciding;
+        : $"Countdown: {Warning.SecondsRemaining} seconds. System input idle: {(Warning.InputIdleTime is { } idle ? $"{idle.TotalSeconds:0}s" : "unknown")} / {Warning.IdleThreshold?.TotalSeconds:0}s. Wait expires in {Warning.WaitRemaining?.TotalMinutes:0.0} minutes. AskEveryTime requires Start now.";
+    public bool CanDecide => Warning is { Presented: true, AcceptingDecisions: true } && !deciding;
     public AsyncCommand StartCommand { get; }
     public AsyncCommand SkipCommand { get; }
     public AsyncCommand DeferCommand { get; }
