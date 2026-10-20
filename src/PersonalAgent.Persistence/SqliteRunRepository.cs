@@ -174,7 +174,7 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
                 throw new ArgumentException("Events must have IDs, belong to the attempt and append contiguous sequences.");
         }
     }
-    private static void CheckSchema(TaskRunRow row)
+    internal static void CheckSchema(TaskRunRow row)
     {
         if (row.PayloadSchemaVersion != 1) throw new NotSupportedException($"Unsupported run payload schema {row.PayloadSchemaVersion}.");
     }
@@ -192,7 +192,7 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
         row.SourcesJson = JsonSerializer.Serialize(run.Sources);
         row.ResultJson = result is null ? null : JsonSerializer.Serialize(result);
     }
-    private static TaskRun ToDomain(TaskRunRow row) => new()
+    internal static TaskRun ToDomain(TaskRunRow row) => new()
     {
         Id = row.Id, TaskDefinitionId = row.TaskDefinitionId, ConversationId = row.ConversationId,
         Origin = Read<TaskOrigin>(row.OriginJson), Instructions = row.Instructions, ModelProfileId = row.ModelProfileId,

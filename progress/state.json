@@ -945,14 +945,15 @@
                                        "attempts":  1
                                    },
                         "PA-087":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T07:43:23.2301156+00:00",
+                                       "completed_at":  "2026-10-20T07:51:43.0791099+00:00",
                                        "evidence":  [
-
+                                                        "SchedulesWindow/MainWindow/SchedulesViewModel: four recurrence modes, timezone/model/misfire selection, three local+UTC trigger previews, versioned save/enable/disable. Schedule repository history queries exact occurrence namespace, excluding shared-template/manual runs. Actual unshown XAML+SQLite create/edit/disable/reopen/re-enable and revision conflict tests. Existing input snapshots and exact once fold/subsecond instant preserved. FDD003 S7/S8 scoped PASS; reverse007 and001/002/006 boundaries preserved, all Draft.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter SchedulesUiTests: 8 passed. Final powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: locked restore; build 0 warnings/errors; 121 unit+610 integration+3 local fake=734 passed. git diff --check passed. Physical countdown/idle, paid/corporate/native E2E not tested."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-088":  {
                                        "status":  "pending",
@@ -1335,6 +1336,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-086",
-    "updated_at":  "2026-10-19T13:53:15.3936260+00:00"
+    "last_task_id":  "PA-087",
+    "updated_at":  "2026-10-20T07:51:43.0891080+00:00"
 }

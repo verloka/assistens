@@ -1,0 +1,75 @@
+<Window x:Class="PersonalAgent.App.SchedulesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Schedules" Width="1040" Height="820" MinWidth="820" MinHeight="650" ShowActivated="False">
+    <DockPanel Margin="20">
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="Schedules" FontSize="24" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,8" AutomationProperties.LiveSetting="Polite" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                <Button Content="New schedule" Command="{Binding NewCommand}" Padding="12,5" />
+                <Button Content="Reload (discard edits)" Command="{Binding ReloadCommand}" Padding="12,5" Margin="8,0" />
+                <Button x:Name="ToggleScheduleButton" Content="{Binding ToggleLabel}" Command="{Binding ToggleCommand}" Padding="12,5" />
+            </StackPanel>
+        </StackPanel>
+        <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" /></Grid.ColumnDefinitions>
+            <DockPanel Margin="0,0,16,0">
+                <TextBlock DockPanel.Dock="Top" Text="Saved schedules · next trigger in UTC" Margin="0,0,0,8" />
+                <ListBox x:Name="ScheduleList" ItemsSource="{Binding Schedules}" SelectedItem="{Binding Selected}" IsEnabled="{Binding CanEdit}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="4">
+                        <TextBlock Text="{Binding Task.Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="Enabled: " /><TextBlock Text="{Binding Schedule.Enabled}" /></StackPanel>
+                        <TextBlock Text="{Binding Schedule.NextRunAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm:ss 'UTC'}}" />
+                        <TextBlock Text="{Binding Schedule.TimeZoneId}" />
+                    </StackPanel></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <StackPanel IsEnabled="{Binding CanEdit}">
+                        <Label Content="Name" Target="{Binding ElementName=ScheduleName}" />
+                        <TextBox x:Name="ScheduleName" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="256" />
+                        <Label Content="Task instructions" Target="{Binding ElementName=ScheduleInstructions}" />
+                        <TextBox x:Name="ScheduleInstructions" Text="{Binding Instructions, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="75" VerticalScrollBarVisibility="Auto" MaxLength="16384" />
+                        <Label Content="Model profile" Target="{Binding ElementName=ScheduleModel}" />
+                        <ComboBox x:Name="ScheduleModel" ItemsSource="{Binding Profiles}" DisplayMemberPath="Label" SelectedValuePath="Id" SelectedValue="{Binding ModelProfileId}" />
+                        <CheckBox Content="Enabled" IsChecked="{Binding Enabled}" Margin="0,10,0,0" />
+                        <Label Content="Recurrence" Target="{Binding ElementName=ScheduleMode}" />
+                        <ComboBox x:Name="ScheduleMode" ItemsSource="{Binding Modes}" SelectedItem="{Binding Mode}" />
+                        <Label Content="Every N minutes (Interval)" Target="{Binding ElementName=ScheduleMinutes}" />
+                        <TextBox x:Name="ScheduleMinutes" Text="{Binding EveryMinutes, UpdateSourceTrigger=PropertyChanged}" />
+                        <Label Content="Date (Once)" Target="{Binding ElementName=ScheduleOnceDate}" />
+                        <DatePicker x:Name="ScheduleOnceDate" SelectedDate="{Binding OnceDate}" />
+                        <Label Content="Local time HH:mm or HH:mm:ss (Once / Daily / Weekdays)" Target="{Binding ElementName=ScheduleTime}" />
+                        <TextBox x:Name="ScheduleTime" Text="{Binding LocalTime, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Text="Days (Weekdays)" Margin="0,8,0,4" />
+                        <ItemsControl ItemsSource="{Binding Days}">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate><DataTemplate><CheckBox Content="{Binding Day}" IsChecked="{Binding Selected}" Margin="0,0,8,4" /></DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Label Content="Timezone" Target="{Binding ElementName=ScheduleTimezone}" />
+                        <ComboBox x:Name="ScheduleTimezone" ItemsSource="{Binding TimeZones}" IsEditable="True" Text="{Binding TimeZoneId, UpdateSourceTrigger=PropertyChanged}" />
+                        <Label Content="Missed occurrences" Target="{Binding ElementName=ScheduleMisfire}" />
+                        <ComboBox x:Name="ScheduleMisfire" ItemsSource="{Binding MisfirePolicies}" SelectedItem="{Binding MisfirePolicy}" />
+                        <Label Content="CatchUp limit (1–10; intervals must be at least 60 minutes)" Target="{Binding ElementName=ScheduleCatchUp}" />
+                        <TextBox x:Name="ScheduleCatchUp" Text="{Binding MaxCatchUpRuns, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Text="Missing DST times are skipped for daily/weekday schedules; repeated times use the earliest instant once." TextWrapping="Wrap" Margin="0,8" />
+                        <Button x:Name="SaveScheduleButton" Content="Save schedule" Command="{Binding SaveCommand}" Padding="12,6" HorizontalAlignment="Left" />
+                    </StackPanel>
+                    <TextBlock Text="Stored future triggers (reload to update)" FontWeight="SemiBold" Margin="0,16,0,8" />
+                    <ItemsControl ItemsSource="{Binding FutureTriggers}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" /></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                    <TextBlock Text="Run history · this schedule only" FontWeight="SemiBold" Margin="0,16,0,8" />
+                    <ListBox x:Name="ScheduleHistory" ItemsSource="{Binding History}" MaxHeight="180" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="4">
+                            <TextBlock><Run Text="{Binding CreatedAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm:ss 'UTC'}}" /><Run Text=" · " /><Run Text="{Binding Status}" /></TextBlock>
+                            <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Reason}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding ErrorCode}" />
+                        </StackPanel></DataTemplate></ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</Window>

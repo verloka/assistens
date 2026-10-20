@@ -30,6 +30,7 @@ public static class AppHost
             services.AddSingleton<ModelProfilesViewModel>();
             services.AddSingleton<McpConnectionsViewModel>();
             services.AddSingleton<ApprovalsViewModel>();
+            services.AddSingleton<SchedulesViewModel>();
             services.AddSingleton(_ =>
             {
                 using var identity = WindowsIdentity.GetCurrent();

@@ -56,6 +56,16 @@ public sealed class SqliteScheduleRepository(IDbContextFactory<AgentDbContext> f
             orderby schedule.CreatedAtUtc, schedule.Id select new { Schedule = schedule, Task = task }).ToArrayAsync(ct);
         return rows.Select(value => Read(value.Schedule, value.Task)).ToArray();
     }
+    public async Task<IReadOnlyList<TaskRun>> ListRunsAsync(Guid scheduleId, CancellationToken ct = default)
+    {
+        var prefix = ScheduleOccurrenceIdentity.Prefix(scheduleId);
+        await using var db = await factory.CreateDbContextAsync(ct);
+        var rows = await db.TaskRuns.AsNoTracking()
+            .Where(row => row.SubmissionSource == ScheduleOccurrenceIdentity.PersistedSource && row.SubmissionKey!.StartsWith(prefix))
+            .OrderByDescending(row => row.CreatedAtUtc).ThenBy(row => row.Id).ToArrayAsync(ct);
+        foreach (var row in rows) SqliteRunRepository.CheckSchema(row);
+        return rows.Select(SqliteRunRepository.ToDomain).ToArray();
+    }
     public async Task<Guid?> FindOccurrenceRunAsync(Guid scheduleId, DateTimeOffset occurrenceUtc, CancellationToken ct = default)
     {
         var key = ScheduleOccurrenceIdentity.Create(scheduleId, occurrenceUtc);

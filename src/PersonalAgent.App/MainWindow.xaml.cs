@@ -19,18 +19,30 @@ public partial class MainWindow : Window
     private ModelProfilesWindow? models;
     private McpConnectionsWindow? mcp;
     private ApprovalsWindow? approvals;
+    private SchedulesWindow? schedules;
+    private readonly PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel;
     private readonly PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections;
     private readonly PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel;
     public MainWindow(PersonalAgent.App.ViewModels.HealthViewModel viewModel, PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections = null,
-        PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel = null)
+        PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel = null, PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel = null)
     {
         InitializeComponent();
         DataContext = viewModel;
         this.mcpConnections = mcpConnections;
         this.approvalModel = approvalModel;
+        this.scheduleModel = scheduleModel;
     }
 
     private void OpenModelsClicked(object sender, RoutedEventArgs e) => OpenModels();
+    private void OpenSchedulesClicked(object sender, RoutedEventArgs e) => OpenSchedules();
+    public void OpenSchedules()
+    {
+        if (scheduleModel is null) return;
+        if (schedules is not null) { schedules.Activate(); return; }
+        schedules = new SchedulesWindow(scheduleModel) { Owner = this };
+        schedules.Closed += (_, _) => schedules = null;
+        schedules.Show();
+    }
     private void OpenMcpClicked(object sender, RoutedEventArgs e) => OpenMcpConnections();
     private void OpenApprovalsClicked(object sender, RoutedEventArgs e) => OpenApprovals();
     public void OpenApprovals()
