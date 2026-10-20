@@ -278,6 +278,12 @@ namespace PersonalAgent.Persistence.Migrations
                     b.Property<long>("CreatedAtUtc")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("DesktopPolicy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("StartWhenIdle");
+
                     b.Property<bool>("Enabled")
                         .HasColumnType("INTEGER");
 
@@ -328,6 +334,8 @@ namespace PersonalAgent.Persistence.Migrations
 
                     b.ToTable("Schedules", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Schedules_DesktopPolicy", "DesktopPolicy IN ('StartWhenIdle','StartAfterCountdown','AskEveryTime')");
+
                             t.HasCheckConstraint("CK_Schedules_Misfire", "MisfirePolicy IN ('RunOnce','Skip','CatchUp') AND MaxCatchUpRuns BETWEEN 1 AND 10");
 
                             t.HasCheckConstraint("CK_Schedules_Mode", "Mode IN ('Once','Interval','Daily','Weekdays')");

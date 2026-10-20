@@ -21,19 +21,25 @@ public partial class MainWindow : Window
     private ApprovalsWindow? approvals;
     private SchedulesWindow? schedules;
     private readonly PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel;
+    private readonly ScheduledDesktopWarnings? desktopWarnings;
     private readonly PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections;
     private readonly PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel;
     public MainWindow(PersonalAgent.App.ViewModels.HealthViewModel viewModel, PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections = null,
-        PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel = null, PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel = null)
+        PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel = null, PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel = null,
+        PersonalAgent.Core.Application.ScheduledDesktopGate? scheduledDesktopGate = null)
     {
         InitializeComponent();
         DataContext = viewModel;
         this.mcpConnections = mcpConnections;
         this.approvalModel = approvalModel;
         this.scheduleModel = scheduleModel;
+        if (scheduledDesktopGate is not null) desktopWarnings = new(this, scheduledDesktopGate);
+        Closed += (_, _) => desktopWarnings?.Dispose();
     }
 
     private void OpenModelsClicked(object sender, RoutedEventArgs e) => OpenModels();
+    private void OpenDesktopRequestsClicked(object sender, RoutedEventArgs e) => desktopWarnings?.Open();
+    public void StartDesktopWarnings() => desktopWarnings?.Start();
     private void OpenSchedulesClicked(object sender, RoutedEventArgs e) => OpenSchedules();
     public void OpenSchedules()
     {

@@ -151,6 +151,7 @@ public sealed class SchedulerTests
     private sealed class FailedAdvance(IScheduleRepository inner) : IScheduleRepository
     {
         public Task<IReadOnlyList<TaskRun>> ListRunsAsync(Guid id, CancellationToken ct = default) => inner.ListRunsAsync(id, ct);
+        public Task<ScheduledTask?> GetForRunAsync(Guid id, CancellationToken ct = default) => inner.GetForRunAsync(id, ct);
         public TaskCompletionSource Entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public Task<ScheduledTask> SaveAsync(ScheduledTask task, long? version = null, CancellationToken ct = default) => inner.SaveAsync(task, version, ct);
         public Task<ScheduledTask?> GetAsync(Guid id, CancellationToken ct = default) => inner.GetAsync(id, ct);

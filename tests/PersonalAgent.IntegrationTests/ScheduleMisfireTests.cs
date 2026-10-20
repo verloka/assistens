@@ -76,6 +76,7 @@ public sealed class ScheduleMisfireTests
         }
         var restored = (await new SqliteScheduleRepository(database).GetAsync(id))!;
         Assert.Equal(MisfirePolicy.RunOnce, restored.Schedule.MisfirePolicy); Assert.Equal(3, restored.Schedule.MaxCatchUpRuns);
+        Assert.Equal(ScheduledDesktopPolicy.StartWhenIdle, restored.Schedule.DesktopPolicy);
         Assert.Equal(now.AddMinutes(10), restored.Schedule.NextRunAtUtc); Assert.Null(restored.Schedule.CatchUpRemaining);
     }
 

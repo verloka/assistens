@@ -1,0 +1,19 @@
+<Window x:Class="PersonalAgent.App.ScheduledDesktopWarningWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Scheduled desktop access" Width="620" SizeToContent="Height" ResizeMode="NoResize"
+        ShowActivated="False" WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="24">
+        <TextBlock Text="Scheduled task needs the desktop" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <TextBlock x:Name="WarningTaskName" Text="{Binding TaskName}" FontSize="18" TextWrapping="Wrap" Margin="0,12" />
+        <TextBlock Text="{Binding Policy}" FontWeight="SemiBold" />
+        <TextBlock x:Name="WarningCountdown" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,8" AutomationProperties.LiveSetting="Polite" />
+        <TextBlock Text="Closing this warning defers desktop access. Pause &amp; Take Control remains available at any time." TextWrapping="Wrap" Margin="0,8" />
+        <WrapPanel Margin="0,12,0,0">
+            <Button x:Name="StartScheduledDesktopButton" Content="Start now" Command="{Binding StartCommand}" Padding="12,6" Margin="0,0,8,8" />
+            <Button x:Name="SkipScheduledDesktopButton" Content="Skip once" Command="{Binding SkipCommand}" Padding="12,6" Margin="0,0,8,8" />
+            <Button x:Name="DeferScheduledDesktopButton" Content="Defer" Command="{Binding DeferCommand}" Padding="12,6" Margin="0,0,8,8" />
+            <Button x:Name="DisableScheduledDesktopButton" Content="Disable schedule" Command="{Binding DisableCommand}" Padding="12,6" Margin="0,0,8,8" />
+        </WrapPanel>
+    </StackPanel>
+</Window>

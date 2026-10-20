@@ -7,6 +7,8 @@ namespace PersonalAgent.Core.Domain;
 public enum ScheduleMode { Once, Interval, Daily, Weekdays }
 [JsonConverter(typeof(JsonStringEnumConverter<MisfirePolicy>))]
 public enum MisfirePolicy { RunOnce, Skip, CatchUp }
+[JsonConverter(typeof(JsonStringEnumConverter<ScheduledDesktopPolicy>))]
+public enum ScheduledDesktopPolicy { StartWhenIdle, StartAfterCountdown, AskEveryTime }
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record ScheduleRecurrence
@@ -62,6 +64,7 @@ public sealed record ScheduleDefinition
     public required DateTimeOffset UpdatedAtUtc { get; init; }
     public DateTimeOffset? NextRunAtUtc { get; init; }
     public MisfirePolicy MisfirePolicy { get; init; } = MisfirePolicy.RunOnce;
+    public ScheduledDesktopPolicy DesktopPolicy { get; init; } = ScheduledDesktopPolicy.StartWhenIdle;
     public int MaxCatchUpRuns { get; init; } = 3;
     public int? CatchUpRemaining { get; init; }
     public DateTimeOffset? CatchUpUntilUtc { get; init; }

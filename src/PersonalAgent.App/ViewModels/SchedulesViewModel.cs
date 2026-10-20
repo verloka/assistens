@@ -48,6 +48,7 @@ public sealed class SchedulesViewModel : INotifyPropertyChanged, IDisposable
     public ObservableCollection<ScheduleProfileChoice> Profiles { get; } = [];
     public IReadOnlyList<ScheduleMode> Modes { get; } = Enum.GetValues<ScheduleMode>();
     public IReadOnlyList<MisfirePolicy> MisfirePolicies { get; } = Enum.GetValues<MisfirePolicy>();
+    public IReadOnlyList<ScheduledDesktopPolicy> DesktopPolicies { get; } = Enum.GetValues<ScheduledDesktopPolicy>();
     public IReadOnlyList<string> TimeZones { get; } = TimeZoneInfo.GetSystemTimeZones().Select(zone => zone.Id).Order().ToArray();
     public IReadOnlyList<ScheduleDay> Days { get; } = Enum.GetValues<DayOfWeek>().Select(day => new ScheduleDay(day)).ToArray();
     public Task Initialization { get; }
@@ -83,6 +84,7 @@ public sealed class SchedulesViewModel : INotifyPropertyChanged, IDisposable
     public string TimeZoneId { get; set; } = TimeZoneInfo.Local.Id;
     public bool Enabled { get; set; } = true;
     public MisfirePolicy MisfirePolicy { get; set; }
+    public ScheduledDesktopPolicy DesktopPolicy { get; set; }
     public string MaxCatchUpRuns { get; set; } = "3";
 
     private void NewEditor()
@@ -91,6 +93,7 @@ public sealed class SchedulesViewModel : INotifyPropertyChanged, IDisposable
         Name = "New check"; Instructions = ""; ModelProfileId = "fake"; Mode = ScheduleMode.Interval;
         EveryMinutes = "10"; OnceDate = clock.GetLocalNow().Date.AddDays(1); LocalTime = "09:00";
         TimeZoneId = TimeZoneInfo.Local.Id; Enabled = true; MisfirePolicy = MisfirePolicy.RunOnce; MaxCatchUpRuns = "3";
+        DesktopPolicy = ScheduledDesktopPolicy.StartWhenIdle;
         foreach (var day in Days) day.Selected = day.Day is not (DayOfWeek.Saturday or DayOfWeek.Sunday);
         Changed(""); Refresh();
     }
@@ -104,6 +107,7 @@ public sealed class SchedulesViewModel : INotifyPropertyChanged, IDisposable
         OnceDate = once.Date; LocalTime = (recurrence.LocalTime ?? TimeOnly.FromDateTime(once.DateTime)).ToString("HH:mm:ss", CultureInfo.InvariantCulture);
         foreach (var day in Days) day.Selected = recurrence.Days.Contains(day.Day);
         MisfirePolicy = schedule.MisfirePolicy; MaxCatchUpRuns = schedule.MaxCatchUpRuns.ToString(CultureInfo.InvariantCulture);
+        DesktopPolicy = schedule.DesktopPolicy;
         if (!Profiles.Any(profile => profile.Id == ModelProfileId)) Profiles.Add(new(ModelProfileId, ModelProfileId + " (unavailable profile)"));
         if (schedule.Enabled && value.Task.Enabled && schedule.NextRunAtUtc is { } next)
         {
@@ -191,7 +195,7 @@ public sealed class SchedulesViewModel : INotifyPropertyChanged, IDisposable
             var now = clock.GetUtcNow(); var task = selected?.Task ?? new TaskDefinition { Id = Guid.NewGuid(), Name = "", Instructions = "", ModelProfileId = "fake", CreatedAtUtc = now, UpdatedAtUtc = now };
             var schedule = selected?.Schedule ?? new ScheduleDefinition { Id = Guid.NewGuid(), TaskDefinitionId = task.Id, Recurrence = new() { Mode = ScheduleMode.Interval, EveryMinutes = 10 }, TimeZoneId = TimeZoneId, CreatedAtUtc = now, UpdatedAtUtc = now };
             var draft = new ScheduledTask(task with { Name = Name.Trim(), Instructions = Instructions.Trim(), ModelProfileId = ModelProfileId },
-                schedule with { Recurrence = Recurrence(), TimeZoneId = TimeZoneId, Enabled = Enabled, MisfirePolicy = MisfirePolicy, MaxCatchUpRuns = cap });
+                schedule with { Recurrence = Recurrence(), TimeZoneId = TimeZoneId, Enabled = Enabled, MisfirePolicy = MisfirePolicy, MaxCatchUpRuns = cap, DesktopPolicy = DesktopPolicy });
             var saved = await repository!.SaveAsync(draft, selected?.Schedule.Version, lifetime.Token);
             await LoadAsync(saved.Schedule.Id); message = "Schedule saved. Existing runs retain their original instructions.";
         }

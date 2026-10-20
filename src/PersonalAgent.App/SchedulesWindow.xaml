@@ -52,6 +52,8 @@
                         <ComboBox x:Name="ScheduleTimezone" ItemsSource="{Binding TimeZones}" IsEditable="True" Text="{Binding TimeZoneId, UpdateSourceTrigger=PropertyChanged}" />
                         <Label Content="Missed occurrences" Target="{Binding ElementName=ScheduleMisfire}" />
                         <ComboBox x:Name="ScheduleMisfire" ItemsSource="{Binding MisfirePolicies}" SelectedItem="{Binding MisfirePolicy}" />
+                        <Label Content="Desktop start policy" Target="{Binding ElementName=ScheduleDesktopPolicy}" />
+                        <ComboBox x:Name="ScheduleDesktopPolicy" ItemsSource="{Binding DesktopPolicies}" SelectedItem="{Binding DesktopPolicy}" />
                         <Label Content="CatchUp limit (1–10; intervals must be at least 60 minutes)" Target="{Binding ElementName=ScheduleCatchUp}" />
                         <TextBox x:Name="ScheduleCatchUp" Text="{Binding MaxCatchUpRuns, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBlock Text="Missing DST times are skipped for daily/weekday schedules; repeated times use the earliest instant once." TextWrapping="Wrap" Margin="0,8" />

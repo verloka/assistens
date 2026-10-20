@@ -5,6 +5,45 @@ namespace PersonalAgent.UnitTests;
 public sealed class DesktopAccessTests
 {
     [Fact]
+    public async Task AsyncAdmissionDoesNotHoldResourceLockAndCannotSurviveTakeoverEvenAfterResume()
+    {
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+        var access = new DesktopAccessCoordinator(_ => true, async (_, ct) =>
+        { Interlocked.Increment(ref calls); entered.TrySetResult(); await release.Task.WaitAsync(ct); });
+        var owner = Guid.NewGuid(); var acquiring = access.AcquireAsync(owner);
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Null(access.TakeControl()); access.ResumeRun(owner); release.SetResult();
+        var error = await Assert.ThrowsAsync<DesktopAccessException>(() => acquiring);
+        Assert.Equal("DesktopPaused", error.Code); Assert.Null(access.Snapshot.OwnerRunId);
+        var fresh = await access.AcquireAsync(owner); Assert.True(access.IsCurrent(fresh)); Assert.Equal(2, calls);
+    }
+
+    [Fact]
+    public async Task QueuedAcquisitionWaitsForResourceBeforeWarningAndCancellationNeverGrants()
+    {
+        var first = Guid.NewGuid(); var second = Guid.NewGuid();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var access = new DesktopAccessCoordinator(_ => true, async (id, ct) =>
+        { if (id == second) { entered.TrySetResult(); await release.Task.WaitAsync(ct); } });
+        var lease = await access.AcquireAsync(first); using var stop = new CancellationTokenSource();
+        var acquiring = access.WaitAcquireAsync(second, stop.Token); Assert.False(entered.Task.IsCompleted);
+        await access.ReleaseAsync(lease); await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Null(access.Snapshot.OwnerRunId); stop.Cancel(); await Assert.ThrowsAnyAsync<OperationCanceledException>(() => acquiring);
+        Assert.Null(access.Snapshot.OwnerRunId);
+    }
+
+    [Fact]
+    public async Task DefaultDenialNeverInvokesPresentationHook()
+    {
+        var calls = 0; var access = new DesktopAccessCoordinator(beforeAcquire: (_, _) => { calls++; return Task.CompletedTask; });
+        await Assert.ThrowsAsync<DesktopAccessException>(() => access.AcquireAsync(Guid.NewGuid()));
+        await Assert.ThrowsAsync<DesktopAccessException>(() => access.WaitAcquireAsync(Guid.NewGuid())); Assert.Equal(0, calls);
+    }
+
+    [Fact]
     public async Task TakeControlWithoutOwnerBlocksFutureGrantsUntilExplicitResume()
     {
         var coordinator = new DesktopAccessCoordinator(_ => true);

@@ -38,7 +38,8 @@ public interface IDesktopAccessCoordinator
 
 // Local resource ownership only. Trusted admission defaults denied; no Win32/UI, idle policy or input.
 // Callers explicitly release/revoke grants; task lifecycle, idle and resume policy stay outside.
-public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : IDesktopAccessCoordinator
+public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null,
+    Func<Guid, CancellationToken, Task>? beforeAcquire = null) : IDesktopAccessCoordinator
 {
     private readonly Func<Guid, bool> admit = admit ?? (_ => false);
     private readonly object sync = new();
@@ -63,7 +64,7 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
             InputCleanupUncertain = inputCleanupUncertain, HumanControlOwnerRunId = humanControlOwner, PauseVersion = pauseVersion }; }
     }
 
-    public Task<DesktopLease> AcquireAsync(Guid runId, CancellationToken ct = default)
+    public async Task<DesktopLease> AcquireAsync(Guid runId, CancellationToken ct = default)
     {
         if (runId == Guid.Empty) throw new ArgumentException("A desktop owner requires a run ID.", nameof(runId));
         ct.ThrowIfCancellationRequested();
@@ -79,10 +80,21 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
             {
                 if (current.RunId != runId) throw new DesktopAccessException("DesktopBusy");
                 if (revoked) throw new DesktopAccessException("DesktopPaused");
-                return Task.FromResult(current);
+                return current;
             }
             if (waiters.Count > 0) throw new DesktopAccessException("DesktopBusy");
-            return Task.FromResult(Grant(runId));
+        }
+        var version = Snapshot.PauseVersion;
+        if (beforeAcquire is not null) await beforeAcquire(runId, ct).ConfigureAwait(false);
+        allowed = admit(runId);
+        lock (sync)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (inputCleanupUncertain) throw new DesktopAccessException("InputCleanupUncertain");
+            if (userControl || pausedRuns.Contains(runId) || pauseVersion != version) throw new DesktopAccessException("DesktopPaused");
+            if (!allowed) throw new DesktopAccessException("DesktopAccessDenied");
+            if (current is not null || waiters.Count > 0) throw new DesktopAccessException("DesktopBusy");
+            return Grant(runId);
         }
     }
 
@@ -98,7 +110,8 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
             {
                 // Policy may query task state: keep it outside the resource lock, including after wakeup.
                 var allowed = admit(runId);
-                Task wait;
+                Task? wait = null;
+                long version;
                 lock (sync)
                 {
                     ct.ThrowIfCancellationRequested();
@@ -108,11 +121,23 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null) : I
                     if (!userControl && !pausedRuns.Contains(runId))
                     {
                         if (current?.RunId == runId && !revoked) return current;
-                        if (current is null && ReferenceEquals(waiters.First, node)) return Grant(runId);
+                        if (current is not null || !ReferenceEquals(waiters.First, node)) wait = changed.Task;
                     }
-                    wait = changed.Task;
+                    else wait = changed.Task;
+                    version = pauseVersion;
                 }
-                await wait.WaitAsync(ct).ConfigureAwait(false);
+                if (wait is not null) { await wait.WaitAsync(ct).ConfigureAwait(false); continue; }
+                if (beforeAcquire is not null) await beforeAcquire(runId, ct).ConfigureAwait(false);
+                allowed = admit(runId);
+                lock (sync)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    if (node.Value.Cancelled) throw new OperationCanceledException("Desktop wait cancelled.", new CancellationToken(true));
+                    if (inputCleanupUncertain) throw new DesktopAccessException("InputCleanupUncertain");
+                    if (!allowed) throw new DesktopAccessException("DesktopAccessDenied");
+                    if (pauseVersion == version && !userControl && !pausedRuns.Contains(runId)
+                        && current is null && ReferenceEquals(waiters.First, node)) return Grant(runId);
+                }
             }
         }
         finally { lock (sync) { waiters.Remove(node); Pulse(); } }

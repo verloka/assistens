@@ -309,6 +309,23 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             lock (sync) if (TaskRunStateMachine.IsTerminal(Find(runId).Run.Status) || Find(runId).Executing) return false;
         }
     }
+    public Task<TaskRun> BeginScheduledDesktopWaitAsync(Guid runId, long expectedVersion, CancellationToken ct = default) =>
+        ChangeAsync(runId, change =>
+        {
+            if (change.Run.Origin.Source != "schedule" || change.Run.Status != RunStatus.Running || change.Run.PauseScope is not null)
+                throw new InvalidOperationException("Only an active scheduled run can wait for desktop admission.");
+            Move(change, RunStatus.WaitingForDesktop, "Waiting for scheduled desktop warning and permission");
+        }, ct, expectedVersion: expectedVersion);
+
+    public Task<TaskRun> EndScheduledDesktopWaitAsync(Guid runId, long expectedVersion, bool skip, CancellationToken ct = default) =>
+        ChangeAsync(runId, change =>
+        {
+            if (change.Run.Origin.Source != "schedule" || change.Run.Status != RunStatus.WaitingForDesktop || change.Run.PauseScope is not null)
+                throw new InvalidOperationException("Scheduled desktop admission is no longer current.");
+            Move(change, skip ? RunStatus.Skipped : RunStatus.Running, skip ? "Scheduled desktop occurrence skipped by owner" : "Scheduled desktop warning permitted acquisition; resource checks still apply");
+            if (skip) { change.DesktopDrain = desktopAccess?.PauseRunAsync(runId); change.Cancel = true; change.Wake = true; }
+        }, ct, expectedVersion: expectedVersion);
+
     public Task<TaskRun> BeginToolApprovalAsync(Guid runId, long expectedVersion, string toolId, CancellationToken ct = default) =>
         ChangeAsync(runId, change =>
         {

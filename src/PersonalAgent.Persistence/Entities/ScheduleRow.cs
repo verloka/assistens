@@ -16,6 +16,7 @@ public sealed class ScheduleRow
     public DateTimeOffset UpdatedAtUtc { get; set; }
     public DateTimeOffset? NextRunAtUtc { get; set; }
     public MisfirePolicy MisfirePolicy { get; set; } = MisfirePolicy.RunOnce;
+    public ScheduledDesktopPolicy DesktopPolicy { get; set; } = ScheduledDesktopPolicy.StartWhenIdle;
     public int MaxCatchUpRuns { get; set; } = 3;
     public int? CatchUpRemaining { get; set; }
     public DateTimeOffset? CatchUpUntilUtc { get; set; }

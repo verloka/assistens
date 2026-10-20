@@ -20,6 +20,8 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 
 ## Unmapped Entry Points
 
+- `src/PersonalAgent.App/ScheduledDesktopWarningWindow.xaml` and App-started ScheduledDesktopWarnings map to FDD-003/FDD-002: nonactivating local warning, 15-second presented countdown, explicit start/skip/defer/disable. Headless hosts never auto-show windows, close defers, and unknown idle evidence cannot auto-start StartWhenIdle. DesktopAccessCoordinator preserves deny-by-default and local takeover after the async callback. Actual unshown XAML/SQLite/fake native evidence is ScheduledDesktopTests; no new flow, all Draft.
+
 - `src/PersonalAgent.App/SchedulesWindow.xaml` is opened explicitly from MainWindow and maps to FDD-003 (reverse FDD-007 and dependencies FDD-001/002/006): create/edit/enable/disable, persisted future triggers and schedule-specific history. Uses existing versioned schedule storage and run identities; does not grant tools or desktop access. SchedulesUiTests covers unshown XAML/SQLite; countdown/idle and delivery remain separate. All Draft.
 
 - `src/PersonalAgent.App/ApprovalsWindow.xaml` maps to FDD-005 and reverse FDD-001/004/007: explicit nonmodal owner review of exact operation, destination, arguments and expiry; deliberate Approve or Deny. Current local Windows SID is trusted identity; opening/closing does not decide or take focus automatically. ApprovalsUiTests covers actual XAML/SQLite/local MCP decisions; no new flow is needed and all remain Draft.

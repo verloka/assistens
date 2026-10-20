@@ -956,14 +956,15 @@
                                        "attempts":  1
                                    },
                         "PA-088":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T07:52:08.8746437+00:00",
+                                       "completed_at":  "2026-10-20T08:07:30.6394382+00:00",
                                        "evidence":  [
-
+                                                        "ScheduledDesktopGate plus trusted DesktopAccessCoordinator pre-acquisition hook gates both immediate and queued leases outside resource lock. Actual App-only nonactivating warning presenter names task and starts 15 monotonic seconds only after presentation. Start/Skip/Defer/Disable, durable WaitingForDesktop and Skipped transitions, stale-revision refusal and persisted default StartWhenIdle. Migration20261020075505. FDD003 S9/S10 and002 scoped deterministic PASS;007/001/005/006 preserved, all Draft.",
+                                                        "Verification: Targeted DesktopAccessTests/TaskRunStateMachineTests:36 passed; ScheduledDesktopTests/ScheduleMisfireTests/SchedulesUiTests:24 passed including11 new integration cases. Final powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: locked restore/build0warnings/errors;124unit+621integration+3localfake=748passed. EF no pending model changes; doctor/diff pass. Actual unshown XAML/SQLite/real controller with fake native, simulated presentation; physical focus/idle, paid/corporate NOT TESTED."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-089":  {
                                        "status":  "pending",
@@ -1336,6 +1337,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-087",
-    "updated_at":  "2026-10-20T07:51:43.0891080+00:00"
+    "last_task_id":  "PA-088",
+    "updated_at":  "2026-10-20T08:07:30.6484379+00:00"
 }

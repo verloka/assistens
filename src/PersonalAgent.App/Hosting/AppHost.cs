@@ -43,7 +43,8 @@ public static class AppHost
             services.AddSingleton<McpConnectionManager>();
             services.AddSingleton<ControlPanelViewModel>();
             services.AddSingleton<ControlWindow>();
-            services.AddSingleton<IDesktopAccessCoordinator>(_ => new DesktopAccessCoordinator());
+            services.AddSingleton<IDesktopAccessCoordinator>(provider => new DesktopAccessCoordinator(beforeAcquire:
+                (id, ct) => provider.GetService<ScheduledDesktopGate>()?.WaitAsync(id, ct) ?? Task.CompletedTask));
             services.AddSingleton<TaskRunCoordinator>();
             services.AddSingleton<ISecretStore>(_ => new WindowsDpapiSecretStore(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PersonalAgent", "secrets")));
@@ -73,6 +74,7 @@ public static class AppHost
                 services.AddSingleton<IScheduleRepository>(provider => new SqliteScheduleRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
                 services.AddHostedService<RunHistoryService>();
                 services.AddSingleton<ScheduleDispatcher>();
+                services.AddSingleton<ScheduledDesktopGate>();
                 services.AddHostedService<SchedulerService>();
             }
             services.AddHostedService<TaskRunnerService>();

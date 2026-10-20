@@ -12,7 +12,8 @@ public static class TaskRunStateMachine
             or RunStatus.Paused or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Skipped,
         RunStatus.Running => to is RunStatus.WaitingForDesktop or RunStatus.WaitingForUser or RunStatus.WaitingForApproval
             or RunStatus.Pausing or RunStatus.Blocked or RunStatus.Completed or RunStatus.Failed or RunStatus.Cancelled or RunStatus.Interrupted,
-        RunStatus.WaitingForDesktop or RunStatus.WaitingForUser or RunStatus.WaitingForApproval =>
+        RunStatus.WaitingForDesktop => to is RunStatus.Running or RunStatus.Pausing or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted or RunStatus.Skipped,
+        RunStatus.WaitingForUser or RunStatus.WaitingForApproval =>
             to is RunStatus.Running or RunStatus.Pausing or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted,
         RunStatus.Pausing => to is RunStatus.Paused or RunStatus.PausedForUser or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted,
         RunStatus.Paused or RunStatus.PausedForUser => to is RunStatus.Queued or RunStatus.Running or RunStatus.Blocked or RunStatus.Cancelled or RunStatus.Failed or RunStatus.Interrupted,

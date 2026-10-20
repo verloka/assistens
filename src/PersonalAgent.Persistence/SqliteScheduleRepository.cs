@@ -38,6 +38,7 @@ public sealed class SqliteScheduleRepository(IDbContextFactory<AgentDbContext> f
         row.Mode = recurrence.Mode; row.RecurrenceJson = json; row.TimeZoneId = draft.Schedule.TimeZoneId;
         row.Enabled = draft.Schedule.Enabled; row.UpdatedAtUtc = now; row.NextRunAtUtc = next;
         row.MisfirePolicy = draft.Schedule.MisfirePolicy; row.MaxCatchUpRuns = draft.Schedule.MaxCatchUpRuns;
+        row.DesktopPolicy = draft.Schedule.DesktopPolicy;
         try { await db.SaveChangesAsync(ct); await transaction.CommitAsync(ct); }
         catch (DbUpdateConcurrencyException) { throw new ScheduleVersionConflictException(); }
         return Read(row, task);
@@ -65,6 +66,21 @@ public sealed class SqliteScheduleRepository(IDbContextFactory<AgentDbContext> f
             .OrderByDescending(row => row.CreatedAtUtc).ThenBy(row => row.Id).ToArrayAsync(ct);
         foreach (var row in rows) SqliteRunRepository.CheckSchema(row);
         return rows.Select(SqliteRunRepository.ToDomain).ToArray();
+    }
+    public async Task<ScheduledTask?> GetForRunAsync(Guid runId, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        var row = await db.TaskRuns.AsNoTracking().SingleOrDefaultAsync(row => row.Id == runId, ct);
+        if (row?.SubmissionSource != ScheduleOccurrenceIdentity.PersistedSource) return null;
+        SqliteRunRepository.CheckSchema(row);
+        var parts = row.SubmissionKey?.Split('/');
+        if (parts is not { Length: 2 } || !Guid.TryParseExact(parts[0], "N", out var id)
+            || !long.TryParse(parts[1], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var ticks)
+            || ticks <= 0 || ticks > DateTimeOffset.MaxValue.UtcTicks
+            || ScheduleOccurrenceIdentity.Create(id, new(ticks, TimeSpan.Zero)).Value != row.SubmissionKey) throw new InvalidDataException("Invalid persisted schedule identity.");
+        var scheduled = await GetAsync(id, ct);
+        if (scheduled is null || scheduled.Task.Id != row.TaskDefinitionId) throw new InvalidDataException("Scheduled run configuration is missing.");
+        return scheduled;
     }
     public async Task<Guid?> FindOccurrenceRunAsync(Guid scheduleId, DateTimeOffset occurrenceUtc, CancellationToken ct = default)
     {
@@ -102,7 +118,7 @@ public sealed class SqliteScheduleRepository(IDbContextFactory<AgentDbContext> f
         if (draft.Task is not { } task || draft.Schedule is not { } schedule || schedule.SchemaVersion != 1 || task.Id == Guid.Empty || schedule.Id == Guid.Empty
             || schedule.TaskDefinitionId != task.Id || schedule.Version < 0 || schedule.Recurrence is null
             || string.IsNullOrWhiteSpace(task.Name) || task.Name.Length > 256 || string.IsNullOrWhiteSpace(task.Instructions) || task.Instructions.Length > 16_384
-            || string.IsNullOrWhiteSpace(task.ModelProfileId) || task.ModelProfileId.Length > 256) throw new ArgumentException("Invalid scheduled task identity or configuration.");
+            || string.IsNullOrWhiteSpace(task.ModelProfileId) || task.ModelProfileId.Length > 256 || !Enum.IsDefined(schedule.DesktopPolicy)) throw new ArgumentException("Invalid scheduled task identity or configuration.");
         schedule.Recurrence.Snapshot(); ScheduleCalculator.ResolveTimeZone(schedule.TimeZoneId);
         ScheduleMisfires.Validate(schedule);
     }
@@ -114,7 +130,7 @@ public sealed class SqliteScheduleRepository(IDbContextFactory<AgentDbContext> f
                 Enabled = task.Enabled, CreatedAtUtc = task.CreatedAtUtc, UpdatedAtUtc = task.UpdatedAtUtc },
             new() { Id = row.Id, TaskDefinitionId = row.TaskDefinitionId, Recurrence = recurrence, TimeZoneId = row.TimeZoneId, Enabled = row.Enabled,
                 Version = row.Version, CreatedAtUtc = row.CreatedAtUtc, UpdatedAtUtc = row.UpdatedAtUtc, NextRunAtUtc = row.NextRunAtUtc,
-                MisfirePolicy = row.MisfirePolicy, MaxCatchUpRuns = row.MaxCatchUpRuns, CatchUpRemaining = row.CatchUpRemaining, CatchUpUntilUtc = row.CatchUpUntilUtc });
+                MisfirePolicy = row.MisfirePolicy, DesktopPolicy = row.DesktopPolicy, MaxCatchUpRuns = row.MaxCatchUpRuns, CatchUpRemaining = row.CatchUpRemaining, CatchUpUntilUtc = row.CatchUpUntilUtc });
         Validate(result);
         if (row.Mode != recurrence.Mode || row.UpdatedAtUtc < row.CreatedAtUtc
             || !row.Enabled && row.NextRunAtUtc is not null
