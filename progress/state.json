@@ -1099,14 +1099,15 @@
                                        "attempts":  1
                                    },
                         "PA-101":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T15:10:39.0187131+00:00",
+                                       "completed_at":  "2026-10-20T15:29:38.3025784+00:00",
                                        "evidence":  [
-
+                                                        "ChannelsWindow/ChannelsViewModel explicit nonmodal setup: DPAPI-only token reference; saved getMe bot ID/username test; exact numeric peer authorization and separate enable/receive choices; token/route/peer changes require new connection ID. Versioned SQLite configuration/migration20261020151723, immutable identity, active-bot uniqueness, current owner and unknown-schema refusal. Optional neutral catalog and connection policy retain static adapter compatibility; actual App configured polling/common callbacks/durable replies/outbox, cached sender denial after disable, failed poller waits for changed revision. ChannelConfigurationTests12 verify real XAML/DPAPI/SQLite, fixed private diagnostics, stale/dirty editor, eight-way CAS, migration preserving run/binding/outbox, and one hosted group-command run with two independent delivered replies/results. FDD006 S16 controlled PASS;001/002/003/005/007 preserved, all Draft. No live Telegram or corporate/paid/native acceptance.",
+                                                        "Verification: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: locked restore/build0warnings/errors;124unit+768integration+3localfake=895passed. Target channel/configuration/ownership/callback/desktop regression62passed,12new. dotnet ef migrations has-pending-model-changes --project src/PersonalAgent.Persistence --no-build: none (tool10.0.7/runtime10.0.12 notice only). FDD51test references resolve; doctor/diff pass."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-102":  {
                                        "status":  "pending",
@@ -1349,6 +1350,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-100",
-    "updated_at":  "2026-10-20T15:10:11.6380042+00:00"
+    "last_task_id":  "PA-101",
+    "updated_at":  "2026-10-20T15:29:38.3176652+00:00"
 }

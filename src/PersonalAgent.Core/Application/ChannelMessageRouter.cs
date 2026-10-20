@@ -8,10 +8,11 @@ public sealed class ChannelMessageRouter
 {
     private readonly ITaskCommands commands;
     private readonly IChannelAccessPolicy? policy;
+    private readonly IOutboundChannelCatalog? catalog;
     private readonly IReadOnlyDictionary<(string Channel, string Connection), IOutboundChannel> outbound;
-    public ChannelMessageRouter(ITaskCommands commands, IEnumerable<IOutboundChannel> outbound, IChannelAccessPolicy? policy = null)
+    public ChannelMessageRouter(ITaskCommands commands, IEnumerable<IOutboundChannel> outbound, IChannelAccessPolicy? policy = null, IOutboundChannelCatalog? catalog = null)
     {
-        this.commands = commands; this.policy = policy;
+        this.commands = commands; this.policy = policy; this.catalog = catalog;
         var channels = outbound.ToArray();
         foreach (var channel in channels)
         {
@@ -48,8 +49,10 @@ public sealed class ChannelMessageRouter
     public async Task SendAsync(OutgoingMessage message, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested(); var snapshot = message.Snapshot();
-        if (!outbound.TryGetValue((snapshot.Destination.ChannelId, snapshot.Destination.ConnectionId), out var channel)
-            || policy is null || !await policy.AllowOutboundAsync(snapshot, ct).ConfigureAwait(false)) throw new ChannelAccessDeniedException();
+        if (policy is null || !await policy.AllowOutboundAsync(snapshot, ct).ConfigureAwait(false)) throw new ChannelAccessDeniedException();
+        if (!outbound.TryGetValue((snapshot.Destination.ChannelId, snapshot.Destination.ConnectionId), out var channel))
+            channel = catalog is null ? null : await catalog.FindAsync(snapshot.Destination, ct).ConfigureAwait(false);
+        if (channel is null || channel.ChannelId != snapshot.Destination.ChannelId || channel.ConnectionId != snapshot.Destination.ConnectionId) throw new ChannelAccessDeniedException();
         if (!channel.Capabilities.SupportsActions && snapshot.Actions.Count > 0)
         {
             snapshot = snapshot with { Text = snapshot.Text + "\n\nOpen Personal Agent to review: " + string.Join(", ", snapshot.Actions.Select(action => action.Label)), Actions = [] };

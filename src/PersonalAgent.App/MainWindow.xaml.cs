@@ -20,24 +20,36 @@ public partial class MainWindow : Window
     private McpConnectionsWindow? mcp;
     private ApprovalsWindow? approvals;
     private SchedulesWindow? schedules;
+    private ChannelsWindow? channels;
+    private readonly PersonalAgent.App.ViewModels.ChannelsViewModel? channelModel;
     private readonly PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel;
     private readonly ScheduledDesktopWarnings? desktopWarnings;
     private readonly PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections;
     private readonly PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel;
     public MainWindow(PersonalAgent.App.ViewModels.HealthViewModel viewModel, PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections = null,
         PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel = null, PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel = null,
-        PersonalAgent.Core.Application.ScheduledDesktopGate? scheduledDesktopGate = null)
+        PersonalAgent.Core.Application.ScheduledDesktopGate? scheduledDesktopGate = null, PersonalAgent.App.ViewModels.ChannelsViewModel? channelModel = null)
     {
         InitializeComponent();
         DataContext = viewModel;
         this.mcpConnections = mcpConnections;
         this.approvalModel = approvalModel;
         this.scheduleModel = scheduleModel;
+        this.channelModel = channelModel;
         if (scheduledDesktopGate is not null) desktopWarnings = new(this, scheduledDesktopGate);
         Closed += (_, _) => desktopWarnings?.Dispose();
     }
 
     private void OpenModelsClicked(object sender, RoutedEventArgs e) => OpenModels();
+    private void OpenChannelsClicked(object sender, RoutedEventArgs e) => OpenChannels();
+    public void OpenChannels()
+    {
+        if (channelModel is null) return;
+        if (channels is not null) { channels.Activate(); return; }
+        channels = new ChannelsWindow(channelModel) { Owner = this };
+        channels.Closed += (_, _) => channels = null;
+        channels.Show();
+    }
     private void OpenDesktopRequestsClicked(object sender, RoutedEventArgs e) => desktopWarnings?.Open();
     public void StartDesktopWarnings() => desktopWarnings?.Start();
     private void OpenSchedulesClicked(object sender, RoutedEventArgs e) => OpenSchedules();

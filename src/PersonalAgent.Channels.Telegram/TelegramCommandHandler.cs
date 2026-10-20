@@ -103,6 +103,7 @@ public sealed class TelegramCommandHandler
         return Reply(message, "Task accepted. " + Describe(run), run);
     }
     private static string Describe(TaskRun run) => $"{run.Id:D} | {run.Status} | version {run.RunVersion.ToString(CultureInfo.InvariantCulture)}";
+    public static Guid ReplyIdentity(IncomingMessage message) => Identity(message.Snapshot(), "reply");
     private static OutgoingMessage Reply(IncomingMessage message, string text, TaskRun? run = null) => new OutgoingMessage
     {
         Id = Identity(message, "reply"), Destination = message.Route, Text = text, RunId = run?.Id, ConversationId = run?.ConversationId

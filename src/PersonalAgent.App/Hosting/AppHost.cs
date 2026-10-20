@@ -11,6 +11,7 @@ using PersonalAgent.Core.Channels;
 using PersonalAgent.Persistence;
 using PersonalAgent.Mcp;
 using PersonalAgent.Computer;
+using PersonalAgent.Channels.Telegram;
 using System.IO;
 using System.Security.Principal;
 
@@ -33,6 +34,8 @@ public static class AppHost
             services.AddSingleton<McpConnectionsViewModel>();
             services.AddSingleton<ApprovalsViewModel>();
             services.AddSingleton<SchedulesViewModel>();
+            services.AddSingleton<ChannelsViewModel>();
+            services.AddSingleton(provider => new TelegramConnectionProbe(provider.GetRequiredService<ISecretStore>(), provider.GetService<Func<System.Net.Http.HttpMessageHandler>>()?.Invoke()));
             services.AddSingleton(_ =>
             {
                 using var identity = WindowsIdentity.GetCurrent();
@@ -80,6 +83,10 @@ public static class AppHost
                 services.AddSingleton<IChannelBindingRepository>(provider => new SqliteChannelBindingRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
                 services.AddSingleton<IChannelCursorRepository>(provider => new SqliteChannelCursorRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IChannelActionRepository>(provider => new SqliteChannelActionRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddSingleton<IChannelConfigurationRepository>(provider => new SqliteChannelConfigurationRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddSingleton<INotificationSubscriptionSource, ConfiguredNotificationSubscriptions>();
+                services.AddSingleton<ConfiguredChannelCatalog>();
+                services.AddSingleton<IOutboundChannelCatalog>(provider => provider.GetRequiredService<ConfiguredChannelCatalog>());
                 services.AddSingleton<ChannelApprovalPresenter>();
                 services.AddSingleton<ChannelOwnershipPolicy>();
                 services.AddSingleton<IChannelAccessPolicy>(provider => provider.GetRequiredService<ChannelOwnershipPolicy>());
@@ -91,10 +98,12 @@ public static class AppHost
                 services.AddSingleton<INotificationOutbox>(provider => new SqliteNotificationOutbox(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
                 services.AddSingleton<NotificationDispatcher>();
                 services.AddSingleton<IOutboundChannel>(provider => new DesktopOutboundChannel(provider.GetRequiredService<ApprovalOwner>().UserId,
-                    provider.GetRequiredService<IChannelAccessPolicy>(), provider.GetRequiredService<IDesktopNotificationSink>()));
+                    new ConfiguredDesktopPolicy(provider.GetRequiredService<IChannelConfigurationRepository>(), provider.GetRequiredService<ApprovalOwner>(),
+                        provider.GetRequiredService<ChannelOwnershipPolicy>()), provider.GetRequiredService<IDesktopNotificationSink>()));
                 services.AddSingleton<RunNotificationPublisher>();
                 services.AddHostedService<RunNotificationService>();
                 services.AddHostedService<NotificationDeliveryService>();
+                services.AddHostedService<ConfiguredTelegramService>();
                 services.AddSingleton<ScheduleDispatcher>();
                 services.AddSingleton<ScheduledDesktopGate>();
                 services.AddHostedService<SchedulerService>();

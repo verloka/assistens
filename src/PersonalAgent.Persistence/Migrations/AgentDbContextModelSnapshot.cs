@@ -202,6 +202,61 @@ namespace PersonalAgent.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ChannelConfigurationRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ChannelId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConfigurationJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConnectionId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DestinationId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OwnerSource")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PayloadSchemaVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RemoteIdentity")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChannelId", "RemoteIdentity")
+                        .IsUnique()
+                        .HasFilter("\"Enabled\" = 1 AND \"RemoteIdentity\" IS NOT NULL");
+
+                    b.HasIndex("OwnerSource", "OwnerId", "ChannelId", "ConnectionId", "DestinationId")
+                        .IsUnique();
+
+                    b.ToTable("ChannelConfigurations", (string)null);
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.ChannelCursorRow", b =>
                 {
                     b.Property<string>("ChannelId")

@@ -24,9 +24,16 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<ChannelCursorRow> ChannelCursors => Set<ChannelCursorRow>();
     public DbSet<ChannelActionRow> ChannelActions => Set<ChannelActionRow>();
     public DbSet<NotificationOutboxRow> NotificationOutbox => Set<NotificationOutboxRow>();
+    public DbSet<ChannelConfigurationRow> ChannelConfigurations => Set<ChannelConfigurationRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        var channelConfigurations = model.Entity<ChannelConfigurationRow>();
+        channelConfigurations.ToTable("ChannelConfigurations");
+        channelConfigurations.HasKey(row => row.Id);
+        channelConfigurations.Property(row => row.Version).IsConcurrencyToken().ValueGeneratedNever();
+        channelConfigurations.HasIndex(row => new { row.OwnerSource, row.OwnerId, row.ChannelId, row.ConnectionId, row.DestinationId }).IsUnique();
+        channelConfigurations.HasIndex(row => new { row.ChannelId, row.RemoteIdentity }).IsUnique().HasFilter("\"Enabled\" = 1 AND \"RemoteIdentity\" IS NOT NULL");
         var channelActions = model.Entity<ChannelActionRow>();
         channelActions.ToTable("ChannelActions");
         channelActions.HasKey(row => row.TokenHash);
