@@ -1011,14 +1011,15 @@
                                        "attempts":  1
                                    },
                         "PA-093":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T08:43:30.4933286+00:00",
+                                       "completed_at":  "2026-10-20T08:56:52.6487041+00:00",
                                        "evidence":  [
-
+                                                        "Neutral bounded versioned Incoming/Outgoing envelopes, exact ChannelRoute/connection identity, attachment metadata, opaque action tokens and capability contracts in Core. ChannelMessageRouter binds adapter metadata, denies absent/unknown policy, reuses ITaskCommands+durable per-route external IDs with unambiguous escaping, defaults local fake/no tools and treats correlation/action/attachment data without authority. Exact outbound authorization, actionless text fallback without tokens, immutable snapshots and one-attempt send; no task-state mutation. AppDI registered with zero adapters/default denial. FDD006 S4/S5/S6 contract-scoped PASS;001/003/005/007 preserved, all Draft.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter ChannelContractTests:7passed actualApp/Core/SQLite with fakeTelegram/secondchannel, duplicates/namespaces/payload conflict, default denial/spoof/foreign sender, unsupported envelopes, outer cancellation, mutable actions and failed delivery unchanged result. Final powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 locked restore/build0warnings/errors;124unit+658integration+3localfake=785passed. Doctor/diff pass. No realTelegram/network/paid/corporate/notificationE2E executed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-094":  {
                                        "status":  "pending",
@@ -1341,6 +1342,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-092",
-    "updated_at":  "2026-10-20T08:43:20.1242530+00:00"
+    "last_task_id":  "PA-093",
+    "updated_at":  "2026-10-20T08:56:52.6582235+00:00"
 }

@@ -20,6 +20,8 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 
 ## Unmapped Entry Points
 
+- `src/PersonalAgent.Core/Application/ChannelMessageRouter.cs` maps to FDD-006 and reverse FDD-001/003/007 plus FDD-005 boundaries: versioned neutral adapter envelopes, bound channel/connection identity, explicit sender/route policy, common plain task submission/external dedup and capability-aware one-attempt outbound routing. App DI defaults to no adapters/no authorization; no network worker or model/tool grant is enabled. ChannelContractTests covers fake Telegram/second adapter with actual App/Core/SQLite; durable identity/real Telegram/outbox/approval callbacks remain subsequent scope. All Draft.
+
 - `src/PersonalAgent.App/ScheduledDesktopWarningWindow.xaml` and App-started ScheduledDesktopWarnings map to FDD-003/FDD-002: nonactivating local warning, 15-second presented countdown, explicit start/skip/defer/disable. Headless hosts never auto-show windows, close defers, and unknown idle evidence cannot auto-start StartWhenIdle. DesktopAccessCoordinator preserves deny-by-default and local takeover after the async callback. Actual unshown XAML/SQLite/fake native evidence is ScheduledDesktopTests; no new flow, all Draft.
 
 - `src/PersonalAgent.App/SchedulesWindow.xaml` is opened explicitly from MainWindow and maps to FDD-003 (reverse FDD-007 and dependencies FDD-001/002/006): create/edit/enable/disable, persisted future triggers and schedule-specific history. Uses existing versioned schedule storage and run identities; does not grant tools or desktop access. SchedulesUiTests covers unshown XAML/SQLite; countdown/idle and delivery remain separate. All Draft.

@@ -48,6 +48,7 @@ public static class AppHost
             services.AddSingleton<IDesktopAccessCoordinator>(provider => new DesktopAccessCoordinator(beforeAcquire:
                 (id, ct) => provider.GetService<ScheduledDesktopGate>()?.WaitAsync(id, ct) ?? Task.CompletedTask));
             services.AddSingleton<TaskRunCoordinator>();
+            services.AddSingleton<ChannelMessageRouter>();
             services.AddSingleton<ISecretStore>(_ => new WindowsDpapiSecretStore(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PersonalAgent", "secrets")));
             services.AddSingleton<OpenAiModelProvider>();
