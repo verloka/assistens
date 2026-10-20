@@ -1044,14 +1044,15 @@
                                        "attempts":  1
                                    },
                         "PA-096":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T09:30:19.3361071+00:00",
+                                       "completed_at":  "2026-10-20T09:37:21.9392687+00:00",
                                        "evidence":  [
-
+                                                        "TelegramCommandHandler; TelegramCommandTests18 actual common handlers/SQLite, busy runtime, GUI gate, scripted polling; FDD006 S11 scoped PASS,001/002/003/005/007 preserved Draft",
+                                                        "Verification: scripts/verify.ps1 locked restore/build0warnings/errors;124unit+703integration+3localfake=830passed; targeted17passed before final input-cleanup test; doctor/diff pass"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-097":  {
                                        "status":  "pending",
@@ -1344,6 +1345,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-095",
-    "updated_at":  "2026-10-20T09:30:08.3892250+00:00"
+    "last_task_id":  "PA-096",
+    "updated_at":  "2026-10-20T09:37:21.9502641+00:00"
 }
