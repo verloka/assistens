@@ -27,7 +27,11 @@ public sealed record RunLimits
 
 // Provider-neutral context; opaque SDK sessions stay inside adapters.
 public sealed record AgentContext(string? Summary = null, IReadOnlyList<SourceLink>? Sources = null,
-    IReadOnlyList<ConversationMessage>? Messages = null);
+    IReadOnlyList<ConversationMessage>? Messages = null)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? DecisionContext { get; init; }
+}
 
 public sealed record AgentRequest
 {

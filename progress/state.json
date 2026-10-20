@@ -1154,14 +1154,15 @@
                                        "attempts":  1
                                    },
                         "PA-106":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T18:33:21.6131465+00:00",
+                                       "completed_at":  "2026-10-20T18:40:38.3514274+00:00",
                                        "evidence":  [
-
+                                                        "AgentContextWindow reuses bounded neutral history with optional backward-compatible DecisionContext, recent completed request/outcome summaries and exact deduplicated bounded typed sources. MafAgentRuntime supplies fresh decision/source data under untrusted user roles across SDK restore/provider switch without permissions or old write replay. ConversationHandoffTests and AgentContextWindowTests cover actual hosted App/Core/MAF/SQLite with scripted model and one sandbox effect. FDD006 S20 controlled local PASS;001/002/003/005/007 preserved, all Draft. Stop requested;107 remains pending/unstarted.",
+                                                        "Verification: dotnet build --no-restore -v minimal:0warnings/errors. Integration target ConversationHandoff/Session/History/ModelProfiles/MafAgentRuntime/StructuredResult53passed; regression ConversationCorrelation/ChannelContract/TelegramCommand/NotificationOutbox/Dashboard/ToolDispatchRecovery/Scheduler/ScheduledDesktop90passed. Unit137passed;localfakeE2E3passed;283unique current checks.58FDD paths/doctor/diff pass. Previous105 full verify943passed; not rerun for106. No live/native/corporate acceptance."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-107":  {
                                        "status":  "pending",
@@ -1354,6 +1355,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-105",
-    "updated_at":  "2026-10-20T18:33:05.6039945+00:00"
+    "last_task_id":  "PA-106",
+    "updated_at":  "2026-10-20T18:40:38.3840301+00:00"
 }

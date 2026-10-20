@@ -510,15 +510,10 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
                 { Sources = run.Sources, ErrorCode = run.ErrorCode });
         }
         var latest = prior.LastOrDefault();
-        return new(latest?.Summary is { } summary ? ClipContext(ConversationPrivacy.Filter(summary), 4000) : null,
-            ConversationPrivacy.FilterSources(latest?.Sources.Take(10) ?? []), neutral.OrderBy(message => message.TimestampUtc).ThenBy(message => message.Sequence).TakeLast(8)
-                .Select(ConversationPrivacy.Filter).Select(message => message with { Content = ClipContext(message.Content, 1000) }).ToArray());
-    }
-    private static string ClipContext(string text, int limit)
-    {
-        if (text.Length <= limit) return text;
-        var length = char.IsHighSurrogate(text[limit - 1]) ? limit - 1 : limit;
-        return text[..length];
+        return AgentContextWindow.Bound(new(latest?.Summary,
+            prior.Reverse().SelectMany(run => run.Sources).Concat(neutral.AsEnumerable().Reverse().SelectMany(message => message.Sources)).ToArray(),
+            neutral.OrderBy(message => message.TimestampUtc).ThenBy(message => message.Sequence).ToArray())
+        { DecisionContext = AgentContextWindow.Decisions(prior) }, id);
     }
     private static string Fingerprint<T>(T command) => typeof(T).Name + ":" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(command))));
     private static RunSubmissionIdentity SubmissionIdentity(SubmitTaskCommand command)
