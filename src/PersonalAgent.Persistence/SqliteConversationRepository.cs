@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PersonalAgent.Core.Domain;
 using PersonalAgent.Core.Persistence;
 using PersonalAgent.Persistence.Entities;
+using System.Text.Json;
 
 namespace PersonalAgent.Persistence;
 
@@ -9,17 +10,13 @@ public sealed class SqliteConversationRepository(IDbContextFactory<AgentDbContex
 {
     public async Task AppendMessageAsync(ConversationMessage message, CancellationToken cancellationToken = default)
     {
+        message = ConversationPrivacy.Filter(message);
         if (message.Id == Guid.Empty || message.ConversationId == Guid.Empty || message.Sequence <= 0 || !Enum.IsDefined(message.Role))
             throw new ArgumentException("Message requires identities, a positive sequence and a known role.");
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
         if (message.RunId is { } runId && !await db.TaskRuns.AnyAsync(run => run.Id == runId && run.ConversationId == message.ConversationId, cancellationToken))
             throw new ArgumentException("Message run belongs to another conversation or is missing.");
-        db.ConversationMessages.Add(new ConversationMessageRow
-        {
-            Id = message.Id, ConversationId = message.ConversationId, Sequence = message.Sequence,
-            Role = message.Role, Content = message.Content, TimestampUtc = message.TimestampUtc,
-            RunId = message.RunId, ExternalId = message.ExternalId
-        });
+        db.ConversationMessages.Add(ToRow(message));
         await db.SaveChangesAsync(cancellationToken);
     }
 
@@ -28,8 +25,24 @@ public sealed class SqliteConversationRepository(IDbContextFactory<AgentDbContex
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
         var rows = await db.ConversationMessages.AsNoTracking().Where(row => row.ConversationId == conversationId)
             .OrderBy(row => row.Sequence).ToListAsync(cancellationToken);
-        return rows.Select(row => new ConversationMessage(row.Id, row.ConversationId, row.Sequence, row.Role,
-            row.Content, row.TimestampUtc, row.RunId, row.ExternalId)).ToArray();
+        return rows.Select(row => ConversationPrivacy.Filter(new ConversationMessage(row.Id, row.ConversationId, row.Sequence, row.Role,
+            row.Content, row.TimestampUtc, row.RunId, row.ExternalId)
+        {
+            Sources = JsonSerializer.Deserialize<SourceLink[]>(row.SourcesJson) ?? throw new InvalidDataException("Missing message sources."),
+            ErrorCode = row.ErrorCode
+        })).ToArray();
+    }
+
+    internal static ConversationMessageRow ToRow(ConversationMessage message)
+    {
+        message = ConversationPrivacy.Filter(message);
+        return new()
+        {
+            Id = message.Id, ConversationId = message.ConversationId, Sequence = message.Sequence,
+            Role = message.Role, Content = message.Content, TimestampUtc = message.TimestampUtc,
+            RunId = message.RunId, ExternalId = message.ExternalId,
+            SourcesJson = JsonSerializer.Serialize(message.Sources), ErrorCode = message.ErrorCode
+        };
     }
 
     public async Task AddSessionAsync(AgentSessionSnapshot session, CancellationToken cancellationToken = default)

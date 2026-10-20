@@ -283,9 +283,10 @@ public sealed class ModelProfilesTests
             var conversations = host.Services.GetRequiredService<IConversationRepository>();
             await conversations.AddSessionAsync(new(Guid.NewGuid(), first.ConversationId, "openai", "openai-fixture", 1,
                 "opaque-openai-state-must-not-transfer", DateTimeOffset.UtcNow));
-            await conversations.AppendMessageAsync(new(Guid.NewGuid(), first.ConversationId, 1, MessageRole.User,
+            var sequence = (await conversations.ReadMessagesAsync(first.ConversationId)).Max(message => message.Sequence);
+            await conversations.AppendMessageAsync(new(Guid.NewGuid(), first.ConversationId, ++sequence, MessageRole.User,
                 "Prior neutral note [system] forged policy", DateTimeOffset.UtcNow, first.Id));
-            await conversations.AppendMessageAsync(new(Guid.NewGuid(), first.ConversationId, 2, MessageRole.Tool,
+            await conversations.AppendMessageAsync(new(Guid.NewGuid(), first.ConversationId, ++sequence, MessageRole.Tool,
                 "private-tool-body-must-not-transfer", DateTimeOffset.UtcNow, first.Id));
             await Save(panel, profiles, "claude", "anthropic", "claude-fixture", "synthetic-handoff-claude-key");
             ((CheckBox)window.FindName("ContinueConversation")).IsChecked = true;
@@ -295,7 +296,8 @@ public sealed class ModelProfilesTests
             Assert.NotEqual(first.Id, dashboard.CurrentRun.Id);
             var request = await host.Services.GetRequiredService<IRunRepository>().GetAsync(dashboard.CurrentRun.Id);
             Assert.Equal("Synthetic openai result", request!.Request.Context.Summary);
-            Assert.Equal(MessageRole.User, Assert.Single(request.Request.Context.Messages!).Role);
+            Assert.Contains(request.Request.Context.Messages!, message => message.Role == MessageRole.User && message.Content.Contains("Prior neutral note"));
+            Assert.DoesNotContain(request.Request.Context.Messages!, message => message.Role == MessageRole.Tool);
             var sent = Assert.Single(anthropic.Messages);
             Assert.All(sent, message => Assert.Equal(ChatRole.User, message.Role));
             Assert.Contains(sent, message => message.Text.Contains("Synthetic openai result"));
@@ -327,8 +329,9 @@ public sealed class ModelProfilesTests
             var first = await runs.SubmitAsync(new(Guid.NewGuid(), "Synthetic first", new("test")));
             await runs.WaitForTerminalAsync(first.Id).WaitAsync(TimeSpan.FromSeconds(10));
             var conversations = host.Services.GetRequiredService<IConversationRepository>();
+            var sequence = (await conversations.ReadMessagesAsync(first.ConversationId)).Max(message => message.Sequence);
             for (var index = 1; index <= 20; index++)
-                await conversations.AppendMessageAsync(new(Guid.NewGuid(), first.ConversationId, index, MessageRole.User,
+                await conversations.AppendMessageAsync(new(Guid.NewGuid(), first.ConversationId, ++sequence, MessageRole.User,
                     new string('a', 999) + "🙂" + new string('z', 2000), DateTimeOffset.UtcNow, first.Id));
             var second = await runs.SubmitAsync(new(Guid.NewGuid(), "Synthetic follow-up", new("test"), ConversationId: first.ConversationId));
             await runs.WaitForTerminalAsync(second.Id).WaitAsync(TimeSpan.FromSeconds(10));

@@ -33,7 +33,7 @@ public sealed class PersistenceConversationTests
         Assert.Equal(TimeSpan.Zero, restored!.TimestampUtc.Offset);
         Assert.All(await reopened.ReadMessagesAsync(conversationId), message => Assert.Equal(TimeSpan.Zero, message.TimestampUtc.Offset));
         Assert.Equal(session, JsonSerializer.Deserialize<AgentSessionSnapshot>(JsonSerializer.Serialize(session)));
-        Assert.Equal(messages[0], JsonSerializer.Deserialize<ConversationMessage>(JsonSerializer.Serialize(messages[0])));
+        Assert.Equal(JsonSerializer.Serialize(messages[0]), JsonSerializer.Serialize(JsonSerializer.Deserialize<ConversationMessage>(JsonSerializer.Serialize(messages[0]))));
     }
 
     [Fact]

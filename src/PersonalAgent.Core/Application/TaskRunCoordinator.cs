@@ -501,16 +501,18 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         // Tool bodies and opaque AgentSessions are intentionally not used for conversation transfer.
         var neutral = messages.Where(message => message.ConversationId == id
             && message.Role is MessageRole.User or MessageRole.Assistant && !string.IsNullOrWhiteSpace(message.Content)).ToList();
-        if (neutral.Count == 0)
-            foreach (var run in prior)
-            {
+        foreach (var run in prior)
+        {
+            if (!neutral.Any(message => message.RunId == run.Id && message.Role == MessageRole.User))
                 neutral.Add(new(run.Id, id, neutral.Count + 1, MessageRole.User, run.Instructions, run.CreatedAtUtc, run.Id));
-                if (!string.IsNullOrWhiteSpace(run.Summary))
-                    neutral.Add(new(Guid.NewGuid(), id, neutral.Count + 1, MessageRole.Assistant, run.Summary, run.EndedAtUtc ?? run.CreatedAtUtc, run.Id));
-            }
+            if (!string.IsNullOrWhiteSpace(run.Summary) && !neutral.Any(message => message.RunId == run.Id && message.Role == MessageRole.Assistant))
+                neutral.Add(new(Guid.NewGuid(), id, neutral.Count + 1, MessageRole.Assistant, run.Summary, run.EndedAtUtc ?? run.CreatedAtUtc, run.Id)
+                { Sources = run.Sources, ErrorCode = run.ErrorCode });
+        }
         var latest = prior.LastOrDefault();
-        return new(latest?.Summary is { } summary ? ClipContext(summary, 4000) : null,
-            latest?.Sources.Take(10).ToArray(), neutral.TakeLast(8).Select(message => message with { Content = ClipContext(message.Content, 1000) }).ToArray());
+        return new(latest?.Summary is { } summary ? ClipContext(ConversationPrivacy.Filter(summary), 4000) : null,
+            ConversationPrivacy.FilterSources(latest?.Sources.Take(10) ?? []), neutral.OrderBy(message => message.TimestampUtc).ThenBy(message => message.Sequence).TakeLast(8)
+                .Select(ConversationPrivacy.Filter).Select(message => message with { Content = ClipContext(message.Content, 1000) }).ToArray());
     }
     private static string ClipContext(string text, int limit)
     {

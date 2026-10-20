@@ -1132,14 +1132,15 @@
                                        "attempts":  1
                                    },
                         "PA-104":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T18:01:04.4874778+00:00",
+                                       "completed_at":  "2026-10-20T18:17:27.1817808+00:00",
                                        "evidence":  [
-
+                                                        "Atomic input/outcome conversation messages with RunId/UTC/source/error metadata in existing SQLite run transactions; additive migration20261020180335 preserves legacy history. ConversationPrivacy filters recognizable credentials in message storage/read/context; mixed legacy fallback and tool exclusion retained. FDD006 S18 controlled local PASS; reverse001/003/007 and002/005 preserved, all Draft. Original immutable run/events/tool privacy remains separate hardening scope.",
+                                                        "Verification: scripts/verify.ps1: locked restore/build0warnings/errors;133unit+3localfake passed; initial integration792passed/1historical migration fixture failed, fixture corrected. Final dotnet test tests/PersonalAgent.IntegrationTests --no-build -v minimal:793passed. Target history/repaired migration10passed; earlier Conversation/Persistence/ModelProfiles36passed. EF no pending model changes;55FDD refs/doctor/diff pass. No live channel/provider/native acceptance."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-105":  {
                                        "status":  "pending",
@@ -1352,6 +1353,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-103",
-    "updated_at":  "2026-10-20T15:55:42.8302052+00:00"
+    "last_task_id":  "PA-104",
+    "updated_at":  "2026-10-20T18:17:27.1978610+00:00"
 }

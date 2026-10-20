@@ -31,7 +31,7 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
         request.Limits.Validate();
         ValidateEvents(run.Id, initialEvents, 0);
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
-        await using var admission = identity?.Schedule is not null ? await db.Database.BeginTransactionAsync(cancellationToken) : null;
+        await using var admission = await db.Database.BeginTransactionAsync(cancellationToken);
         if (identity?.Schedule is { } claim)
         {
             var trigger = ScheduleOccurrenceIdentity.Create(claim.ScheduleId, claim.OccurrenceUtc);
@@ -57,8 +57,12 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
         Apply(row, run, null);
         db.TaskRuns.Add(row);
         db.RunEvents.AddRange(initialEvents.Select(ToRow));
+        var sequence = await LastMessageSequenceAsync(db, run.ConversationId, cancellationToken);
+        db.ConversationMessages.Add(SqliteConversationRepository.ToRow(new(Guid.NewGuid(), run.ConversationId,
+            ++sequence, MessageRole.User, run.Instructions, run.CreatedAtUtc, run.Id)));
+        if (TaskRunStateMachine.IsTerminal(run.Status)) AddOutcome(db, run, ++sequence, run.CreatedAtUtc);
         await db.SaveChangesAsync(cancellationToken);
-        if (admission is not null) await admission.CommitAsync(cancellationToken);
+        await admission.CommitAsync(cancellationToken);
     }
 
     public async Task<StoredRun> GetOrCreateAsync(TaskRun run, Conversation conversation, AgentRequest request,
@@ -111,6 +115,7 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
         AgentRunResult? result = null, CancellationToken cancellationToken = default)
     {
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         // Read the run revision and its last event in one SQLite statement/snapshot.
         var revision = await db.TaskRuns.Where(value => value.Id == run.Id).Select(value => new
         {
@@ -143,19 +148,31 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
             throw new ArgumentException("Final result must match the run snapshot.");
         Apply(row, run, result);
         db.RunEvents.AddRange(newEvents.Select(ToRow));
+        if (TaskRunStateMachine.IsTerminal(run.Status) || result is not null)
+            AddOutcome(db, run, checked(await LastMessageSequenceAsync(db, run.ConversationId, cancellationToken) + 1), newEvents[^1].TimestampUtc);
         try
         {
             // EF wraps row CAS + all event inserts in one transaction. No external action/retry occurs here.
             await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch (DbUpdateException)
         {
+            await transaction.RollbackAsync(cancellationToken);
             await using var check = await contexts.CreateDbContextAsync(cancellationToken);
             var actual = await check.TaskRuns.Where(value => value.Id == run.Id).Select(value => value.RunVersion).SingleAsync(cancellationToken);
             if (actual != expectedVersion) throw new RunVersionConflictException(run.Id, expectedVersion, actual);
             throw;
         }
     }
+
+    private static async Task<long> LastMessageSequenceAsync(AgentDbContext db, Guid conversationId, CancellationToken ct) =>
+        await db.ConversationMessages.Where(row => row.ConversationId == conversationId).MaxAsync(row => (long?)row.Sequence, ct) ?? 0;
+
+    private static void AddOutcome(AgentDbContext db, TaskRun run, long sequence, DateTimeOffset timestamp) =>
+        db.ConversationMessages.Add(SqliteConversationRepository.ToRow(new(Guid.NewGuid(), run.ConversationId,
+            sequence, MessageRole.Assistant, run.Summary ?? run.Reason ?? run.Status.ToString(), run.EndedAtUtc ?? timestamp, run.Id)
+        { Sources = run.Sources, ErrorCode = run.ErrorCode }));
 
     public async Task<IReadOnlyList<TaskRun>> ListAsync(CancellationToken cancellationToken = default)
     {

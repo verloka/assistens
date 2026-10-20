@@ -8,6 +8,8 @@ using PersonalAgent.App;
 using PersonalAgent.App.ViewModels;
 using PersonalAgent.Channels.Telegram;
 using PersonalAgent.Core.Application;
+using PersonalAgent.Core.Agents;
+using PersonalAgent.Core.Domain;
 using PersonalAgent.Core.Channels;
 using PersonalAgent.Core.Persistence;
 using PersonalAgent.Core.Security;
@@ -145,8 +147,15 @@ public sealed class ChannelConfigurationTests
     public async Task AdditiveConfigurationMigrationKeepsExistingRunBindingAndPendingOutbox()
     {
         using var database = new TemporaryAgentDatabase(); await using (var old = database.Open()) await old.GetService<IMigrator>().MigrateAsync("20261020094956_NotificationDeliveryOutbox");
-        var repository = new SqliteRunRepository(database); using var runs = new TaskRunCoordinator(repository);
-        var run = await runs.SubmitAsync(new(Guid.NewGuid(), "Migration source", new("desktop")));
+        var repository = new SqliteRunRepository(database);
+        var run = new TaskRun { Id = Guid.NewGuid(), ConversationId = Guid.NewGuid(), Instructions = "Migration source", ModelProfileId = "fake", Origin = new("desktop"), CreatedAtUtc = DateTimeOffset.UtcNow };
+        var request = JsonSerializer.Serialize(new AgentRequest { RunId = run.Id, ConversationId = run.ConversationId, Instructions = run.Instructions, ModelProfileId = run.ModelProfileId });
+        await using (var old = database.Open())
+        {
+            // Seed the historical schema directly; current run admission also writes newer message columns.
+            await old.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Conversations (Id, Title, CreatedAtUtc, UpdatedAtUtc) VALUES ({run.ConversationId}, {run.Instructions}, {run.CreatedAtUtc.UtcTicks}, {run.CreatedAtUtc.UtcTicks})");
+            await old.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO TaskRuns (Id, ConversationId, OriginJson, Instructions, ModelProfileId, Status, RunVersion, CreatedAtUtc, SourcesJson, RequestJson, PayloadSchemaVersion) VALUES ({run.Id}, {run.ConversationId}, {JsonSerializer.Serialize(run.Origin)}, {run.Instructions}, {run.ModelProfileId}, {"Created"}, {0L}, {run.CreatedAtUtc.UtcTicks}, {"[]"}, {request}, {1})");
+        }
         var profile = Profile(); var bindings = new SqliteChannelBindingRepository(database); var binding = await bindings.RequestPairingAsync(profile.Route, profile.SenderId, Owner);
         var message = new OutgoingMessage { Id = Guid.NewGuid(), Destination = profile.Route, Text = "Pending neutral notification", RunId = run.Id };
         var outbox = new SqliteNotificationOutbox(database); var delivery = await outbox.EnqueueAsync(Guid.NewGuid(), message);

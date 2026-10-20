@@ -12,6 +12,8 @@ public sealed class ConversationMessageRow
     public DateTimeOffset TimestampUtc { get; set; }
     public Guid? RunId { get; set; }
     public string? ExternalId { get; set; }
+    public string SourcesJson { get; set; } = "[]";
+    public string? ErrorCode { get; set; }
 }
 
 public sealed class AgentSessionRow

@@ -191,6 +191,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         messages.HasIndex(row => new { row.ConversationId, row.ExternalId }).IsUnique();
         messages.Property(row => row.Role).HasConversion<string>();
         messages.Property(row => row.TimestampUtc).HasConversion(utcTicks);
+        messages.Property(row => row.SourcesJson).HasDefaultValue("[]");
 
         var sessions = model.Entity<AgentSessionRow>();
         sessions.ToTable("AgentSessions", table => table.HasCheckConstraint("CK_AgentSessions_SchemaVersion", "SchemaVersion > 0"));

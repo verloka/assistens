@@ -350,6 +350,9 @@ namespace PersonalAgent.Persistence.Migrations
                     b.Property<Guid>("ConversationId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ErrorCode")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ExternalId")
                         .HasColumnType("TEXT");
 
@@ -362,6 +365,12 @@ namespace PersonalAgent.Persistence.Migrations
 
                     b.Property<long>("Sequence")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("SourcesJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("[]");
 
                     b.Property<long>("TimestampUtc")
                         .HasColumnType("INTEGER");
