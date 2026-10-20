@@ -84,6 +84,8 @@ public static class AppHost
                 services.AddSingleton<IChannelCursorRepository>(provider => new SqliteChannelCursorRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IChannelActionRepository>(provider => new SqliteChannelActionRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IChannelConfigurationRepository>(provider => new SqliteChannelConfigurationRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddSingleton<IChannelConversationRepository>(provider => new SqliteChannelConversationRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddSingleton<ChannelConversationCorrelator>();
                 services.AddSingleton<INotificationSubscriptionSource, ConfiguredNotificationSubscriptions>();
                 services.AddSingleton<ConfiguredChannelCatalog>();
                 services.AddSingleton<IOutboundChannelCatalog>(provider => provider.GetRequiredService<ConfiguredChannelCatalog>());

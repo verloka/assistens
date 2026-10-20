@@ -25,6 +25,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<ChannelActionRow> ChannelActions => Set<ChannelActionRow>();
     public DbSet<NotificationOutboxRow> NotificationOutbox => Set<NotificationOutboxRow>();
     public DbSet<ChannelConfigurationRow> ChannelConfigurations => Set<ChannelConfigurationRow>();
+    public DbSet<ChannelConversationLinkRow> ChannelConversationLinks => Set<ChannelConversationLinkRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -51,6 +52,14 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         connections.HasKey(row => row.Id);
         connections.Property(row => row.ProfileJson).IsRequired();
         var utcTicks = new ValueConverter<DateTimeOffset, long>(value => value.UtcTicks, ticks => new DateTimeOffset(ticks, TimeSpan.Zero));
+        var conversationLinks = model.Entity<ChannelConversationLinkRow>();
+        conversationLinks.ToTable("ChannelConversationLinks");
+        conversationLinks.HasKey(row => new { row.OwnerSource, row.OwnerId, row.ChannelId, row.ConnectionId, row.DestinationId, row.SenderId, row.ExternalMessageId });
+        conversationLinks.HasIndex(row => new { row.OwnerSource, row.OwnerId, row.ChannelId, row.ConnectionId, row.DestinationId, row.SenderId, row.ExternalUpdateId })
+            .IsUnique().HasFilter("\"ExternalUpdateId\" IS NOT NULL");
+        conversationLinks.Property(row => row.CreatedAtUtc).HasConversion(utcTicks);
+        conversationLinks.HasOne<ConversationRow>().WithMany().HasForeignKey(row => row.ConversationId).OnDelete(DeleteBehavior.Restrict);
+        conversationLinks.HasOne<TaskRunRow>().WithMany().HasForeignKey(row => row.RunId).OnDelete(DeleteBehavior.Restrict);
         var outbox = model.Entity<NotificationOutboxRow>();
         outbox.ToTable("NotificationOutbox", table =>
         {

@@ -1,4 +1,5 @@
 using PersonalAgent.Core.Domain;
+using PersonalAgent.Core.Security;
 using System.Text.Json.Serialization;
 
 namespace PersonalAgent.Core.Channels;
@@ -27,6 +28,10 @@ public sealed record IncomingMessage
     public string Text { get; init; } = "";
     public string? CorrelationKey { get; init; }
     public string? ActionToken { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? TransportMessageId { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ReplyToMessageId { get; init; }
     public IReadOnlyList<ChannelAttachment> Attachments { get; init; } = [];
 
     public IncomingMessage Snapshot()
@@ -35,6 +40,7 @@ public sealed record IncomingMessage
         ArgumentNullException.ThrowIfNull(Route); Route.Validate();
         ChannelFields.Identity(SenderId, 256); ChannelFields.Identity(ExternalMessageId, 256);
         ChannelFields.Text(Text, 16_384); ChannelFields.OptionalIdentity(CorrelationKey, 512); ChannelFields.OptionalIdentity(ActionToken, 512);
+        ChannelFields.OptionalIdentity(TransportMessageId, 256); ChannelFields.OptionalIdentity(ReplyToMessageId, 256);
         if (TimestampUtc.UtcTicks == 0 || Attachments is null || Attachments.Count > 8) throw new ArgumentException("Invalid incoming message metadata.");
         var attachments = Attachments.ToArray();
         foreach (var item in attachments)
@@ -93,6 +99,14 @@ public interface IChannelAccessPolicy
 {
     ValueTask<bool> AllowInboundAsync(IncomingMessage message, CancellationToken ct);
     ValueTask<bool> AllowOutboundAsync(OutgoingMessage message, CancellationToken ct);
+}
+public interface IChannelOwnerPolicy : IChannelAccessPolicy
+{
+    Task<ApprovalOwner> RequireOwnerAsync(IncomingMessage message, CancellationToken ct = default);
+}
+public interface IChannelDeliveryReceiptSink
+{
+    Task RecordAsync(OutgoingMessage message, string externalMessageId, CancellationToken ct = default);
 }
 public sealed class ChannelAccessDeniedException() : InvalidOperationException("Channel sender or destination is not authorized.");
 

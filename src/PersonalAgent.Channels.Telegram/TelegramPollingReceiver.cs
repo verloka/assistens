@@ -165,7 +165,9 @@ public sealed class TelegramPollingReceiver : IInboundChannel, IDisposable
                 TimestampUtc = DateTimeOffset.FromUnixTimeSeconds(body.GetProperty("date").GetInt64()),
                 Text = callback ? "" : body.GetProperty("text").GetString()!,
                 ActionToken = callback ? item.GetProperty("data").GetString() : null,
-                CorrelationKey = callback ? item.GetProperty("id").GetString() : body.GetProperty("message_id").GetInt64().ToString(CultureInfo.InvariantCulture)
+                CorrelationKey = callback ? item.GetProperty("id").GetString() : body.GetProperty("message_id").GetInt64().ToString(CultureInfo.InvariantCulture),
+                TransportMessageId = callback ? null : MessageId(body),
+                ReplyToMessageId = !callback && body.TryGetProperty("reply_to_message", out var reply) ? MessageId(reply) : null
             }.Snapshot();
         }
         catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException or FormatException or ArgumentException)
@@ -173,4 +175,10 @@ public sealed class TelegramPollingReceiver : IInboundChannel, IDisposable
     }
 
     public void Dispose() => client.Dispose();
+    private static string MessageId(JsonElement body)
+    {
+        var id = body.GetProperty("message_id").GetInt64();
+        if (id <= 0) throw new ArgumentException("Invalid Telegram message identity.");
+        return id.ToString(CultureInfo.InvariantCulture);
+    }
 }

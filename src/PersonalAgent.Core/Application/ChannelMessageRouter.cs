@@ -9,10 +9,12 @@ public sealed class ChannelMessageRouter
     private readonly ITaskCommands commands;
     private readonly IChannelAccessPolicy? policy;
     private readonly IOutboundChannelCatalog? catalog;
+    private readonly ChannelConversationCorrelator? conversations;
     private readonly IReadOnlyDictionary<(string Channel, string Connection), IOutboundChannel> outbound;
-    public ChannelMessageRouter(ITaskCommands commands, IEnumerable<IOutboundChannel> outbound, IChannelAccessPolicy? policy = null, IOutboundChannelCatalog? catalog = null)
+    public ChannelMessageRouter(ITaskCommands commands, IEnumerable<IOutboundChannel> outbound, IChannelAccessPolicy? policy = null, IOutboundChannelCatalog? catalog = null,
+        ChannelConversationCorrelator? conversations = null)
     {
-        this.commands = commands; this.policy = policy; this.catalog = catalog;
+        this.commands = commands; this.policy = policy; this.catalog = catalog; this.conversations = conversations;
         var channels = outbound.ToArray();
         foreach (var channel in channels)
         {
@@ -42,9 +44,13 @@ public sealed class ChannelMessageRouter
         if (snapshot.ActionToken is not null || snapshot.Attachments.Count > 0)
             throw new NotSupportedException("This task receiver accepts plain text only; action and attachment handling requires an explicit adapter flow.");
         var route = snapshot.Route;
+        if (snapshot.ReplyToMessageId is not null && conversations is null) throw new ChannelConversationNotFoundException();
+        var conversationId = conversations is null ? null : await conversations.ResolveAsync(snapshot, ct).ConfigureAwait(false);
         var source = "channel/" + Uri.EscapeDataString(route.ChannelId) + "/" + Uri.EscapeDataString(route.ConnectionId) + "/" + Uri.EscapeDataString(route.DestinationId);
-        return await commands.SubmitAsync(new(Guid.NewGuid(), snapshot.Text, new("channel/" + route.ChannelId, snapshot.SenderId, snapshot.ExternalMessageId),
-            ExternalKey: new(source, snapshot.ExternalMessageId)), ct).ConfigureAwait(false);
+        var run = await commands.SubmitAsync(new(Guid.NewGuid(), snapshot.Text, new("channel/" + route.ChannelId, snapshot.SenderId, snapshot.ExternalMessageId),
+            ConversationId: conversationId, ExternalKey: new(source, snapshot.ExternalMessageId)), ct).ConfigureAwait(false);
+        if (conversations is not null) await conversations.BindAsync(snapshot, run, ct).ConfigureAwait(false);
+        return run;
     }
     public async Task SendAsync(OutgoingMessage message, CancellationToken ct = default)
     {

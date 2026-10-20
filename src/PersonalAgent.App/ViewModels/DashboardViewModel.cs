@@ -33,6 +33,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         ResumeCommand = new AsyncCommand(() => ControlAsync(run => commands.ResumeAsync(new(Guid.NewGuid(), run.Id, run.RunVersion), lifetime.Token)),
             () => CanControl && CurrentRun!.Status is RunStatus.Paused or RunStatus.PausedForUser);
         CancelCommand = new AsyncCommand(() => ControlAsync(run => commands.CancelAsync(new(Guid.NewGuid(), run.Id, run.RunVersion), lifetime.Token)), () => CanControl);
+        RefreshHistoryCommand = new(() => { RefreshHistory(); return Task.CompletedTask; }, () => !active && !disposed && !lifetime.IsCancellationRequested);
         RefreshHistory();
     }
 
@@ -56,6 +57,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
     public AsyncCommand PauseCommand { get; }
     public AsyncCommand ResumeCommand { get; }
     public AsyncCommand CancelCommand { get; }
+    public AsyncCommand RefreshHistoryCommand { get; }
     public string Instructions
     {
         get => instructions;
@@ -138,6 +140,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         Changed(nameof(CurrentRun)); Changed(nameof(Status)); Changed(nameof(Summary)); Changed(nameof(Message)); Changed(nameof(IsActive));
         Changed(nameof(Result)); Changed(nameof(Sources)); Changed(nameof(Warnings)); Changed(nameof(UsageSummary));
         SubmitCommand.Refresh(); PauseCommand.Refresh(); ResumeCommand.Refresh(); CancelCommand.Refresh();
+        RefreshHistoryCommand.Refresh();
     }
     private void RefreshHistory()
     {

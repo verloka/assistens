@@ -52,7 +52,7 @@ public sealed class TelegramCommandHandler
             verb = verb[..at];
         }
         var arguments = split < 0 ? "" : text[(split + 1)..].Trim();
-        if (verb == "/new") return arguments.Length == 0 ? Reply(message, Usage) : await SubmitAsync(message with { Text = arguments }, ct).ConfigureAwait(false);
+        if (verb == "/new") return arguments.Length == 0 ? Reply(message, Usage) : await SubmitAsync(message with { Text = arguments, ReplyToMessageId = null }, ct).ConfigureAwait(false);
         if (verb == "/tasks" && arguments.Length == 0)
         {
             var all = runs.GetRuns(); var latest = all.Take(20).Select(Describe);
@@ -99,8 +99,13 @@ public sealed class TelegramCommandHandler
 
     private async Task<OutgoingMessage> SubmitAsync(IncomingMessage message, CancellationToken ct)
     {
-        var run = await router.SubmitAsync(message, ct).ConfigureAwait(false);
-        return Reply(message, "Task accepted. " + Describe(run), run);
+        try
+        {
+            var run = await router.SubmitAsync(message, ct).ConfigureAwait(false);
+            return Reply(message, "Task accepted. " + Describe(run), run);
+        }
+        catch (ChannelConversationNotFoundException) { return Reply(message, "This reply target is not linked to your conversation. Use /new <task> to start a separate task."); }
+        catch (ChannelConversationConflictException) { return Reply(message, "Message identity changed. Review the conversation and send a new message."); }
     }
     private static string Describe(TaskRun run) => $"{run.Id:D} | {run.Status} | version {run.RunVersion.ToString(CultureInfo.InvariantCulture)}";
     public static Guid ReplyIdentity(IncomingMessage message) => Identity(message.Snapshot(), "reply");

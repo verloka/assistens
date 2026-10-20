@@ -80,6 +80,7 @@
                             </Style>
                         </ComboBox.Style>
                     </ComboBox>
+                    <Button x:Name="RefreshTaskHistory" Content="Refresh" Command="{Binding RefreshHistoryCommand}" Margin="8,0,0,0" Padding="10,3" />
                 </StackPanel>
                 <TextBox x:Name="TaskInstructions" Grid.Row="2" Text="{Binding Instructions, UpdateSourceTrigger=PropertyChanged}"
                          AcceptsReturn="True" MinHeight="48" TextWrapping="Wrap" />

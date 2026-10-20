@@ -5,7 +5,7 @@ using PersonalAgent.Core.Security;
 namespace PersonalAgent.Core.Application;
 
 // The owner is supplied by the trusted local composition root, never from a channel body.
-public sealed class ChannelOwnershipPolicy : IChannelAccessPolicy
+public sealed class ChannelOwnershipPolicy : IChannelOwnerPolicy
 {
     private readonly ApprovalOwner owner;
     private readonly IChannelBindingRepository bindings;

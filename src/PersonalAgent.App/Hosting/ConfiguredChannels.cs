@@ -24,7 +24,8 @@ public sealed class ConfiguredNotificationSubscriptions(IChannelConfigurationRep
 }
 
 public sealed class ConfiguredChannelCatalog(IChannelConfigurationRepository configurations, ApprovalOwner owner, IChannelBindingRepository bindings,
-    IApprovalRepository approvals, IChannelActionRepository actions, TaskRunCoordinator runs, ISecretStore secrets, Func<System.Net.Http.HttpMessageHandler>? handlerFactory = null) : IOutboundChannelCatalog, IDisposable
+    IApprovalRepository approvals, IChannelActionRepository actions, TaskRunCoordinator runs, ISecretStore secrets,
+    IChannelConversationRepository conversations, Func<System.Net.Http.HttpMessageHandler>? handlerFactory = null) : IOutboundChannelCatalog, IDisposable
 {
     private readonly ConcurrentDictionary<Guid, Lazy<TelegramOutboundChannel>> senders = new();
     public async Task<IOutboundChannel?> FindAsync(ChannelRoute route, CancellationToken ct = default)
@@ -37,7 +38,8 @@ public sealed class ConfiguredChannelCatalog(IChannelConfigurationRepository con
         {
             var policy = new ChannelOwnershipPolicy(owner, bindings, new ConfiguredChannelPolicy(configurations, owner, current.Id));
             return new TelegramOutboundChannel(current.Route.ConnectionId, current.SecretReference, secrets, policy,
-                new ChannelApprovalPresenter(policy, approvals, actions, runs: runs), handlerFactory?.Invoke());
+                new ChannelApprovalPresenter(policy, approvals, actions, runs: runs), handlerFactory?.Invoke(),
+                new ChannelConversationReceiptRecorder(owner, current.Route, current.SenderId, conversations));
         })).Value;
     }
     public void Dispose() { foreach (var sender in senders.Values) if (sender.IsValueCreated) sender.Value.Dispose(); senders.Clear(); }

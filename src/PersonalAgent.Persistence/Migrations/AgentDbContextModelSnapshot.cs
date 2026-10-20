@@ -257,6 +257,60 @@ namespace PersonalAgent.Persistence.Migrations
                     b.ToTable("ChannelConfigurations", (string)null);
                 });
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ChannelConversationLinkRow", b =>
+                {
+                    b.Property<string>("OwnerSource")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OwnerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ChannelId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConnectionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DestinationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SenderId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ExternalMessageId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ExternalUpdateId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("OutgoingMessageId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PayloadSchemaVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("OwnerSource", "OwnerId", "ChannelId", "ConnectionId", "DestinationId", "SenderId", "ExternalMessageId");
+
+                    b.HasIndex("ConversationId");
+
+                    b.HasIndex("RunId");
+
+                    b.HasIndex("OwnerSource", "OwnerId", "ChannelId", "ConnectionId", "DestinationId", "SenderId", "ExternalUpdateId")
+                        .IsUnique()
+                        .HasFilter("\"ExternalUpdateId\" IS NOT NULL");
+
+                    b.ToTable("ChannelConversationLinks", (string)null);
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.ChannelCursorRow", b =>
                 {
                     b.Property<string>("ChannelId")
@@ -766,6 +820,21 @@ namespace PersonalAgent.Persistence.Migrations
 
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.ApprovalRequestRow", b =>
                 {
+                    b.HasOne("PersonalAgent.Persistence.Entities.TaskRunRow", null)
+                        .WithMany()
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ChannelConversationLinkRow", b =>
+                {
+                    b.HasOne("PersonalAgent.Persistence.Entities.ConversationRow", null)
+                        .WithMany()
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("PersonalAgent.Persistence.Entities.TaskRunRow", null)
                         .WithMany()
                         .HasForeignKey("RunId")

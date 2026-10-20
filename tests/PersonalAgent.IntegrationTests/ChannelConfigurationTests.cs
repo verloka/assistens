@@ -213,7 +213,7 @@ public sealed class ChannelConfigurationTests
             {
                 Interlocked.Increment(ref script.Sends); using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct)); Assert.Equal(24, body.RootElement.GetProperty("chat_id").GetInt64());
                 Assert.DoesNotContain(Token, body.RootElement.GetProperty("text").GetString());
-                return Response("{\"ok\":true,\"result\":{\"message_id\":1,\"chat\":{\"id\":24}}}");
+                return Response(JsonSerializer.Serialize(new { ok = true, result = new { message_id = 10_000 + script.Sends, chat = new { id = 24 } } }));
             }
             Assert.EndsWith("/getUpdates", request.RequestUri.AbsolutePath); var poll = Interlocked.Increment(ref script.Polls); Assert.True(script.Receive);
             if (poll > 1)

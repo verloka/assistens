@@ -16,15 +16,17 @@ public sealed class TelegramOutboundChannel : IOutboundChannel, IDisposable
     private readonly IChannelAccessPolicy policy;
     private readonly ChannelApprovalPresenter? approvals;
     private readonly HttpClient client;
+    private readonly IChannelDeliveryReceiptSink? receipts;
     public string ChannelId => "telegram";
     public string ConnectionId { get; }
     public ChannelCapabilities Capabilities { get; } = new(true);
     public TelegramOutboundChannel(string connectionId, string tokenReference, ISecretStore secrets, IChannelAccessPolicy policy,
-        ChannelApprovalPresenter? approvals = null, HttpMessageHandler? handler = null)
+        ChannelApprovalPresenter? approvals = null, HttpMessageHandler? handler = null, IChannelDeliveryReceiptSink? receipts = null)
     {
         new ChannelRoute("telegram", connectionId, "configuration").Validate();
         ArgumentException.ThrowIfNullOrWhiteSpace(tokenReference);
         ConnectionId = connectionId; this.tokenReference = tokenReference; this.secrets = secrets; this.policy = policy; this.approvals = approvals;
+        this.receipts = receipts;
         client = new HttpClient(handler ?? new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false }) { Timeout = Timeout.InfiniteTimeSpan };
     }
     public async Task SendAsync(OutgoingMessage incoming, CancellationToken ct)
@@ -72,6 +74,11 @@ public sealed class TelegramOutboundChannel : IOutboundChannel, IDisposable
                     || result.GetProperty("message_id").GetInt64() <= 0 || result.GetProperty("chat").GetProperty("id").GetInt64() != chatId)
                     throw new ChannelDeliveryException("UnconfirmedResponse", true, acceptedParts: accepted);
                 accepted++;
+                if (receipts is not null)
+                {
+                    try { await receipts.RecordAsync(message, result.GetProperty("message_id").GetInt64().ToString(CultureInfo.InvariantCulture), CancellationToken.None).ConfigureAwait(false); }
+                    catch (Exception) { throw new ChannelDeliveryException("ReceiptNotStored", true, acceptedParts: accepted); }
+                }
             }
             catch (HttpRequestException ex) { throw new ChannelDeliveryException("TransportUnavailable", ex.HttpRequestError != HttpRequestError.NameResolutionError, ex.HttpRequestError == HttpRequestError.NameResolutionError, accepted); }
             catch (Exception ex) when (ex is IOException or JsonException or TelegramProtocolException or InvalidOperationException or KeyNotFoundException or FormatException)
