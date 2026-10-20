@@ -123,6 +123,68 @@ namespace PersonalAgent.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ChannelBindingRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ChannelId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConnectionId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DestinationId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OwnerSource")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PayloadSchemaVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SenderId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UpdatedAtUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerSource", "OwnerId", "Status");
+
+                    b.HasIndex("ChannelId", "ConnectionId", "DestinationId", "SenderId")
+                        .IsUnique();
+
+                    b.ToTable("ChannelBindings", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ChannelBindings_Status", "Status IN ('Pending','Approved','Revoked')");
+
+                            t.HasCheckConstraint("CK_ChannelBindings_Version", "Version >= 0 AND PayloadSchemaVersion > 0");
+                        });
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.ConversationMessageRow", b =>
                 {
                     b.Property<Guid>("Id")

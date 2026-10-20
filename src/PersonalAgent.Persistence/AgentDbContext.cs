@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PersonalAgent.Core.Domain;
 using PersonalAgent.Core.Security;
+using PersonalAgent.Core.Channels;
 using PersonalAgent.Persistence.Entities;
 
 namespace PersonalAgent.Persistence;
@@ -19,6 +20,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<ApprovalRequestRow> ApprovalRequests => Set<ApprovalRequestRow>();
     public DbSet<ToolCallRow> ToolCalls => Set<ToolCallRow>();
     public DbSet<ScheduleRow> Schedules => Set<ScheduleRow>();
+    public DbSet<ChannelBindingRow> ChannelBindings => Set<ChannelBindingRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -31,6 +33,19 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         connections.HasKey(row => row.Id);
         connections.Property(row => row.ProfileJson).IsRequired();
         var utcTicks = new ValueConverter<DateTimeOffset, long>(value => value.UtcTicks, ticks => new DateTimeOffset(ticks, TimeSpan.Zero));
+        var bindings = model.Entity<ChannelBindingRow>();
+        bindings.ToTable("ChannelBindings", table =>
+        {
+            table.HasCheckConstraint("CK_ChannelBindings_Version", "Version >= 0 AND PayloadSchemaVersion > 0");
+            table.HasCheckConstraint("CK_ChannelBindings_Status", "Status IN ('Pending','Approved','Revoked')");
+        });
+        bindings.HasKey(row => row.Id);
+        bindings.HasIndex(row => new { row.ChannelId, row.ConnectionId, row.DestinationId, row.SenderId }).IsUnique();
+        bindings.HasIndex(row => new { row.OwnerSource, row.OwnerId, row.Status });
+        bindings.Property(row => row.Status).HasConversion<string>();
+        bindings.Property(row => row.Version).IsConcurrencyToken().ValueGeneratedNever();
+        bindings.Property(row => row.CreatedAtUtc).HasConversion(utcTicks);
+        bindings.Property(row => row.UpdatedAtUtc).HasConversion(utcTicks);
         var schedules = model.Entity<ScheduleRow>();
         schedules.ToTable("Schedules", table =>
         {

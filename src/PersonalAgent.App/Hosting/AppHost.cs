@@ -7,6 +7,7 @@ using PersonalAgent.Core.Application;
 using PersonalAgent.Core.Persistence;
 using PersonalAgent.Core.Computer;
 using PersonalAgent.Core.Security;
+using PersonalAgent.Core.Channels;
 using PersonalAgent.Persistence;
 using PersonalAgent.Mcp;
 using PersonalAgent.Computer;
@@ -73,6 +74,10 @@ public static class AppHost
                 services.AddSingleton<IModelProfileRepository>(provider => new SqliteModelProfileRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IMcpConnectionRepository>(provider => new SqliteMcpConnectionRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IApprovalRepository>(provider => new SqliteApprovalRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddSingleton<IChannelBindingRepository>(provider => new SqliteChannelBindingRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
+                services.AddSingleton<ChannelOwnershipPolicy>();
+                services.AddSingleton<IChannelAccessPolicy>(provider => provider.GetRequiredService<ChannelOwnershipPolicy>());
+                services.AddSingleton<ChannelOwnerCommands>();
                 services.AddSingleton<IToolCallRepository>(provider => new SqliteToolCallRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IScheduleRepository>(provider => new SqliteScheduleRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
                 services.AddHostedService<RunHistoryService>();

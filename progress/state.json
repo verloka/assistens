@@ -1022,14 +1022,15 @@
                                        "attempts":  1
                                    },
                         "PA-094":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T08:56:54.4665320+00:00",
+                                       "completed_at":  "2026-10-20T09:14:15.8226724+00:00",
                                        "evidence":  [
-
+                                                        "One ChannelBindings SQLite table/migration20261020090446: exact channel/connection/chat/sender to trusted local ApprovalOwner, Pending/Approved/Revoked and CAS version. Atomic bounded pairing intake100per owner/channel/connection; no body/token storage or first-peer bootstrap. ChannelOwnershipPolicy default App DB host has noApprovedpeers; current binding required for task/control/approval and outboundroute. ChannelOwnerCommands forwards commonCancel/Pause/Resume/exactApproval only after owner check, replaces suppliedActor with trusted owner. FDD006 S3/S7/S8 gateway-scoped PASS and005/001/003/007 preserved, all Draft.",
+                                                        "Verification: Target dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter ChannelOwnershipTests|ChannelContractTests:18passed including11new. Actual Core/MAF/localMCP/SQLite unpaired start/cancel/approve0effects then explicit pairing1ownedwrite;5identity variations;8request/review races1winner/reopen;foreignowner/cap/schema/defaultApp/migration preservation. Final powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 lockedrestore/build0warnings/errors;124unit+669integration+3localfake=796passed. EF no pending model changes;doctor/diff pass. No actual Telegram/callback/WPFwizard/paid/corporate acceptance."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-095":  {
                                        "status":  "pending",
@@ -1342,6 +1343,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-093",
-    "updated_at":  "2026-10-20T08:56:52.6582235+00:00"
+    "last_task_id":  "PA-094",
+    "updated_at":  "2026-10-20T09:14:15.8329538+00:00"
 }
