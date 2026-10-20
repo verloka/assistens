@@ -7,6 +7,7 @@ using PersonalAgent.Core.Persistence;
 using PersonalAgent.IntegrationTests.Fakes;
 using PersonalAgent.Persistence;
 using System.IO;
+using System.Text.Json;
 
 namespace PersonalAgent.IntegrationTests;
 
@@ -104,7 +105,7 @@ public sealed class PersistenceIdempotencyTests
             var sentinel = await reopened.SubmitAsync(Submit());
             await reopened.WaitForTerminalAsync(sentinel.Id).WaitAsync(TimeSpan.FromSeconds(10));
             Assert.Equal(1, probe.Calls); // Only sentinel, never the redelivered completed run.
-            Assert.Equal(history, reopened.GetEvents(id));
+            Assert.Equal(JsonSerializer.Serialize(history), JsonSerializer.Serialize(reopened.GetEvents(id)));
         }
         finally { stopping.Cancel(); await worker; }
     }

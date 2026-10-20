@@ -14,6 +14,7 @@ public partial class App : Application
     private bool _shutdownStarted;
     private TakeControlHotkeyService? _takeControl;
     private DesktopShell? _shell;
+    private DesktopNotificationSink? _notificationSink;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -39,9 +40,12 @@ public partial class App : Application
                 MessageBox.Show("Ctrl+Shift+F10 is unavailable. Desktop automation remains blocked; see diagnostic output.",
                     "Take Control shortcut unavailable", MessageBoxButton.OK, MessageBoxImage.Warning);
             MainWindow = host.Services.GetRequiredService<MainWindow>();
+            var tray = new WindowsTrayIcon();
             _shell = new DesktopShell((MainWindow)MainWindow, host.Services.GetRequiredService<ControlWindow>(),
-                host.Services.GetRequiredService<ViewModels.ControlPanelViewModel>(), new WindowsTrayIcon(), () => BeginShutdown());
+                host.Services.GetRequiredService<ViewModels.ControlPanelViewModel>(), tray, () => BeginShutdown());
             _shell.Start();
+            _notificationSink = host.Services.GetRequiredService<DesktopNotificationSink>();
+            _notificationSink.Attach(Dispatcher, tray);
             MainWindow.Show();
             ((MainWindow)MainWindow).StartDesktopWarnings();
             if (e.Args.Contains("--models", StringComparer.Ordinal)) ((MainWindow)MainWindow).OpenModels();
@@ -69,6 +73,7 @@ public partial class App : Application
         try
         {
             _takeControl?.Dispose(); _takeControl = null;
+            _notificationSink?.Detach(); _notificationSink = null;
             _shell?.Dispose(); _shell = null;
             if (_desktopHost is not null)
                 await _desktopHost.StopAsync();

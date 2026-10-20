@@ -547,6 +547,9 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             _ when TaskRunStateMachine.IsTerminal(status) => RunEventType.RunFinished,
             _ => RunEventType.StatusChanged
         }, message);
+        // Persist status with the event, so delayed/restarted notification consumers need not infer
+        // an earlier state from the current run or parse human-readable messages.
+        change.Events[^1] = change.Events[^1] with { Payload = JsonSerializer.SerializeToElement(new { change.Run.Status, change.Run.RunVersion }) };
     }
     private static void AddEvent(Change change, RunEventType type, string message, string? toolId = null, Guid? callId = null) => change.Events.Add(new RunEvent
     {

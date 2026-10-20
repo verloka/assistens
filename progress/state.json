@@ -1088,14 +1088,15 @@
                                        "attempts":  1
                                    },
                         "PA-100":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T14:54:30.3588275+00:00",
+                                       "completed_at":  "2026-10-20T15:10:11.6249935+00:00",
                                        "evidence":  [
-
+                                                        "DesktopOutboundChannel uses same neutral router/outbox contract as Telegram; current-owner exact local destination, Unicode-safe bounded tray preview, UI-dispatcher-only attached existing tray, no automatic windows/control or token exposure. Empty-by-default typed subscriptions with start-time filters; RunNotificationPublisher consumes durable run events, stable event/route message IDs, independent destination enqueue failures, current policy and restart dedup. Existing transition event payload adds status/revision for delayed consumers; no schema/dependency changes. DesktopNotificationTests10 cover actual hosted one run to Desktop plus scripted Telegram outage/recovery/restart, unchanged durable result, filters/revocation, partial publication, Failed/Blocked/ApprovalNeeded, headless refusal and WPF dispatcher/fake tray. FDD006 S15 controlled PASS;001/002/003/005/007 preserved, all Draft. Physical OS display/live Telegram not claimed; persisted UI configuration101 separate.",
+                                                        "Verification: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 final PASS: locked restore/build0warnings/errors;124unit+756integration+3localfake=883passed. New DesktopNotificationTests10; targeted DesktopNotification/desktop/channel/outbox32passed; persistence/idempotency/Dashboard/notification regression32passed after comparing full serialized event payload values. FDD50test paths resolve; doctor/diff pass."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-101":  {
                                        "status":  "pending",
@@ -1348,6 +1349,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-099",
-    "updated_at":  "2026-10-20T14:53:36.2149591+00:00"
+    "last_task_id":  "PA-100",
+    "updated_at":  "2026-10-20T15:10:11.6380042+00:00"
 }

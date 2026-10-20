@@ -7,6 +7,7 @@ using PersonalAgent.Core.Persistence;
 using PersonalAgent.IntegrationTests.Fakes;
 using PersonalAgent.Persistence;
 using System.IO;
+using System.Text.Json;
 
 namespace PersonalAgent.IntegrationTests;
 
@@ -47,7 +48,7 @@ public sealed class PersistenceRuntimeTests
                 Assert.Equal(expected, final.Status);
                 originalEvents = coordinator.GetEvents(id);
                 var durable = (await repository.GetAsync(id))!;
-                Assert.Equal(originalEvents, durable.Events);
+                Assert.Equal(JsonSerializer.Serialize(originalEvents), JsonSerializer.Serialize(durable.Events));
                 Assert.Equal(final.RunVersion, durable.Run.RunVersion);
             }
             finally { stop.Cancel(); await loop; }
@@ -56,7 +57,7 @@ public sealed class PersistenceRuntimeTests
         await reopened.LoadFinishedHistoryAsync();
         Assert.Equal(id, Assert.Single(reopened.GetRuns()).Id);
         Assert.Equal(expected, reopened.GetRun(id).Status);
-        Assert.Equal(originalEvents, reopened.GetEvents(id));
+        Assert.Equal(JsonSerializer.Serialize(originalEvents), JsonSerializer.Serialize(reopened.GetEvents(id)));
         var restored = reopened.GetResult(id)!;
         Assert.Equal(output.Summary, restored.Summary);
         Assert.Equal(output.ErrorCode, restored.ErrorCode);
@@ -166,7 +167,7 @@ public sealed class PersistenceRuntimeTests
             var durable = (await repository.GetAsync(run.Id))!;
             Assert.Equal(cancelPaused ? RunStatus.Cancelled : RunStatus.Completed, durable.Run.Status);
             Assert.Equal(final.RunVersion, durable.Run.RunVersion);
-            Assert.Equal(coordinator.GetEvents(run.Id), durable.Events);
+            Assert.Equal(JsonSerializer.Serialize(coordinator.GetEvents(run.Id)), JsonSerializer.Serialize(durable.Events));
             if (cancelPaused) Assert.Null(durable.Result);
         }
         finally { release.TrySetResult(); stop.Cancel(); await loop; }

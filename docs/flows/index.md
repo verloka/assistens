@@ -20,6 +20,8 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 
 ## Unmapped Entry Points
 
+- Core `RunNotificationPublisher`/App `RunNotificationService` and `DesktopOutboundChannel`/existing tray presentation map to FDD-006 S15 (reverse FDD-001/003/007), preserving FDD-002 control and FDD-005 approval gates. Explicit empty-by-default event subscriptions use one immutable outbox identity per event/route; no delivery calls from the task runner. DesktopNotificationTests proves actual hosted local run, multi-destination outage/restart delivery and WPF dispatcher/fake tray without opening windows. OS display/live Telegram remain untested; configuration101 remains separate, all Draft.
+
 - `ChannelActionHandler` and Telegram command callback dispatch map to FDD-006 S14/FDD-005 S5; reverse FDD-001/003/007 and FDD-002 desktop safety retain common commands, expected revisions and existing single-use dispatch ledger. Hash-only exact scopes are reauthenticated, duplicates cannot repeat effects, pause/cancel never auto-resume stale consent. TelegramCallbackTests covers Core/MAF/loopback MCP/SQLite with scripted polling/acknowledgement failures, not live Telegram. No new flow or migration; all Draft.
 
 - `NotificationDispatcher`/App `NotificationDeliveryService` map to FDD-006 S1/S13 and FDD-007 S3, reverse FDD-001/003/005 preserved. SQLite outbox claim precedes send; bounded known-not-accepted retries and exclusive startup unknown-outcome recovery cannot mutate a completed source run. NotificationOutboxTests covers actual hosted recovery/SQLite with scripted HTTP/adapter effects. Only already-enqueued messages are delivered; subscriptions/configuration100/101 and real Telegram remain separate. All Draft.

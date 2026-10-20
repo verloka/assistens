@@ -50,6 +50,9 @@ public static class AppHost
                 (id, ct) => provider.GetService<ScheduledDesktopGate>()?.WaitAsync(id, ct) ?? Task.CompletedTask));
             services.AddSingleton<TaskRunCoordinator>();
             services.AddSingleton<ChannelMessageRouter>();
+            services.AddSingleton<INotificationSubscriptionSource>(new FixedNotificationSubscriptions([]));
+            services.AddSingleton<DesktopNotificationSink>();
+            services.AddSingleton<IDesktopNotificationSink>(provider => provider.GetRequiredService<DesktopNotificationSink>());
             services.AddSingleton<ISecretStore>(_ => new WindowsDpapiSecretStore(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PersonalAgent", "secrets")));
             services.AddSingleton<OpenAiModelProvider>();
@@ -87,6 +90,10 @@ public static class AppHost
                 services.AddHostedService<RunHistoryService>();
                 services.AddSingleton<INotificationOutbox>(provider => new SqliteNotificationOutbox(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
                 services.AddSingleton<NotificationDispatcher>();
+                services.AddSingleton<IOutboundChannel>(provider => new DesktopOutboundChannel(provider.GetRequiredService<ApprovalOwner>().UserId,
+                    provider.GetRequiredService<IChannelAccessPolicy>(), provider.GetRequiredService<IDesktopNotificationSink>()));
+                services.AddSingleton<RunNotificationPublisher>();
+                services.AddHostedService<RunNotificationService>();
                 services.AddHostedService<NotificationDeliveryService>();
                 services.AddSingleton<ScheduleDispatcher>();
                 services.AddSingleton<ScheduledDesktopGate>();

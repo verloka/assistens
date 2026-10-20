@@ -14,6 +14,7 @@ using System.Windows.Threading;
 using PersonalAgent.IntegrationTests.Fakes;
 using PersonalAgent.Persistence;
 using System.IO;
+using System.Text.Json;
 
 namespace PersonalAgent.IntegrationTests;
 
@@ -222,7 +223,7 @@ public sealed class DashboardTests
                 Assert.Equal(id, model.CurrentRun!.Id);
                 Assert.Equal("Completed", ((TextBlock)window.FindName("RunStatusText")).Text);
                 Assert.Contains("fake", ((TextBlock)window.FindName("RunSummaryText")).Text);
-                Assert.Equal(original, model.Events);
+                Assert.Equal(JsonSerializer.Serialize(original), JsonSerializer.Serialize(model.Events));
                 Assert.Contains(model.Events, value => value.Message == "Persisted visible step");
                 Assert.False(model.IsActive);
                 Assert.False(model.ResumeCommand.CanExecute(null));

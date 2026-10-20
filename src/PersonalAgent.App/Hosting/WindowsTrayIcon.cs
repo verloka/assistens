@@ -9,6 +9,7 @@ public interface ITrayIcon : IDisposable
 {
     void Start(ControlPanelViewModel model, Action open, Action controls, Action exit);
     void Refresh(string status);
+    void ShowNotification(string text) => throw new PersonalAgent.Core.Channels.ChannelDeliveryException("DesktopUnavailable", false, true);
 }
 
 public sealed class WindowsTrayIcon : ITrayIcon
@@ -33,6 +34,7 @@ public sealed class WindowsTrayIcon : ITrayIcon
         ownedIcon = (System.Drawing.Icon)decoded.Clone();
         icon = new Forms.NotifyIcon { Icon = ownedIcon, Text = "Personal Agent", ContextMenuStrip = menu, Visible = true };
         icon.DoubleClick += (_, _) => open();
+        icon.BalloonTipClicked += (_, _) => open(); // Only a deliberate click opens/activates the main window.
         Refresh(model.Status);
     }
     private void AddCommand(string title, ICommand command)
@@ -52,5 +54,10 @@ public sealed class WindowsTrayIcon : ITrayIcon
         if (icon is not null) { icon.Visible = false; icon.Dispose(); icon = null; }
         ownedIcon?.Dispose(); ownedIcon = null;
         menu?.Dispose(); menu = null; commands.Clear();
+    }
+    public void ShowNotification(string text)
+    {
+        if (icon is null) throw new PersonalAgent.Core.Channels.ChannelDeliveryException("DesktopUnavailable", false, true);
+        icon.ShowBalloonTip(5000, "Personal Agent", DesktopOutboundChannel.Preview(text), Forms.ToolTipIcon.Info);
     }
 }
