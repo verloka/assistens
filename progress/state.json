@@ -1143,14 +1143,15 @@
                                        "attempts":  1
                                    },
                         "PA-105":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T18:17:49.7097298+00:00",
+                                       "completed_at":  "2026-10-20T18:33:05.5819990+00:00",
                                        "evidence":  [
-
+                                                        "Actual pinned MAF local session SerializeSessionAsync/DeserializeSessionAsync via ProfileAgentRuntime/App DI and existing conversation repository; nullable unique AgentSessions.RunId migration20261020182055 preserves legacy snapshots. Latest completed provider/model/schema/SDK-policy-compatible checkpoint supplies bounded filtered untrusted text only; incompatible/corrupt/incomplete state falls back to neutral history. No tools/approvals/remote IDs/screenshots or retry after checkpoint failure. FDD006 S19/007 controlled local PASS;001/002/003/005 preserved, all Draft.",
+                                                        "Verification: Final scripts/verify.ps1 locked restore/build0warnings/errors;133unit+807integration+3localfake=943passed, including14ConversationSession cases. Expanded targeted48passed. EF has-pending-model-changes none;56FDD refs/doctor/diff pass. Actual App/Core/MAF/SQLite with scripted clients only, no live provider/channel/native acceptance."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-106":  {
                                        "status":  "pending",
@@ -1353,6 +1354,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-104",
-    "updated_at":  "2026-10-20T18:17:27.1978610+00:00"
+    "last_task_id":  "PA-105",
+    "updated_at":  "2026-10-20T18:33:05.6039945+00:00"
 }

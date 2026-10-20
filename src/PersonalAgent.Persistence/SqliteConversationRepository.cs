@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PersonalAgent.Core.Domain;
+using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Persistence;
 using PersonalAgent.Persistence.Entities;
 using System.Text.Json;
@@ -52,10 +53,18 @@ public sealed class SqliteConversationRepository(IDbContextFactory<AgentDbContex
         ArgumentException.ThrowIfNullOrWhiteSpace(session.ProviderId);
         ArgumentException.ThrowIfNullOrWhiteSpace(session.ModelId);
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        if (session.RunId is { } runId)
+        {
+            var run = await db.TaskRuns.AsNoTracking().SingleOrDefaultAsync(run => run.Id == runId && run.ConversationId == session.ConversationId, cancellationToken);
+            if (run is null) throw new ArgumentException("Session run belongs to another conversation or is missing.");
+            var request = JsonSerializer.Deserialize<AgentRequest>(run.RequestJson);
+            if (request?.Profile is not { } profile || profile.ProviderId != session.ProviderId || profile.ModelId != session.ModelId)
+                throw new ArgumentException("Session provider/model does not match its run.");
+        }
         db.AgentSessions.Add(new AgentSessionRow
         {
             Id = session.Id, ConversationId = session.ConversationId, ProviderId = session.ProviderId,
-            ModelId = session.ModelId, SchemaVersion = session.SchemaVersion, SerializedState = session.SerializedState, TimestampUtc = session.TimestampUtc
+            ModelId = session.ModelId, SchemaVersion = session.SchemaVersion, SerializedState = session.SerializedState, TimestampUtc = session.TimestampUtc, RunId = session.RunId
         });
         await db.SaveChangesAsync(cancellationToken);
     }
@@ -65,6 +74,26 @@ public sealed class SqliteConversationRepository(IDbContextFactory<AgentDbContex
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
         var row = await db.AgentSessions.AsNoTracking().SingleOrDefaultAsync(value => value.Id == sessionId, cancellationToken);
         if (row is null || row.ProviderId != providerId || row.ModelId != modelId || row.SchemaVersion != schemaVersion) return null;
-        return new AgentSessionSnapshot(row.Id, row.ConversationId, row.ProviderId, row.ModelId, row.SchemaVersion, row.SerializedState, row.TimestampUtc);
+        return ToSession(row);
     }
+
+    public async Task<AgentSessionSnapshot?> ReadLatestSessionAsync(Guid conversationId, Guid currentRunId, CancellationToken cancellationToken = default)
+    {
+        await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        var current = await db.TaskRuns.AsNoTracking().SingleOrDefaultAsync(run => run.Id == currentRunId && run.ConversationId == conversationId, cancellationToken);
+        if (current is null) return null;
+        var previous = await db.TaskRuns.AsNoTracking().Where(run => run.ConversationId == conversationId
+            && run.Id != currentRunId && run.CreatedAtUtc <= current.CreatedAtUtc)
+            .OrderByDescending(run => run.CreatedAtUtc).ThenByDescending(run => run.Id).FirstOrDefaultAsync(cancellationToken);
+        if (previous?.Status != RunStatus.Completed || previous.ResultJson is null) return null;
+        SqliteRunRepository.CheckSchema(previous);
+        var row = await db.AgentSessions.AsNoTracking().SingleOrDefaultAsync(session => session.RunId == previous.Id && session.ConversationId == conversationId, cancellationToken);
+        var profile = JsonSerializer.Deserialize<AgentRequest>(previous.RequestJson)?.Profile;
+        if (row is not null && (profile is null || row.ProviderId != profile.ProviderId || row.ModelId != profile.ModelId)) return null;
+        return row is null ? null : ToSession(row);
+    }
+
+    private static AgentSessionSnapshot ToSession(AgentSessionRow row) =>
+        new(row.Id, row.ConversationId, row.ProviderId, row.ModelId, row.SchemaVersion, row.SerializedState, row.TimestampUtc) { RunId = row.RunId };
 }

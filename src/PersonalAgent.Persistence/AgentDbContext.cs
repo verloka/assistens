@@ -197,6 +197,8 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         sessions.ToTable("AgentSessions", table => table.HasCheckConstraint("CK_AgentSessions_SchemaVersion", "SchemaVersion > 0"));
         sessions.HasKey(row => row.Id);
         sessions.HasOne<ConversationRow>().WithMany().HasForeignKey(row => row.ConversationId).OnDelete(DeleteBehavior.Restrict);
+        sessions.HasOne<TaskRunRow>().WithMany().HasForeignKey(row => row.RunId).OnDelete(DeleteBehavior.Restrict);
+        sessions.HasIndex(row => row.RunId).IsUnique().HasFilter("\"RunId\" IS NOT NULL");
         sessions.Property(row => row.TimestampUtc).HasConversion(utcTicks);
     }
 }

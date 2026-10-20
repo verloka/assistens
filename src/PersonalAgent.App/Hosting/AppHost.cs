@@ -68,7 +68,8 @@ public static class AppHost
                 [new("Read local task", TimeSpan.FromSeconds(1)), new("Prepare local result", TimeSpan.FromSeconds(1))],
                 provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync));
             services.AddSingleton<IAgentRuntime>(provider => new ProfileAgentRuntime(provider.GetRequiredService<FakeAgentRuntime>(),
-                provider.GetServices<IModelProvider>(), provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync));
+                provider.GetServices<IModelProvider>(), provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync,
+                provider.GetService<IConversationRepository>()));
             services.AddSingleton<TaskRunner>();
             services.AddHostedService<LifecycleLoggingService>();
             services.AddHostedService<McpLifecycleService>();

@@ -34,6 +34,9 @@ namespace PersonalAgent.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("RunId")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("SchemaVersion")
                         .HasColumnType("INTEGER");
 
@@ -47,6 +50,10 @@ namespace PersonalAgent.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ConversationId");
+
+                    b.HasIndex("RunId")
+                        .IsUnique()
+                        .HasFilter("\"RunId\" IS NOT NULL");
 
                     b.ToTable("AgentSessions", null, t =>
                         {
@@ -825,6 +832,11 @@ namespace PersonalAgent.Persistence.Migrations
                         .HasForeignKey("ConversationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("PersonalAgent.Persistence.Entities.TaskRunRow", null)
+                        .WithMany()
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.ApprovalRequestRow", b =>

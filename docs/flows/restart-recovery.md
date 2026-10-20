@@ -21,6 +21,7 @@ Status: Draft
 6. Resume eligible outbound delivery independently of run execution.
 
 ## Validations
+- A model-history checkpoint cannot resume execution or authorize actions. Only a snapshot bound to the latest preceding completed run and matching provider/model/format/current policy may supply filtered text; unfinished or failed final commits, incompatible or corrupt state use neutral context without replay.
 - Consistent persisted state, unique operation IDs, session-provider compatibility, expiry and ownership.
 - Startup with exclusive store ownership converts dispatched calls lacking acknowledgement to OutcomeUnknown and marks their interrupted runs for outcome review. Persisted approval or a fresh SDK session cannot replay that operation.
 

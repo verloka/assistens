@@ -12,4 +12,7 @@ public sealed record ConversationMessage(Guid Id, Guid ConversationId, long Sequ
 
 // Immutable provider-specific checkpoint. Callers must exclude credentials; state never authorizes replay.
 public sealed record AgentSessionSnapshot(Guid Id, Guid ConversationId, string ProviderId, string ModelId,
-    int SchemaVersion, string SerializedState, DateTimeOffset TimestampUtc);
+    int SchemaVersion, string SerializedState, DateTimeOffset TimestampUtc)
+{
+    public Guid? RunId { get; init; }
+}

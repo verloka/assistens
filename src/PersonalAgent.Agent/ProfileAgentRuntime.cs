@@ -1,10 +1,11 @@
 using PersonalAgent.Core.Agents;
+using PersonalAgent.Core.Persistence;
 
 namespace PersonalAgent.Agent;
 
 // A run carries its immutable configuration. Changing selection/editor state cannot change a queued run.
 public sealed class ProfileAgentRuntime(IAgentRuntime localRuntime, IEnumerable<IModelProvider> providers,
-    Func<Guid, CancellationToken, Task> waitAtBoundary) : IAgentRuntime
+    Func<Guid, CancellationToken, Task> waitAtBoundary, IConversationRepository? sessions = null) : IAgentRuntime
 {
     private readonly IReadOnlyDictionary<string, IModelProvider> available = providers.ToDictionary(p => p.ProviderId, StringComparer.Ordinal);
 
@@ -18,7 +19,7 @@ public sealed class ProfileAgentRuntime(IAgentRuntime localRuntime, IEnumerable<
             return Blocked("ModelProfileUnavailable", "The selected model profile is unavailable; no provider call was started.");
         if (request.AllowedToolIds.Count != 0)
             return Blocked("ToolRegistryUnavailable", "Tool permissions are not configured for this task; no provider call was started.");
-        return new MafAgentRuntime(provider, profile, requiresDesktop: false, waitAtBoundary).ExecuteAsync(request, progress, cancellationToken);
+        return new MafAgentRuntime(provider, profile, requiresDesktop: false, waitAtBoundary, sessions).ExecuteAsync(request, progress, cancellationToken);
     }
 
     private static Task<AgentRunResult> Blocked(string code, string message) => Task.FromResult(new AgentRunResult

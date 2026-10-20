@@ -20,6 +20,7 @@ public sealed class AgentSessionRow
 {
     public Guid Id { get; set; }
     public Guid ConversationId { get; set; }
+    public Guid? RunId { get; set; }
     public string ProviderId { get; set; } = "";
     public string ModelId { get; set; } = "";
     public int SchemaVersion { get; set; }

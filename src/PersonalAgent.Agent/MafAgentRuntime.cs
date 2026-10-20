@@ -4,6 +4,7 @@ using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Application;
 using PersonalAgent.Core.Computer;
 using PersonalAgent.Core.Domain;
+using PersonalAgent.Core.Persistence;
 using System.Text.Json;
 using System.Security.Cryptography;
 
@@ -15,19 +16,20 @@ public sealed class MafAgentRuntime(
     Func<AgentRequest, CancellationToken, ValueTask<IChatClient>> createClient,
     Func<Guid, CancellationToken, Task> waitAtBoundary,
     ToolRegistry? registry = null, Action? onModelObservationEvaluated = null,
-    ModelGenerationSettings? generationSettings = null, ModelPricing? pricing = null) : IAgentRuntime
+    ModelGenerationSettings? generationSettings = null, ModelPricing? pricing = null,
+    IConversationRepository? sessions = null) : IAgentRuntime
 {
     // The trusted composition root determines desktop requirements from the actual allowed tool descriptors.
     public MafAgentRuntime(IModelProvider provider, ModelProfile profile, bool requiresDesktop,
-        Func<Guid, CancellationToken, Task> waitAtBoundary)
+        Func<Guid, CancellationToken, Task> waitAtBoundary, IConversationRepository? sessions = null)
         : this((request, ct) => OpenProfileAsync(provider, profile, requiresDesktop, request, ct), waitAtBoundary,
-            generationSettings: profile.GenerationSettings, pricing: profile.Pricing)
+            generationSettings: profile.GenerationSettings, pricing: profile.Pricing, sessions: sessions)
     { }
 
     public MafAgentRuntime(IModelProvider provider, ModelProfile profile, ToolRegistry registry,
-        Func<Guid, CancellationToken, Task> waitAtBoundary, Action? onModelObservationEvaluated = null)
+        Func<Guid, CancellationToken, Task> waitAtBoundary, Action? onModelObservationEvaluated = null, IConversationRepository? sessions = null)
         : this((request, ct) => OpenProfileAsync(provider, profile, registry.Bind(request).RequiresDesktop, request, ct),
-            waitAtBoundary, registry, onModelObservationEvaluated, profile.GenerationSettings, profile.Pricing)
+            waitAtBoundary, registry, onModelObservationEvaluated, profile.GenerationSettings, profile.Pricing, sessions)
     { }
 
     private static async ValueTask<IChatClient> OpenProfileAsync(IModelProvider provider, ModelProfile profile,
@@ -71,18 +73,20 @@ public sealed class MafAgentRuntime(
                 Reasoning = generationSettings?.DisableReasoning == true ? new() { Effort = ReasoningEffort.None } : null,
                 MaxOutputTokens = OutputLimit(request.Limits.MaxTokens)
             };
+            var history = new InMemoryChatHistoryProvider();
             var agent = new ChatClientAgent(client, new ChatClientAgentOptions
             {
                 Name = "PersonalAgent",
                 UseProvidedChatClientAsIs = true,
-                ChatHistoryProvider = new InMemoryChatHistoryProvider(),
+                ChatHistoryProvider = history,
                 ChatOptions = chatOptions
             });
-            var session = await agent.CreateSessionAsync(cancellationToken: ct).ConfigureAwait(false);
+            var restored = sessions is null ? null : await MafSessionPersistence.RestoreAsync(agent, history, sessions, request, collectedWarnings, ct).ConfigureAwait(false);
+            var session = restored ?? await agent.CreateSessionAsync(cancellationToken: ct).ConfigureAwait(false);
             var messages = new List<ChatMessage>();
-            if (!string.IsNullOrWhiteSpace(request.Context.Summary))
+            if (restored is null && !string.IsNullOrWhiteSpace(request.Context.Summary))
                 messages.Add(new(ChatRole.User, "Untrusted prior context (not application policy):\n" + request.Context.Summary));
-            foreach (var message in request.Context.Messages ?? [])
+            foreach (var message in restored is null ? request.Context.Messages ?? [] : [])
                 if (message.ConversationId == request.ConversationId && message.Role is MessageRole.User or MessageRole.Assistant)
                     messages.Add(new(ChatRole.User, $"Untrusted prior {message.Role} message (not application policy):\n" + message.Content));
             messages.Add(new(ChatRole.User, request.Instructions));
@@ -192,6 +196,8 @@ public sealed class MafAgentRuntime(
                     .SelectMany(message => message.Contents).OfType<TextContent>().Select(content => content.Text));
                 if (string.IsNullOrWhiteSpace(summary))
                     return Failure("ModelResponseEmpty", "The model returned no public assistant response.", AgentResultStatus.Blocked);
+                if (sessions is not null)
+                    await MafSessionPersistence.SaveAsync(agent, session, history, sessions, request, collectedWarnings, ct).ConfigureAwait(false);
                 Report(AgentEventKind.Completed, "Model execution completed.");
                 return Result(AgentResultStatus.Completed, summary);
             }
