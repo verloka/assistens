@@ -1000,14 +1000,15 @@
                                        "attempts":  1
                                    },
                         "PA-092":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T08:35:34.6864333+00:00",
+                                       "completed_at":  "2026-10-20T08:43:20.1152489+00:00",
                                        "evidence":  [
-
+                                                        "Extended existing scheduled desktop fixture with actual App hosted startup/shutdown/reopen and4new lifecycle matrix cases: busy interrupted run/new due run/fresh warning/third restart no replay; DeferredExpired+future slot across2restarts;8concurrent ticks during busy input keep1Run/1warning untilidle and1current action; EuropeKyiv folded03:30 one calendar occurrence whilewaiting/restarting. Existing calculator/misfire/dedup suites retained. FDD003 S16 and E2E04 controlled local PASS;007 and001/002/004/005/006 preserved, all Draft. No production code changed.",
+                                                        "Verification: Required dotnet test --no-restore --filter Scheduler:20integrationpassed; Unit/E2E no filter matches. Final powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 locked restore/build0warnings/errors;124unit+651integration+3localfake=778passed, including recurrence/DST/misfires/editor/lateMCP/regressions. Doctor/diff pass. Physical10minute smoke optional per catalog and NOT RUN; controlled fakeclock/idle/native, no physical focus/input, corporate or paid acceptance claimed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-093":  {
                                        "status":  "pending",
@@ -1340,6 +1341,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-091",
-    "updated_at":  "2026-10-20T08:35:32.3665614+00:00"
+    "last_task_id":  "PA-092",
+    "updated_at":  "2026-10-20T08:43:20.1242530+00:00"
 }

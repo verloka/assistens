@@ -1120,3 +1120,18 @@ without an immediate old follow-up. Eight coalescing writers have one version
 winner; explicit Skip, unrelated and terminal runs cannot be coalesced by this path.
 Physical focus/keyboard, notification delivery and corporate/live-model acceptance
 remain separate from these deterministic fixtures.
+
+### PA-092 scheduler lifecycle matrix
+
+```powershell
+dotnet test --no-restore --filter Scheduler
+```
+
+The mandatory filter includes actual hosted busy-warning restart, expiration
+across repeated host reopen, eight concurrent ticks while input is busy and a
+Kyiv repeated03:30 calendar occurrence held through the fold/restart. Existing
+SchedulerTests supplies occurrence deduplication and lost-advance recovery;
+ScheduleMisfireTests and ScheduleCalculatorTests in the full suite supply the
+spring gap/fold and policy matrix. E2E-04 local acceptance uses controlled input
+idle/native boundaries and no physical focus/input. The optional real ten-minute
+smoke was not run; it remains distinct from these passing deterministic tests.
