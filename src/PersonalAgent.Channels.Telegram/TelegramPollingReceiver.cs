@@ -45,8 +45,9 @@ public sealed class TelegramPollingReceiver : IInboundChannel, IDisposable
         {
             ct.ThrowIfCancellationRequested();
             var token = await secrets.ReadAsync(options.TokenReference, ct);
-            if (!ValidToken(token)) throw new TelegramPollingException("MissingOrInvalidCredential");
-            var endpoint = new Uri("https://api.telegram.org/bot" + token + "/getUpdates");
+            Uri endpoint;
+            try { endpoint = TelegramProtocol.Endpoint(token, "getUpdates"); }
+            catch (TelegramProtocolException ex) { throw new TelegramPollingException(ex.Code); }
             var cursor = await cursors.ReadAsync(ChannelId, ConnectionId, ct);
             while (true)
             {
@@ -91,7 +92,7 @@ public sealed class TelegramPollingReceiver : IInboundChannel, IDisposable
                 if ((int)response.StatusCode >= 500) error = "ServiceUnavailable";
                 else
                 {
-                    var document = await ReadBoundedAsync(response.Content, deadline.Token);
+                    var document = await TelegramProtocol.ReadBoundedAsync(response.Content, deadline.Token);
                     var keep = false;
                     try
                     {
@@ -112,6 +113,7 @@ public sealed class TelegramPollingReceiver : IInboundChannel, IDisposable
                 }
             }
             catch (HttpRequestException) { /* Never expose token-bearing request diagnostics. */ }
+            catch (TelegramProtocolException ex) { throw new TelegramPollingException(ex.Code); }
             catch (IOException) { }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested) { error = "PollTimeout"; }
             catch (OperationCanceledException) { throw new OperationCanceledException(ct); }
@@ -120,21 +122,6 @@ public sealed class TelegramPollingReceiver : IInboundChannel, IDisposable
             if (attempt >= options.MaxPollAttempts) throw new TelegramPollingException(error);
             await Task.Delay(delay, clock, ct);
         }
-    }
-
-    private static async Task<JsonDocument> ReadBoundedAsync(HttpContent content, CancellationToken ct)
-    {
-        const int maxBytes = 4 * 1024 * 1024;
-        if (content.Headers.ContentLength > maxBytes) throw new TelegramPollingException("ResponseTooLarge");
-        await using var stream = await content.ReadAsStreamAsync(ct);
-        using var buffer = new MemoryStream(); var chunk = new byte[8192];
-        while (true)
-        {
-            var read = await stream.ReadAsync(chunk, ct); if (read == 0) break;
-            if (buffer.Length + read > maxBytes) throw new TelegramPollingException("ResponseTooLarge");
-            buffer.Write(chunk, 0, read);
-        }
-        return JsonDocument.Parse(buffer.ToArray(), new JsonDocumentOptions { MaxDepth = 32 });
     }
 
     private static long UpdateId(JsonElement update)
@@ -168,14 +155,6 @@ public sealed class TelegramPollingReceiver : IInboundChannel, IDisposable
         }
         catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException or FormatException or ArgumentException)
         { return null; } // Unsupported/malformed transport messages never acquire application authority.
-    }
-
-    private static bool ValidToken(string? token)
-    {
-        if (token is null || token.Length is < 8 or > 256) return false;
-        var parts = token.Split(':');
-        return parts.Length == 2 && parts[0].Length > 0 && parts[0].All(char.IsAsciiDigit)
-            && parts[1].Length > 0 && parts[1].All(c => char.IsAsciiLetterOrDigit(c) || c is '_' or '-');
     }
 
     public void Dispose() => client.Dispose();

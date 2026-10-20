@@ -1055,14 +1055,15 @@
                                        "attempts":  1
                                    },
                         "PA-097":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T09:37:23.2069320+00:00",
+                                       "completed_at":  "2026-10-20T09:46:44.9667699+00:00",
                                        "evidence":  [
-
+                                                        "TelegramOutboundChannel; ChannelApprovalPresenter and hash-only exact ChannelActionGrant; SQLite migration20261020093917; TelegramOutboundTests11; FDD006 S12/005 S4 presentation-scoped PASS all Draft",
+                                                        "Verification: scripts/verify.ps1 lockedrestore/build0warnings/errors;124unit+714integration+3localfake=841passed; initial TelegramOutbound|Polling|Command44passed, final new11; EF no pendingmodelchanges; doctor/diff pass"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-098":  {
                                        "status":  "pending",
@@ -1345,6 +1346,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-096",
-    "updated_at":  "2026-10-20T09:37:21.9502641+00:00"
+    "last_task_id":  "PA-097",
+    "updated_at":  "2026-10-20T09:46:44.9757697+00:00"
 }

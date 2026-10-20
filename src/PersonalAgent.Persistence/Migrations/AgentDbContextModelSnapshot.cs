@@ -123,6 +123,23 @@ namespace PersonalAgent.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.ChannelActionRow", b =>
+                {
+                    b.Property<string>("TokenHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PayloadSchemaVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ScopeJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("TokenHash");
+
+                    b.ToTable("ChannelActions", (string)null);
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.ChannelBindingRow", b =>
                 {
                     b.Property<Guid>("Id")

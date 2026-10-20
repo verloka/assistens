@@ -22,9 +22,14 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     public DbSet<ScheduleRow> Schedules => Set<ScheduleRow>();
     public DbSet<ChannelBindingRow> ChannelBindings => Set<ChannelBindingRow>();
     public DbSet<ChannelCursorRow> ChannelCursors => Set<ChannelCursorRow>();
+    public DbSet<ChannelActionRow> ChannelActions => Set<ChannelActionRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        var channelActions = model.Entity<ChannelActionRow>();
+        channelActions.ToTable("ChannelActions");
+        channelActions.HasKey(row => row.TokenHash);
+        channelActions.Property(row => row.ScopeJson).IsRequired();
         var cursors = model.Entity<ChannelCursorRow>();
         cursors.ToTable("ChannelCursors", table => table.HasCheckConstraint("CK_ChannelCursors_Position", "NextSequence >= 0 AND Version >= 0 AND PayloadSchemaVersion > 0"));
         cursors.HasKey(row => new { row.ChannelId, row.ConnectionId });

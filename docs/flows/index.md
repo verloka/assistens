@@ -20,6 +20,8 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 
 ## Unmapped Entry Points
 
+- `TelegramOutboundChannel` and Core `ChannelApprovalPresenter` map to FDD-006 S12 plus FDD-005 exact action presentation; reverse FDD-001/003/007 retain independent task/delivery state. Random callback hashes bind exact owner/peer/action/presentation/expiry and cannot approve anything on send. TelegramOutboundTests uses scripted HTTP and actual Core/MAF/local MCP/SQLite, not live Telegram. No auto send retry/worker; outbox098 and callback consumption099 remain separate. All Draft.
+
 - `TelegramCommandHandler` maps to FDD-006 S11 and reverse FDD-001/007, preserving FDD-002 desktop gates and FDD-005 approval boundaries. Exact owner checks precede queries/control; explicit run/revision commands bypass models and use shared handlers. Plain/new tasks retain existing external dedup/default policy. TelegramCommandTests covers actual SQLite/commands, busy runtime and scripted polling; replies are returned for delivery097+, callbacks099/follow-up103+ stay separate. All Draft.
 
 - `src/PersonalAgent.Channels.Telegram/TelegramPollingReceiver.cs` maps to FDD-006 S9/S10 and reverse FDD-001/003/007; owner/approval boundaries FDD-005 are preserved. Explicit long polling, durable receive cursor and common external-update identity cover duplicate/restart acceptance without a webhook. TelegramPollingTests exercises scripted HTTP with actual SQLite/App/owner policy, including failed acceptance and cursor persistence, bounded retries and cancellation. No automatic network worker, outbound write, action authorization or new tool grant; real Telegram remains untested. All Draft.
