@@ -1002,7 +1002,7 @@ Pausing-state handoff and explicit boundary/resume, using no native/API calls.
 dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter FullyQualifiedName~HybridMcpGuiTests
 ```
 
-Five account-free cases compose actual MainWindow/XAML commands, Core runner,
+The original five account-free cases compose actual MainWindow/XAML commands, Core runner,
 MAF, common tool registry, loopback Jira MCP, WindowsComputerController and SQLite.
 A scripted model and in-memory Teams/native adapters supply synthetic GUI pixels
 and record input; no real screen is read and no native input is sent.
@@ -1014,6 +1014,15 @@ after GUI keeps XAML and durable Blocked results consistent, releases the lease
 and does not replay the read. This covers deterministic E2E-02/E2E-05 composition;
 physical idle detection, corporate accounts and notification delivery remain
 separate. Default production model tool exposure remains closed.
+
+PA-090 adds six cases to the same fixture (eleven total). Persisted scheduled
+submission now reaches the production warning/idle/lease gate after the actual
+local MCP read. All three policies prevent premature GUI, preserve the same
+model session and typed Jira result, and complete with one read/one GUI action.
+Skip/cancel before GUI has zero native effects; a direct click with an invented
+observation token is refused without acquiring desktop. Warning presentation,
+clock, idle and native effects are controlled fixtures; E2E-05 local acceptance
+does not imply physical focus or corporate/live-provider acceptance.
 
 ### PA-078..080 exact human approvals
 

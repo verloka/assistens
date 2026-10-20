@@ -978,14 +978,15 @@
                                        "attempts":  1
                                    },
                         "PA-090":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T08:17:06.4122238+00:00",
+                                       "completed_at":  "2026-10-20T08:23:28.8640883+00:00",
                                        "evidence":  [
-
+                                                        "Existing088/089 pre-acquisition gate already enforces first late GUI call; no duplicate production implementation. Extended HybridMcpGuiTests actual scheduled dispatcher/common commands/Core/MAF/registry/local HTTP MCP/SQLite/unshown Dashboard+warning. Three policies hold first screenshot with one completed read/modelcall2 pending and zero controller/capture/input; same context continues to one action and typed-source history. Skip/cancel no read replay; direct schema-valid invented observation click refuses StaleDesktopContext with no lease. FDD003 S13/E2E05 controlled local PASS;004 and reverse001/002/007/005/006 preserved, all Draft.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter HybridMcpGuiTests:11 passed (6new+5existing). Final powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 locked restore/build0warnings/errors;124unit+642integration+3localfake=769passed. Doctor/diff pass. Scripted model/Teams/native, simulated clock/idle/presentation; physical focus/corporate/paid NOT TESTED."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-091":  {
                                        "status":  "pending",
@@ -1338,6 +1339,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-089",
-    "updated_at":  "2026-10-20T08:17:04.7584561+00:00"
+    "last_task_id":  "PA-090",
+    "updated_at":  "2026-10-20T08:23:28.8730874+00:00"
 }
