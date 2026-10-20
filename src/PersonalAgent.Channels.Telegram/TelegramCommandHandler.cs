@@ -18,15 +18,18 @@ public sealed class TelegramCommandHandler
     private readonly ChannelMessageRouter router;
     private readonly TaskRunCoordinator runs;
     private readonly string? botUsername;
+    private readonly ChannelActionHandler? actions;
     private const string Usage = "Commands: /status [run-id], /tasks, /new <task>, /pause <run-id> <version>, /resume <run-id> <version>, /cancel <run-id> <version>. Use /status or /tasks to get the current version.";
 
-    public TelegramCommandHandler(string connectionId, ChannelOwnershipPolicy ownership, ChannelOwnerCommands controls, ChannelMessageRouter router, TaskRunCoordinator runs, string? botUsername = null)
+    public TelegramCommandHandler(string connectionId, ChannelOwnershipPolicy ownership, ChannelOwnerCommands controls, ChannelMessageRouter router, TaskRunCoordinator runs, string? botUsername = null,
+        ChannelActionHandler? actions = null)
     {
         new ChannelRoute("telegram", connectionId, "configuration").Validate();
         if (botUsername is not null && (botUsername.Length is < 1 or > 64 || botUsername.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '_')))
             throw new ArgumentException("Invalid configured bot username.");
         this.connectionId = connectionId; this.ownership = ownership; this.controls = controls; this.router = router; this.runs = runs;
         this.botUsername = botUsername;
+        this.actions = actions;
     }
 
     public async Task<OutgoingMessage> HandleAsync(IncomingMessage incoming, CancellationToken ct = default)
@@ -35,6 +38,7 @@ public sealed class TelegramCommandHandler
         if (message.Route.ChannelId != "telegram" || message.Route.ConnectionId != connectionId) throw new ChannelAccessDeniedException();
         await ownership.RequireOwnerAsync(message, ct).ConfigureAwait(false);
         ct.ThrowIfCancellationRequested();
+        if (message.ActionToken is not null && actions is not null) return Reply(message, await actions.HandleAsync(message, ct).ConfigureAwait(false));
         if (message.ActionToken is not null || message.Attachments.Count != 0)
             throw new NotSupportedException("Telegram command handler accepts text only; callback actions require explicit authorization.");
         var text = message.Text.Trim();

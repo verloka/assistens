@@ -45,8 +45,8 @@ public sealed class TelegramPollingReceiver : IInboundChannel, IDisposable
         {
             ct.ThrowIfCancellationRequested();
             var token = await secrets.ReadAsync(options.TokenReference, ct);
-            Uri endpoint;
-            try { endpoint = TelegramProtocol.Endpoint(token, "getUpdates"); }
+            Uri endpoint; Uri callbackEndpoint;
+            try { endpoint = TelegramProtocol.Endpoint(token, "getUpdates"); callbackEndpoint = TelegramProtocol.Endpoint(token, "answerCallbackQuery"); }
             catch (TelegramProtocolException ex) { throw new TelegramPollingException(ex.Code); }
             var cursor = await cursors.ReadAsync(ChannelId, ConnectionId, ct);
             while (true)
@@ -64,6 +64,8 @@ public sealed class TelegramPollingReceiver : IInboundChannel, IDisposable
                     {
                         try { await accept(message, ct); }
                         catch (ChannelAccessDeniedException) { /* Explicit policy denial is a terminal discard, never a task. */ }
+                        if (message.ActionToken is not null && message.CorrelationKey is { } queryId)
+                            await AnswerCallbackAsync(callbackEndpoint, queryId, ct);
                     }
                     ct.ThrowIfCancellationRequested();
                     // https://core.telegram.org/bots/api#getupdates: higher offset confirms earlier updates.
@@ -74,6 +76,19 @@ public sealed class TelegramPollingReceiver : IInboundChannel, IDisposable
             }
         }
         finally { Volatile.Write(ref running, 0); }
+    }
+
+    private async Task AnswerCallbackAsync(Uri endpoint, string queryId, CancellationToken ct)
+    {
+        // Transport acknowledgement only: no result/body, decision, retry or receive-cursor authority.
+        // Even a failed/unknown acknowledgement cannot replay an accepted application action.
+        try
+        {
+            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct); deadline.CancelAfter(TimeSpan.FromSeconds(5));
+            using var request = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = JsonContent.Create(new { callback_query_id = queryId }) };
+            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline.Token);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or OperationCanceledException) { ct.ThrowIfCancellationRequested(); }
     }
 
     private async Task<JsonDocument> PollAsync(Uri endpoint, long offset, CancellationToken ct)

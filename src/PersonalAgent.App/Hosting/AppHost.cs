@@ -81,6 +81,7 @@ public static class AppHost
                 services.AddSingleton<ChannelOwnershipPolicy>();
                 services.AddSingleton<IChannelAccessPolicy>(provider => provider.GetRequiredService<ChannelOwnershipPolicy>());
                 services.AddSingleton<ChannelOwnerCommands>();
+                services.AddSingleton<ChannelActionHandler>();
                 services.AddSingleton<IToolCallRepository>(provider => new SqliteToolCallRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IScheduleRepository>(provider => new SqliteScheduleRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
                 services.AddHostedService<RunHistoryService>();

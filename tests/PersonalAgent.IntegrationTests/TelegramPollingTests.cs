@@ -178,7 +178,14 @@ public sealed class TelegramPollingTests
         public TaskCompletionSource Entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
-            Assert.Equal(HttpMethod.Post, request.Method); Assert.Equal("api.telegram.org", request.RequestUri!.Host); Assert.EndsWith("/getUpdates", request.RequestUri.AbsolutePath);
+            Assert.Equal(HttpMethod.Post, request.Method); Assert.Equal("api.telegram.org", request.RequestUri!.Host);
+            if (request.RequestUri.AbsolutePath.EndsWith("/answerCallbackQuery"))
+            {
+                using var answer = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));
+                Assert.Equal("query-id", answer.RootElement.GetProperty("callback_query_id").GetString());
+                return new(HttpStatusCode.OK) { Content = new StringContent("{\"ok\":true,\"result\":true}") };
+            }
+            Assert.EndsWith("/getUpdates", request.RequestUri.AbsolutePath);
             using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct)); Offsets.Add(body.RootElement.GetProperty("offset").GetInt64());
             Assert.Equal(30, body.RootElement.GetProperty("timeout").GetInt32()); Assert.Equal(100, body.RootElement.GetProperty("limit").GetInt32());
             Assert.Equal(new[] { "message", "callback_query" }, body.RootElement.GetProperty("allowed_updates").EnumerateArray().Select(value => value.GetString()));

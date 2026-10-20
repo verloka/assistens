@@ -11,7 +11,7 @@ public sealed record ChannelRoute(string ChannelId, string ConnectionId, string 
     }
 }
 [JsonConverter(typeof(JsonStringEnumConverter<ChannelActionKind>))]
-public enum ChannelActionKind { Approve, Reject, Cancel, OpenDetails }
+public enum ChannelActionKind { Approve, Reject, Cancel, OpenDetails, Pause }
 // Tokens identify a future exact action; the kind/label in a message never grants authority.
 public sealed record ChannelMessageAction(ChannelActionKind Kind, string Label, string Token);
 public sealed record ChannelAttachment(string ExternalId, string ContentType, string Name, long? SizeBytes = null);

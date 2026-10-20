@@ -1077,14 +1077,15 @@
                                        "attempts":  1
                                    },
                         "PA-099":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-20T14:43:21.5428303+00:00",
+                                       "completed_at":  "2026-10-20T14:53:36.2019617+00:00",
                                        "evidence":  [
-
+                                                        "ChannelActionHandler authenticates exact current owner/peer/hash-only scope/TTL/action/run/request revisions; common approval CAS and dispatch ledger ensure one effect; pause/cancel use current run versions and stable token command IDs. Telegram polling answers callbacks once without replay on acknowledgement failure. TelegramCallbackTests 22 cases cover races, foreign/revoked/changed/expired scopes, reject, control invalidation, reopen and lost receive-offset persistence. FDD006 S14/FDD005 S5 controlled local PASS; reverse001/002/003/007 preserved, all Draft; no live Telegram/corporate/native acceptance. No migration or dependencies.",
+                                                        "Verification: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: locked restore; build 0 warnings/errors; 124 unit + 746 integration + 3 local fake-flow = 873 passed. Target TelegramCallbackTests: 22 passed; earlier Telegram regression suite65 passed. FDD49 test references resolve; taskctl doctor and git diff --check pass."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-100":  {
                                        "status":  "pending",
@@ -1347,6 +1348,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-098",
-    "updated_at":  "2026-10-20T09:56:16.7736054+00:00"
+    "last_task_id":  "PA-099",
+    "updated_at":  "2026-10-20T14:53:36.2149591+00:00"
 }
