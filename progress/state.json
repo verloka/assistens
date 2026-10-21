@@ -1185,14 +1185,15 @@
                                        "attempts":  0
                                    },
                         "PA-109":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-21T10:11:10.4309490+00:00",
+                                       "completed_at":  "2026-10-21T10:14:28.4677389+00:00",
                                        "evidence":  [
-
+                                                        "WindowsInputObserver/WindowsActivityHooks: explicitly started dedicated STA message-loop metadata observer, no App registration/polling/activity history; current idle probe reused. InputObservationTests12cases cover lifecycle/errors/100000event burst/native metadata; tests/README.md documents attribution, secure-desktop and silent-hook-removal limits. Diagnostic-only prototype, no task business behavior/FDD change; native global hook acceptance is NOT TESTED.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter InputObservationTests|WindowsSystemIdleTests:20passed; expanded InputObservationTests|WindowsSystemIdleTests|ScheduledDesktopTests|TakeControl|DesktopShellTests:59passed. dotnet build --no-restore -v minimal:0warnings/errors. Observation-thread idle CPU\u003c100ms over250ms; git diff --check passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-110":  {
                                        "status":  "pending",
@@ -1355,6 +1356,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-107",
-    "updated_at":  "2026-10-21T10:10:52.5958337+00:00"
+    "last_task_id":  "PA-109",
+    "updated_at":  "2026-10-21T10:14:28.4777389+00:00"
 }

@@ -23,6 +23,36 @@ dotnet test --no-build
 Run a focused group with `dotnet test --filter DesktopHostTests` or
 `dotnet test --filter HealthScreenTests`.
 
+PA-109: `--filter 'InputObservationTests|WindowsSystemIdleTests'` exercises the
+explicitly started `WindowsInputObserver` prototype with a fake hook registration
+on an actual dedicated Windows dispatcher. It reuses the on-demand session idle
+probe, installs at most one keyboard/mouse pair, blocks on messages while idle,
+keeps no activity queue, and removes hooks on shutdown/partial setup failure.
+The idle test measures the observation thread's CPU over250ms (under100ms CPU),
+independent of other test threads. A100000-event burst retains counters only.
+No actual global hooks, key contents, pointer positions, captures or injected input
+are used in these automated cases. The App does not start this prototype.
+
+The native implementation observes WH_KEYBOARD_LL/WH_MOUSE_LL metadata only:
+device, injected/lower-integrity flags, event tick and dwExtraInfo. Callbacks always
+continue the hook chain and must remain short; consumer exceptions stop observation
+with a fixed diagnostic. Start/stop and native cleanup failures do not imply that
+observation remains healthy. Native callback delegates are retained if unhook fails.
+
+Limitations: GetLastInputInfo is session-specific and includes injected events;
+its timestamps can wrap or move backwards. A missing injected flag is only a
+physical-input candidate, not proof of human origin. Other accessibility software,
+remote sessions and drivers can inject input; dwExtraInfo can be forged and grants
+no authority. Secure desktops/elevation/session boundaries can prevent observation.
+Windows can silently remove a slow low-level hook; Running reports installation
+and pump lifetime, not proof of continuous event coverage. Actual native hook,
+accessibility/RDP/lock behavior and attended auto-pause acceptance remain separate.
+Own-injection attribution and active-run policy are PA-110/111.
+API references: [keyboard callback](https://learn.microsoft.com/windows/win32/winmsg/lowlevelkeyboardproc),
+[mouse callback](https://learn.microsoft.com/windows/win32/winmsg/lowlevelmouseproc),
+[keyboard flags](https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-kbdllhookstruct),
+[mouse flags](https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-msllhookstruct).
+
 PA-066: `--filter McpConnectionConfig` verifies generic configured connections,
 owner-approval/default denial, immutable settings/allowlists, scoped secret
 references, connection cancellation/timeouts and sanitized failed-handshake
