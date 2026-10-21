@@ -44,7 +44,7 @@ internal sealed class TakeoverWindow : Window
     private Task? runnerLoop, initialization;
     private Guid? currentRun;
     private string currentMode = "";
-    private bool consent, closing, closed;
+    private bool consent, closing, closed, resuming;
     private nint handle;
     private int clickEvents;
     private DateTimeOffset resumeRequested;
@@ -126,6 +126,7 @@ internal sealed class TakeoverWindow : Window
         var capture = new GuardedCapture(this);
         WindowsComputerController? controller = null;
         ScreenCapture? frame = null;
+        var stage = "initial input";
         var sample = string.Concat(Enumerable.Repeat("Тест 🙂 你好 ", 250));
         try
         {
@@ -179,7 +180,8 @@ internal sealed class TakeoverWindow : Window
                 stored.Events.Any(e => e.EventType == RunEventType.DesktopPauseConfirmed);
             var autoReason = stored.Events.Any(e => e.Message == nameof(PauseReason.AutoPause));
             if (activityPause) pauseOk &= autoReason && activity!.IgnoredOwnEvents > 0;
-            Write($"PA048 PAUSE {(pauseOk ? "OK" : "FAILED")}; mode={currentMode}; nativeCalls={before}->{input.Calls}; clickEvents={clickEvents}; chars={actual.Length}/{sample.Length}; modifiersReleased={Released()}; validUnicode={validUnicode}; checkpoint={takeControl.Handoff.Confirmed}; AutoPause={autoReason}; ownEvents={activity?.IgnoredOwnEvents ?? 0}. MOVE TARGET, then RESUME and keep hands off.");
+            Write($"PA048 PAUSE {(pauseOk ? "OK" : "FAILED")}; mode={currentMode}; nativeCalls={before}->{input.Calls}; clickEvents={clickEvents}; chars={actual.Length}/{sample.Length}; modifiersReleased={Released()}; validUnicode={validUnicode}; checkpoint={takeControl.Handoff.Confirmed}; AutoPause={autoReason}; ownEvents={activity?.IgnoredOwnEvents ?? 0}; handoffError={takeControl.Handoff.Error ?? "none"}; {activity?.ObservationDiagnostic ?? "manualHotkey=True"}. {(pauseOk ? "MOVE TARGET, then RESUME and keep hands off." : "Acceptance failed. Close this test window and send this full line; no input retried.")}");
+            if (!pauseOk) return new() { Status = AgentResultStatus.Blocked, Summary = "Attended pause failed; no resume/input retry." };
             await runs!.WaitAtBoundaryAsync(request.RunId, new RunStepAccess(true, false, false), ct);
 
             // Resume discards the unfinished macro. Only deliberate fresh-target click/chord follows.
@@ -189,15 +191,18 @@ internal sealed class TakeoverWindow : Window
             try { await controller.ClickAsync(safeProbePoint, MouseButton.Left, ct); }
             catch (ComputerInputException error) when (error.Code == "StaleDesktopContext") { staleDenied = input.Calls == nativeBefore; }
             var oldGeneration = lease.Generation;
+            stage = "resume acquisition";
             lease = await desktop.AcquireAsync(request.RunId, ct);
             var fresh = new WindowsComputerController(desktop, lease, capture, input, capture.GetMonitors, chord => chord == "Ctrl+A");
             var foreignDenied = false;
             try { fresh.ConfirmObservation(frame); }
             catch (ComputerInputException) { foreignDenied = true; }
             var capturesBefore = capture.Calls;
+            stage = "resume capture";
             var freshFrame = await fresh.ScreenshotAsync(new(ScreenshotArea.VirtualDesktop), ct);
             var pointAfter = await PrepareMouseAsync(); fresh.ConfirmObservation(freshFrame);
             var clicksBefore = clickEvents;
+            stage = "resume fresh input";
             await fresh.ClickAsync(pointAfter, MouseButton.Left, ct);
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             await Dispatcher.InvokeAsync(() => { RequireForeground(); mouseOperation = false; text.IsReadOnly = true; if (text.Text.Length == 0) text.Text = "Fresh context chord"; text.Select(0, 0); text.Focus(); });
@@ -212,7 +217,8 @@ internal sealed class TakeoverWindow : Window
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (Exception error)
         {
-            Write($"PA048 BLOCKED: {error.GetType().Name}; no input retried.");
+            var code = error switch { DesktopAccessException e => e.Code, ComputerInputException e => e.Code, ScreenCaptureException e => e.Code, _ => "unspecified" };
+            Write($"PA048 BLOCKED: {error.GetType().Name}; code={code}; stage={stage}; desktopState={desktop?.Snapshot.State}; leaseCurrent={lease is not null && desktop?.IsCurrent(lease) == true}; handoffError={takeControl?.Handoff.Error ?? "none"}; {activity?.ObservationDiagnostic ?? "manualHotkey=True"}; no input retried.");
             return new() { Status = AgentResultStatus.Blocked, Summary = "Attended test blocked; no retry." };
         }
         finally { if (lease is not null) await desktop!.ReleaseAsync(lease); }
@@ -236,24 +242,34 @@ internal sealed class TakeoverWindow : Window
     private static bool Released() => new[] { 1, 2, 4, 16, 17, 18 }.All(key => (Native.GetAsyncKeyState(key) & 0x8000) == 0);
     private async Task ResumeAsync()
     {
-        if (currentRun is not { } id || runs is null) return;
+        if (currentRun is not { } id || runs is null || resuming) return;
+        resuming = true;
         try
         {
             RequireForeground(); if (!Released()) throw new InvalidOperationException("Release keys/buttons first.");
+            if (activityPause)
+            {
+                // Keep the existing pause gate closed while the human finishes the deliberate
+                // RESUME click. Observation stays active; subsequent activity still revokes the new lease.
+                for (var second = 3; second > 0; second--)
+                { status.Text = $"Resume starts in {second}s. Keep hands off; the desktop is still paused."; await Task.Delay(1000, stop.Token); }
+                RequireForeground(); if (!Released()) throw new InvalidOperationException("Release keys/buttons before resume.");
+            }
             resumeRequested = DateTimeOffset.UtcNow;
             var run = runs.GetRun(id); await runs.ResumeAsync(new(Guid.NewGuid(), id, run.RunVersion));
         }
         catch (Exception error) { Write($"PA048 RESUME BLOCKED: {error.GetType().Name}; no input retried."); }
+        finally { resuming = false; }
     }
     private void Refresh()
     {
         if (currentRun is not { } id || runs is null || closing) return;
         var run = runs.GetRun(id);
         var paused = run.Status is RunStatus.Paused or RunStatus.PausedForUser;
-        resume.IsEnabled = move.IsEnabled = paused && takeControl!.Handoff.Confirmed;
+        resume.IsEnabled = move.IsEnabled = paused && takeControl!.Handoff.Confirmed && !resuming;
         cancel.IsEnabled = !TaskRunStateMachine.IsTerminal(run.Status);
         start.IsEnabled = mode.IsEnabled = TaskRunStateMachine.IsTerminal(run.Status);
-        if (paused) status.Text = "Paused. Move the target (or move this window), then click RESUME. No old sequence will be replayed.";
+        if (paused && !resuming) status.Text = "Paused. Move the target (or move this window), then click RESUME. No old sequence will be replayed.";
     }
     private void Write(string value)
     { if (!Dispatcher.CheckAccess()) { Dispatcher.BeginInvoke(new Action(() => Write(value))); return; } report.AppendText((activityPause ? value.Replace("PA048", "PA111", StringComparison.Ordinal) : value) + Environment.NewLine); report.ScrollToEnd(); }

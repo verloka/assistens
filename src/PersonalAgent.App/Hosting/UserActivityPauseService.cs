@@ -12,8 +12,19 @@ public sealed class UserActivityPauseService(IDesktopAccessCoordinator desktop, 
     private Task watch = Task.CompletedTask;
     private volatile bool required, stopping;
     private long ownEvents;
+    private long injectedEvents, markerWidthMismatches, unflaggedOwnEvents, lowerOwnEvents;
     public long IgnoredOwnEvents => Interlocked.Read(ref ownEvents);
     public bool IsMonitoring => observer?.Status.Running == true;
+    public string ObservationDiagnostic
+    {
+        get
+        {
+            var status = observer?.Status;
+            return $"observerRunning={status?.Running == true}; observedEvents={status?.Events ?? 0}; observerError={status?.ErrorCode ?? "none"}; "
+                + $"injectedEvents={Interlocked.Read(ref injectedEvents)}; markerWidthMismatch={Interlocked.Read(ref markerWidthMismatches)}; "
+                + $"ownUnflagged={Interlocked.Read(ref unflaggedOwnEvents)}; ownLower={Interlocked.Read(ref lowerOwnEvents)}";
+        }
+    }
     public async Task<bool> StartAsync(CancellationToken ct = default)
     {
         ObjectDisposedException.ThrowIf(stopping, this);
@@ -36,6 +47,15 @@ public sealed class UserActivityPauseService(IDesktopAccessCoordinator desktop, 
     private void OnActivity(ObservedInputActivity activity)
     {
         if (stopping) return;
+        if (activity.Injected) Interlocked.Increment(ref injectedEvents);
+        var marker = InputActivityAttribution.InspectMarker(activity);
+        if (marker.Exact)
+        {
+            if (!activity.Injected) Interlocked.Increment(ref unflaggedOwnEvents);
+            if (activity.LowerIntegrityInjected) Interlocked.Increment(ref lowerOwnEvents);
+        }
+        else if (activity.Injected && marker.Lower32)
+            Interlocked.Increment(ref markerWidthMismatches);
         if (!InputActivityAttribution.RequiresTakeover(activity)) { Interlocked.Increment(ref ownEvents); return; }
         _ = takeover.AutoPauseForUserActivity(); // Closes only the current GUI owner's gate before returning.
     }

@@ -21,6 +21,53 @@ namespace PersonalAgent.IntegrationTests;
 public sealed class ActivityAutoPauseTests
 {
     [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public async Task ActivityPauseSurvivesConcurrentProgressButCannotOverrideNewDesktopConsent(bool superseded)
+    {
+        using var database = new TemporaryAgentDatabase(); await using (var db = database.Open()) await db.Database.MigrateAsync();
+        var repository = new DelayedPause(new SqliteRunRepository(database)) { HoldProgress = true }; repository.Release.TrySetResult();
+        var desktop = new DesktopAccessCoordinator(_ => true); using var runs = new TaskRunCoordinator(repository, desktop);
+        using var stop = new CancellationTokenSource(); var runtime = new HeldRuntime(runs);
+        var loop = new TaskRunner(runs, runtime).RunAsync(stop.Token);
+        Task? progress = null;
+        try
+        {
+            var run = await runs.SubmitAsync(new(Guid.NewGuid(), "Concurrent progress during takeover", new("test")));
+            await runtime.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            var lease = await desktop.AcquireAsync(run.Id);
+            progress = Task.Run(() => runtime.Progress!.Report(new() { RunId = run.Id, TimestampUtc = DateTimeOffset.UtcNow, Kind = AgentEventKind.Progress, Message = "Own click completed" }));
+            await repository.ProgressEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(run.Id, desktop.TakeControlIfOwned()); var pauseVersion = desktop.Snapshot.PauseVersion;
+            var staleVersion = runs.GetRun(run.Id).RunVersion;
+            // Both operations wait behind the in-flight progress commit; normal command CAS stays strict.
+            var normal = runs.PauseAsync(new(Guid.NewGuid(), run.Id, staleVersion));
+            var automatic = runs.PauseForUserActivityAsync(run.Id, pauseVersion);
+            DesktopLease? fresh = null;
+            if (superseded) { desktop.ResumeRun(run.Id); fresh = await desktop.AcquireAsync(run.Id); }
+            repository.ProgressRelease.TrySetResult(); await progress;
+            await Assert.ThrowsAsync<RunVersionConflictException>(() => normal);
+            if (superseded)
+            {
+                Assert.Equal("ActivityTakeoverSuperseded", (await Assert.ThrowsAsync<DesktopAccessException>(() => automatic)).Code);
+                Assert.True(desktop.IsCurrent(fresh!)); Assert.Null(runs.GetRun(run.Id).PauseScope);
+                await desktop.ReleaseAsync(fresh!);
+            }
+            else
+            {
+                var paused = await automatic; Assert.Equal(nameof(PauseReason.AutoPause), paused.Reason);
+                Assert.False(desktop.IsCurrent(lease)); await runs.ConfirmDesktopPauseAsync(run.Id);
+                Assert.Contains((await repository.GetAsync(run.Id))!.Events, e => e.EventType == RunEventType.DesktopPauseConfirmed);
+            }
+        }
+        finally
+        {
+            repository.ProgressRelease.TrySetResult(); repository.Release.TrySetResult();
+            if (progress is not null) await progress;
+            stop.Cancel(); runtime.Release.TrySetResult(); await loop;
+        }
+    }
+
+    [Theory]
     [InlineData("physical")] [InlineData("foreign")] [InlineData("lower")]
     public async Task ActivityAutoPauseClosesGateBeforeDelayedStorageAndWaitsForAtomicInputCleanup(string origin)
     {
@@ -138,9 +185,10 @@ public sealed class ActivityAutoPauseTests
     { using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5)); while (!condition()) await Task.Delay(10, timeout.Token); }
     private sealed class HeldRuntime(TaskRunCoordinator runs) : IAgentRuntime
     {
+        public IProgress<AgentEvent>? Progress;
         public TaskCompletionSource Entered = new(TaskCreationOptions.RunContinuationsAsynchronously), Release = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public async Task<AgentRunResult> ExecuteAsync(AgentRequest request, IProgress<AgentEvent> progress, CancellationToken ct)
-        { Entered.TrySetResult(); await Release.Task.WaitAsync(ct); await runs.WaitAtBoundaryAsync(request.RunId, ct); return new() { Status = AgentResultStatus.Completed, Summary = "Explicit continuation" }; }
+        { Progress = progress; Entered.TrySetResult(); await Release.Task.WaitAsync(ct); await runs.WaitAtBoundaryAsync(request.RunId, ct); return new() { Status = AgentResultStatus.Completed, Summary = "Explicit continuation" }; }
     }
     private sealed class Idle : ISystemIdleSource { public SystemIdleSnapshot Read() => new(true, TimeSpan.Zero); }
     private sealed class Hooks : IWindowsActivityHooks
@@ -165,6 +213,7 @@ public sealed class ActivityAutoPauseTests
     }
     private sealed class DelayedPause(IRunRepository inner) : IRunRepository
     {
+        public bool HoldProgress; public TaskCompletionSource ProgressEntered = new(TaskCreationOptions.RunContinuationsAsynchronously), ProgressRelease = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public int PauseWrites; public bool Fail; public TaskCompletionSource Entered = new(TaskCreationOptions.RunContinuationsAsynchronously), Release = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public Task CreateAsync(TaskRun run, Conversation conversation, AgentRequest request, IReadOnlyList<RunEvent> events, CancellationToken ct = default) => inner.CreateAsync(run, conversation, request, events, ct);
         public Task<StoredRun> GetOrCreateAsync(TaskRun run, Conversation conversation, AgentRequest request, IReadOnlyList<RunEvent> events, RunSubmissionIdentity identity, CancellationToken ct = default) => inner.GetOrCreateAsync(run, conversation, request, events, identity, ct);
@@ -172,6 +221,8 @@ public sealed class ActivityAutoPauseTests
         public Task<IReadOnlyList<TaskRun>> ListAsync(CancellationToken ct = default) => inner.ListAsync(ct);
         public async Task UpdateAsync(TaskRun run, long version, IReadOnlyList<RunEvent> events, AgentRunResult? result = null, CancellationToken ct = default)
         {
+            if (HoldProgress && events.Any(e => e.EventType == RunEventType.Progress))
+            { ProgressEntered.TrySetResult(); await ProgressRelease.Task.WaitAsync(ct); }
             if (run.Status is RunStatus.Pausing or RunStatus.Paused && run.Reason == nameof(PauseReason.AutoPause))
             { Interlocked.Increment(ref PauseWrites); Entered.TrySetResult(); await Release.Task.WaitAsync(ct); if (Fail) throw new System.IO.IOException("Synthetic checkpoint failure"); }
             await inner.UpdateAsync(run, version, events, result, ct);

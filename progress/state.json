@@ -1207,14 +1207,15 @@
                                        "attempts":  1
                                    },
                         "PA-111":  {
-                                       "status":  "blocked",
-                                       "started_at":  "2026-10-21T10:19:41.6661650+00:00",
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-21T11:19:06.1480610+00:00",
+                                       "completed_at":  "2026-10-21T11:24:45.6128319+00:00",
                                        "evidence":  [
-
+                                                        "src/PersonalAgent.App/Hosting/{TakeControlHotkeyService,UserActivityPauseService}.cs; Core/Application/TaskRunCoordinator.cs; Computer/InputActivityAttribution.cs; ActivityAutoPauseTests,TakeControlPersistenceTests,NativeActivityMetadataTests; owner-returned PA111 PAUSE/RESUME OK in both modes: clicks5/20 nativeCalls5-\u003e5 generation1-\u003e2; Unicode318/2750 nativeCalls20-\u003e20 generation3-\u003e4, validUnicode/releasedModifiers/checkpoint/AutoPause/freshCapture/freshClick/CtrlA and stale/foreign denial True. Full native reports recorded in progress/LOG.md; FDD002 S5/S6 verification with reverse consumers preserved, all Draft.",
+                                                        "Verification: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: locked restore/build0warnings/errors,137unit+845integration+3localfake=985passed before final marker fix; after marker fix dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter input/attribution/activity/safe-pause set:49passed; text/observation/resume/hotkey set --no-build:40passed; final attended/activity/metadata/persistence/resume set:28passed; dotnet build tests/PersonalAgent.WindowsSmoke --no-restore -v minimal:0warnings/errors; owner attended four PA111 OK reports."
                                                     ],
-                                       "note":  "Implementation and automated checks preserved: real WPF-only observer startup; conservative activity attribution -\u003e synchronous owned GUI gate -\u003e existing background takeover checkpoint/atomic drain; durable AutoPause/UserActivity, no MCP-only pause or automatic resume, failed monitor blocks acquisition. ActivityAutoPauseTests9 and final targeted takeover20passed; full verify locked restore/build0warnings/errors,137unit+840integration+3localfake=980passed. Attended native acceptance is pending: no owner-observed PA111 PAUSE OK/RESUME OK reports yet for click and Unicode modes. WindowsSmoke --activity is built and documented; one monitor is sufficient. Need owner participation, not unavailable Windows hardware. Independent tasks exhausted;112 waits111,108 waits107.",
-                                       "attempts":  1
+                                       "note":  "Acceptance verified",
+                                       "attempts":  3
                                    },
                         "PA-112":  {
                                        "status":  "pending",
@@ -1358,5 +1359,5 @@
                                    }
                     },
     "last_task_id":  "PA-111",
-    "updated_at":  "2026-10-21T10:33:12.9805424+00:00"
+    "updated_at":  "2026-10-21T11:24:45.6243551+00:00"
 }

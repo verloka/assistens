@@ -132,8 +132,20 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         }, cancellationToken);
 
     public Task<TaskRun> PauseAsync(PauseRunCommand command, CancellationToken cancellationToken = default) =>
-        Apply(command.CommandId, command.RunId, command.ExpectedVersion, command, change =>
+        PauseCore(command, cancellationToken);
+
+    // A trusted local takeover is bound to the exact closed desktop gate, not to a progress revision.
+    // No command/tool replay or stale user-resume override is permitted.
+    public Task<TaskRun> PauseForUserActivityAsync(Guid runId, long expectedPauseVersion, CancellationToken ct = default) =>
+        PauseCore(new(Guid.NewGuid(), runId, 0, PauseScope.EntireRun, PauseReason.AutoPause), ct, expectedPauseVersion);
+
+    private Task<TaskRun> PauseCore(PauseRunCommand command, CancellationToken cancellationToken, long? activityPauseVersion = null) =>
+        ChangeAsync(command.RunId, change =>
         {
+            if (activityPauseVersion is { } expected && (desktopAccess?.Snapshot is not { } state
+                || state.PauseVersion != expected || state.HumanControlOwnerRunId != command.RunId
+                || state.State is not (DesktopAccessState.Pausing or DesktopAccessState.PausedForUser)))
+                throw new DesktopAccessException("ActivityTakeoverSuperseded");
             if (!Enum.IsDefined(command.Scope)) throw new ArgumentOutOfRangeException(nameof(command.Scope));
             if (command.Reason is { } reason && (!Enum.IsDefined(reason) || command.Scope != PauseScope.EntireRun))
                 throw new ArgumentException("Automatic activity pause requires the entire run scope.");
@@ -153,7 +165,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             }
             Move(change, change.Run.Status == RunStatus.Queued ? RunStatus.Paused : RunStatus.Pausing, command.Reason?.ToString() ?? "Pause requested", command.Scope);
             change.NewResume = Signal();
-        }, cancellationToken);
+        }, cancellationToken, command.CommandId, Fingerprint(command), activityPauseVersion is null ? command.ExpectedVersion : null);
 
     public async Task<TaskRun> ConfirmDesktopPauseAsync(Guid runId, CancellationToken cancellationToken = default)
     {

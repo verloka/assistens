@@ -69,7 +69,7 @@ and never resumes itself. Failed checkpoints/observation cannot claim control is
 safely released; monitor unavailability vetoes later acquisition. Headless hosts
 do not install hooks. Running still cannot detect Windows silently removing a hook.
 
-Attended PA-111 acceptance is pending. Close the main App/other smoke windows that
+Attended PA-111 acceptance passed on2026-10-21 in both modes; reports are in progress/LOG.md. To rerun, close the main App/other smoke windows that
 use Ctrl+Shift+F10, then run:
 
 ```powershell
@@ -79,12 +79,19 @@ dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --activity
 Opening this fixture creates controls only. Choose `20 clicks`, deliberately press
 START, keep hands off during the3second countdown and until at least one own click,
 then move the mouse **inside this window** without a hotkey. After PA111 PAUSE OK,
-MOVE TARGET, press RESUME and keep hands off while the fresh-context check finishes.
+MOVE TARGET, press RESUME and keep hands off during its3second countdown and
+while the fresh-context check finishes. The existing pause stays closed during
+the countdown; activity after acquisition can still revoke the new lease.
 Repeat in `Unicode text` mode, moving the mouse after some text appears. Provide
 the PA111 PAUSE OK and PA111 RESUME OK lines for both modes. PAUSE must report stable
 nativeCalls, released modifiers, valid Unicode, checkpoint=True, AutoPause=True and
 ownEvents>0; RESUME must reject stale context and use a new generation/fresh capture.
 No real native success is recorded until the owner observes and returns these lines.
+If PAUSE reports FAILED, send the complete line including observation counters and
+handoffError, then close the fixture; it does not continue the resume sequence.
+Counters contain no keys, text, coordinates or raw process markers. A separate
+read-only hook counter can prove event delivery, but cannot prove own-injection
+classification or durable pause/resume acceptance.
 
 PA-066: `--filter McpConnectionConfig` verifies generic configured connections,
 owner-approval/default denial, immutable settings/allowlists, scoped secret

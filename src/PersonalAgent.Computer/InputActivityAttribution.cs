@@ -16,6 +16,9 @@ public static class InputActivityAttribution
         return InputActivityOrigin.Uncertain;
     }
     public static bool RequiresTakeover(ObservedInputActivity activity) => Classify(activity) != InputActivityOrigin.OwnInjected;
+    // Diagnostic comparison only: the lower-width match never authorizes or suppresses takeover.
+    public static (bool Exact, bool Lower32) InspectMarker(ObservedInputActivity activity) =>
+        (activity.ExtraInfo == Marker, (uint)activity.ExtraInfo == (uint)Marker);
 
     // Stamp only a private copy after the ordinary batch validation; caller-supplied metadata stays denied.
     internal static NativeInput[] Stamp(NativeInput[] inputs)
@@ -29,9 +32,12 @@ public static class InputActivityAttribution
     }
     private static nuint CreateMarker()
     {
-        Span<byte> bytes = stackalloc byte[IntPtr.Size];
-        nuint marker;
-        do { RandomNumberGenerator.Fill(bytes); marker = IntPtr.Size == 8 ? (nuint)BitConverter.ToUInt64(bytes) : BitConverter.ToUInt32(bytes); } while (marker == 0);
+        // Some Windows input paths preserve only 32 bits of ExtraInfo. A positive 31-bit
+        // value survives both zero/sign extension; classification still compares the entire
+        // native-width field exactly. This heuristic is never an authorization credential.
+        Span<byte> bytes = stackalloc byte[sizeof(uint)];
+        uint marker;
+        do { RandomNumberGenerator.Fill(bytes); marker = BitConverter.ToUInt32(bytes) & 0x7fff_ffffu; } while (marker == 0);
         return marker;
     }
 }
