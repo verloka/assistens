@@ -30,6 +30,7 @@ public interface IDesktopAccessCoordinator
     bool TryResumeRun(Guid runId, long expectedPauseVersion);
     Task CancelRunAsync(Guid runId);
     Guid? TakeControl();
+    Guid? TakeControlIfOwned();
     void ReportInputCleanupFailure(DesktopLease lease);
     void RestoreInputCleanupFailure(Guid runId);
     Task<DesktopAccessSnapshot> ReleasePausedRunAsync(Guid runId, CancellationToken ct = default);
@@ -238,6 +239,12 @@ public sealed class DesktopAccessCoordinator(Func<Guid, bool>? admit = null,
     }
 
     // Human takeover is global: even a run with no current lease cannot acquire behind the user's back.
+    // Activity observation is different: ordinary input must not pause unrelated MCP-only work.
+    public Guid? TakeControlIfOwned()
+    {
+        lock (sync) return current is null || revoked ? null : TakeControl();
+    }
+
     public Guid? TakeControl()
     {
         lock (sync)

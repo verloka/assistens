@@ -17,10 +17,11 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        var takeover = args.Contains("--takeover", StringComparer.Ordinal);
+        var activity = args.Contains("--activity", StringComparer.Ordinal);
+        var takeover = activity || args.Contains("--takeover", StringComparer.Ordinal);
         var liveOpenAi = args.Contains("--live-openai", StringComparer.Ordinal);
         var app = new Application { ShutdownMode = takeover || liveOpenAi ? ShutdownMode.OnExplicitShutdown : ShutdownMode.OnMainWindowClose };
-        app.Run(liveOpenAi ? new LiveOpenAiWindow() : takeover ? new TakeoverWindow() : new SmokeWindow());
+        app.Run(liveOpenAi ? new LiveOpenAiWindow() : takeover ? new TakeoverWindow(activity) : new SmokeWindow());
     }
 }
 

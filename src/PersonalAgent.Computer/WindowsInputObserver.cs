@@ -27,6 +27,7 @@ public sealed class WindowsInputObserver : IAsyncDisposable
     internal WindowsInputObserver(Action<ObservedInputActivity> observe, IWindowsActivityHooks hooks, ISystemIdleSource idle)
     { ArgumentNullException.ThrowIfNull(observe); this.observe = observe; this.hooks = hooks; this.idle = idle; }
     public InputObservationStatus Status { get { lock (sync) return new(running && !stopping, Interlocked.Read(ref events), error); } }
+    public Task Completion => finished.Task;
     public SystemIdleSnapshot ReadIdle() => idle.Read(); // Existing session-aware GetLastInputInfo probe, on demand only.
 
     public async Task<bool> StartAsync(CancellationToken ct = default)

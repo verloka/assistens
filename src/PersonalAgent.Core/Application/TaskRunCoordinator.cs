@@ -135,6 +135,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         Apply(command.CommandId, command.RunId, command.ExpectedVersion, command, change =>
         {
             if (!Enum.IsDefined(command.Scope)) throw new ArgumentOutOfRangeException(nameof(command.Scope));
+            if (command.Reason is { } reason && (!Enum.IsDefined(reason) || command.Scope != PauseScope.EntireRun))
+                throw new ArgumentException("Automatic activity pause requires the entire run scope.");
             if (TaskRunStateMachine.IsTerminal(change.Run.Status)) throw new InvalidOperationException("Cannot pause a terminal run.");
             if (change.Run.PauseScope is { } scope)
             {
@@ -149,7 +151,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
                 AddEvent(change, RunEventType.DesktopTakenOver, "GUI-only pause requested; new desktop actions blocked");
                 return;
             }
-            Move(change, change.Run.Status == RunStatus.Queued ? RunStatus.Paused : RunStatus.Pausing, "Pause requested", command.Scope);
+            Move(change, change.Run.Status == RunStatus.Queued ? RunStatus.Paused : RunStatus.Pausing, command.Reason?.ToString() ?? "Pause requested", command.Scope);
             change.NewResume = Signal();
         }, cancellationToken);
 
@@ -172,7 +174,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             AddEvent(change, RunEventType.DesktopPauseConfirmed, "Desktop input drained and lease released; explicit resume required");
             change.Events[^1] = change.Events[^1] with { Payload = JsonSerializer.SerializeToElement(new
             {
-                released.Generation, InputReleased = true, Reason = "UserTakeControl"
+                released.Generation, InputReleased = true, Reason = change.Run.Reason == nameof(PauseReason.AutoPause) ? "UserActivity" : "UserTakeControl"
             }) };
         }, cancellationToken).ConfigureAwait(false);
     }
@@ -391,7 +393,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
                 cancellationToken.ThrowIfCancellationRequested();
                 if (change.Run.Status == RunStatus.Cancelled) throw new OperationCanceledException("Run cancelled.", change.Entry.Cancellation.Token);
                 change.Entry.Cancellation.Token.ThrowIfCancellationRequested();
-                if (change.Run.Status == RunStatus.Pausing) Move(change, RunStatus.Paused, "Safe step boundary reached", change.Run.PauseScope);
+                if (change.Run.Status == RunStatus.Pausing) Move(change, RunStatus.Paused,
+                    change.Run.Reason == nameof(PauseReason.AutoPause) ? nameof(PauseReason.AutoPause) : "Safe step boundary reached", change.Run.PauseScope);
             }, cancellationToken).ConfigureAwait(false);
             Task? wait;
             lock (sync)

@@ -37,6 +37,9 @@ public enum RunStatus
 [JsonConverter(typeof(JsonStringEnumConverter<PauseScope>))]
 public enum PauseScope { GuiOnly, EntireRun }
 
+[JsonConverter(typeof(JsonStringEnumConverter<PauseReason>))]
+public enum PauseReason { AutoPause }
+
 public sealed record TaskRun
 {
     public required Guid Id { get; init; }

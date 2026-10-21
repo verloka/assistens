@@ -72,7 +72,9 @@ public sealed class ControlPanelViewModel
         { Status = "Error"; Message = "Desktop actions blocked; input release or checkpoint could not be confirmed. Manual review required."; }
         else if (Status == "Paused")
             Message = IsControlConfirmed
-                ? "Компьютер твой — агент не управляет им."
+                ? current?.Reason == nameof(PauseReason.AutoPause)
+                    ? "Agent paused — you're in control. Компьютер твой — агент не управляет им."
+                    : "Компьютер твой — агент не управляет им."
                 : "New desktop actions blocked. Waiting for safe pause confirmation.";
         else if (wasConfirmed || Status == "Pausing") Message = "Human handoff is not confirmed; waiting for a safe pause.";
         if (current is not null)

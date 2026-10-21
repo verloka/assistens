@@ -20,6 +20,8 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 
 ## Unmapped Entry Points
 
+- PA-111 partial: WPF App startup -> UserActivityPauseService -> atomic owned-GUI gate -> existing takeover checkpoint/control UI maps to FDD-002 S6; reverse FDD-001/003/007 and notification/approval FDD-006/005 preserve ordinary pause, no automatic resume, current policy and recovery. ActivityAutoPauseTests uses actual App/Core/SQLite/dispatcher with controlled input; WindowsSmoke --activity is the attended native entry point under the same flow. No native reports yet; all Draft.
+
 - PA-110 own-input stamping/attribution maps to FDD-002 S5 and reverse FDD-001/003/007. InputAttributionTests uses actual driver/Core gate with fake native events; normal and cleanup injection share a process marker, uncertain activity remains a takeover candidate. No automatic observer startup/task policy yet; PA-111 handles that integration. Existing tool authorization/approval/resume boundaries remain unchanged and all flows Draft.
 
 - PA-107 partial maps the bundled follow-up policy and controlled Telegram reply/read/clarification journey to FDD-006 S2, with reverse FDD-001/003/007 and MCP FDD-004/005. TelegramFollowupTests uses actual hosted Core/MAF/SQLite/loopback MCP and scripted transport/model; its exact-peer read grant is explicit test composition. Production channel tool configuration and live corporate E2E-06 remain unverified; no tool grant is inferred from a conversation. All Draft.

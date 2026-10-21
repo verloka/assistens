@@ -143,6 +143,7 @@ public sealed class DesktopAccessDriverTests
         public bool TryResumeRun(Guid runId, long expectedPauseVersion) => inner.TryResumeRun(runId, expectedPauseVersion);
         public Task CancelRunAsync(Guid runId) => inner.CancelRunAsync(runId);
         public Guid? TakeControl() => inner.TakeControl();
+        public Guid? TakeControlIfOwned() => inner.TakeControlIfOwned();
         public void ReportInputCleanupFailure(DesktopLease lease) => inner.ReportInputCleanupFailure(lease);
         public void RestoreInputCleanupFailure(Guid runId) => inner.RestoreInputCleanupFailure(runId);
         public Task<DesktopAccessSnapshot> ReleasePausedRunAsync(Guid runId, CancellationToken ct = default) => inner.ReleasePausedRunAsync(runId, ct);

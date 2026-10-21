@@ -13,7 +13,8 @@ public sealed record SubmitTaskCommand(Guid CommandId, string Instructions, Task
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SkipReason = null);
 public sealed record RunTriggerKey(string Source, string Value);
 public sealed record CancelRunCommand(Guid CommandId, Guid RunId, long ExpectedVersion);
-public sealed record PauseRunCommand(Guid CommandId, Guid RunId, long ExpectedVersion, PauseScope Scope = PauseScope.EntireRun);
+public sealed record PauseRunCommand(Guid CommandId, Guid RunId, long ExpectedVersion, PauseScope Scope = PauseScope.EntireRun,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] PauseReason? Reason = null);
 public sealed record ResumeRunCommand(Guid CommandId, Guid RunId, long ExpectedVersion);
 public sealed record SkipRunCommand(Guid CommandId, Guid RunId, long ExpectedVersion, string Reason);
 

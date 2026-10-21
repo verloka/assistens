@@ -38,6 +38,8 @@ internal sealed class TakeoverWindow : Window
     private TaskRunCoordinator? runs;
     private DesktopAccessCoordinator? desktop;
     private TakeControlHotkeyService? takeControl;
+    private UserActivityPauseService? activity;
+    private readonly bool activityPause;
     private SqliteRunRepository? repository;
     private Task? runnerLoop, initialization;
     private Guid? currentRun;
@@ -49,9 +51,11 @@ internal sealed class TakeoverWindow : Window
     private ScreenPoint expectedMouse;
     private bool mouseOperation;
 
-    public TakeoverWindow()
+    public TakeoverWindow(bool activityPause = false)
     {
-        Title = "PersonalAgent attended takeover (PA-048)";
+        this.activityPause = activityPause;
+        Title = activityPause ? "PersonalAgent attended activity pause (PA-111)" : "PersonalAgent attended takeover (PA-048)";
+        if (activityPause) status.Text = "After START keep hands off until input begins, then move the mouse inside this window to pause. No hotkey needed.";
         Width = 800; Height = 680; MinWidth = 760; MinHeight = 650; ShowActivated = false;
         var panel = new StackPanel { Margin = new Thickness(20) };
         panel.Children.Add(new TextBlock { Text = "Real input only in this test window. Keep it visible and active. No screenshot files/uploads or LLM.", TextWrapping = TextWrapping.Wrap });
@@ -83,10 +87,16 @@ internal sealed class TakeoverWindow : Window
         await using (var db = factory.CreateDbContext()) await db.Database.MigrateAsync(stop.Token);
         if (closing) return;
         repository = new(factory);
-        desktop = new(_ => consent && Native.GetForegroundWindow() == handle);
+        desktop = new(_ => consent && Native.GetForegroundWindow() == handle, beforeAcquire: (_, _) =>
+        { activity?.RequireAvailable(); return Task.CompletedTask; });
         runs = new(repository, desktop);
         takeControl = new(desktop, runs, NullLogger<TakeControlHotkeyService>.Instance);
         if (!takeControl.Start()) throw new InvalidOperationException("Ctrl+Shift+F10 is unavailable. Close another diagnostic/App using it first.");
+        if (activityPause)
+        {
+            activity = new(desktop, takeControl, NullLogger<UserActivityPauseService>.Instance);
+            if (!await activity.StartAsync(stop.Token)) throw new InvalidOperationException("Input observation is unavailable; no GUI test started.");
+        }
         runnerLoop = new TaskRunner(runs, new Runtime(ExecuteAsync)).RunAsync(stop.Token);
     }
 
@@ -104,7 +114,7 @@ internal sealed class TakeoverWindow : Window
             currentMode = (string)mode.SelectedItem;
             var run = await runs!.SubmitAsync(new(Guid.NewGuid(), $"PA048 {currentMode}", new("attended-diagnostic")));
             currentRun = run.Id;
-            Write($"PA048 START {currentMode}. Wait for input, then press and release Ctrl+Shift+F10. Keep this window active. Synthetic checkpoint DB is temporary; screenshots stay in memory.");
+            Write($"PA048 START {currentMode}. Wait for input, then {(activityPause ? "move the mouse inside this window (no hotkey)" : "press and release Ctrl+Shift+F10")}. Keep this window active. Synthetic checkpoint DB is temporary; screenshots stay in memory.");
         }
         catch (Exception error) { Write($"PA048 BLOCKED: {error.Message}"); start.IsEnabled = !closing; mode.IsEnabled = !closing; }
     }
@@ -120,7 +130,7 @@ internal sealed class TakeoverWindow : Window
         try
         {
             for (var second = 3; second > 0; second--)
-            { await Dispatcher.InvokeAsync(() => status.Text = $"Input starts in {second}s. Then press Ctrl+Shift+F10."); await Task.Delay(1000, ct); }
+            { await Dispatcher.InvokeAsync(() => status.Text = $"Input starts in {second}s. Then {(activityPause ? "move the mouse to pause; no hotkey" : "press Ctrl+Shift+F10")}."); await Task.Delay(1000, ct); }
             lease = await desktop!.AcquireAsync(request.RunId, ct);
             controller = new(desktop, lease, capture, input, capture.GetMonitors, chord => chord == "Ctrl+A");
             frame = await controller.ScreenshotAsync(new(ScreenshotArea.VirtualDesktop), ct);
@@ -167,7 +177,9 @@ internal sealed class TakeoverWindow : Window
                 actual.Length > 0 && actual.Length < sample.Length && actual.Length == input.UnicodeUnits && sample.StartsWith(actual, StringComparison.Ordinal);
             var pauseOk = stoppedPartway && validUnicode && Released() && before == input.Calls && takeControl.Handoff.Confirmed &&
                 stored.Events.Any(e => e.EventType == RunEventType.DesktopPauseConfirmed);
-            Write($"PA048 PAUSE {(pauseOk ? "OK" : "FAILED")}; mode={currentMode}; nativeCalls={before}->{input.Calls}; clickEvents={clickEvents}; chars={actual.Length}/{sample.Length}; modifiersReleased={Released()}; validUnicode={validUnicode}; checkpoint={takeControl.Handoff.Confirmed}. MOVE TARGET, then RESUME.");
+            var autoReason = stored.Events.Any(e => e.Message == nameof(PauseReason.AutoPause));
+            if (activityPause) pauseOk &= autoReason && activity!.IgnoredOwnEvents > 0;
+            Write($"PA048 PAUSE {(pauseOk ? "OK" : "FAILED")}; mode={currentMode}; nativeCalls={before}->{input.Calls}; clickEvents={clickEvents}; chars={actual.Length}/{sample.Length}; modifiersReleased={Released()}; validUnicode={validUnicode}; checkpoint={takeControl.Handoff.Confirmed}; AutoPause={autoReason}; ownEvents={activity?.IgnoredOwnEvents ?? 0}. MOVE TARGET, then RESUME and keep hands off.");
             await runs!.WaitAtBoundaryAsync(request.RunId, new RunStepAccess(true, false, false), ct);
 
             // Resume discards the unfinished macro. Only deliberate fresh-target click/chord follows.
@@ -244,7 +256,7 @@ internal sealed class TakeoverWindow : Window
         if (paused) status.Text = "Paused. Move the target (or move this window), then click RESUME. No old sequence will be replayed.";
     }
     private void Write(string value)
-    { if (!Dispatcher.CheckAccess()) { Dispatcher.BeginInvoke(new Action(() => Write(value))); return; } report.AppendText(value + Environment.NewLine); report.ScrollToEnd(); }
+    { if (!Dispatcher.CheckAccess()) { Dispatcher.BeginInvoke(new Action(() => Write(value))); return; } report.AppendText((activityPause ? value.Replace("PA048", "PA111", StringComparison.Ordinal) : value) + Environment.NewLine); report.ScrollToEnd(); }
     private async void CloseAsync(object? sender, CancelEventArgs args)
     {
         if (closed) return;
@@ -252,6 +264,7 @@ internal sealed class TakeoverWindow : Window
         takeControl?.Dispose(); stop.Cancel();
         try
         {
+            if (activity is not null) await activity.DisposeAsync();
             if (initialization is not null) { try { await initialization; } catch { } }
             takeControl?.Dispose();
             if (runnerLoop is not null) await runnerLoop;

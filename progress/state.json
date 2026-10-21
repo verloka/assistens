@@ -1207,14 +1207,14 @@
                                        "attempts":  1
                                    },
                         "PA-111":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-21T10:19:41.6661650+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Implementation and automated checks preserved: real WPF-only observer startup; conservative activity attribution -\u003e synchronous owned GUI gate -\u003e existing background takeover checkpoint/atomic drain; durable AutoPause/UserActivity, no MCP-only pause or automatic resume, failed monitor blocks acquisition. ActivityAutoPauseTests9 and final targeted takeover20passed; full verify locked restore/build0warnings/errors,137unit+840integration+3localfake=980passed. Attended native acceptance is pending: no owner-observed PA111 PAUSE OK/RESUME OK reports yet for click and Unicode modes. WindowsSmoke --activity is built and documented; one monitor is sufficient. Need owner participation, not unavailable Windows hardware. Independent tasks exhausted;112 waits111,108 waits107.",
+                                       "attempts":  1
                                    },
                         "PA-112":  {
                                        "status":  "pending",
@@ -1357,6 +1357,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-110",
-    "updated_at":  "2026-10-21T10:19:40.2668611+00:00"
+    "last_task_id":  "PA-111",
+    "updated_at":  "2026-10-21T10:33:12.9805424+00:00"
 }

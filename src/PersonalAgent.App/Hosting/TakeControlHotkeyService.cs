@@ -43,11 +43,27 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
             if (!pending.IsCompleted) return pending;
             var runId = owner ?? desktop.Snapshot.HumanControlOwnerRunId ?? targetRunId ??
                 runs.GetRuns().FirstOrDefault(run => !TaskRunStateMachine.IsTerminal(run.Status) && run.Status != RunStatus.Blocked)?.Id;
-            Volatile.Write(ref handoff, new(runId, desktop.Snapshot.Generation, false, null));
-            return pending = PauseOwnerAsync(runId);
+            return BeginHandoff(runId);
         }
     }
-    private async Task PauseOwnerAsync(Guid? runId)
+    // Called from a low-level input callback: only local gate/metadata work here, never storage or UI waits.
+    public Task AutoPauseForUserActivity()
+    {
+        if (disposed) return Task.CompletedTask;
+        var runId = desktop.TakeControlIfOwned();
+        return runId is null ? Task.CompletedTask : BeginHandoff(runId, PauseReason.AutoPause);
+    }
+    private Task BeginHandoff(Guid? runId, PauseReason? reason = null)
+    {
+        lock (sync)
+        {
+            if (!pending.IsCompleted) return pending;
+            Volatile.Write(ref handoff, new(runId, desktop.Snapshot.Generation, false, null));
+            // Never hold this shared callback lock across even a synchronously completing store operation.
+            return pending = Task.Run(() => PauseOwnerAsync(runId, reason));
+        }
+    }
+    private async Task PauseOwnerAsync(Guid? runId, PauseReason? reason = null)
     {
         try
         {
@@ -56,7 +72,7 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
                 var run = runs.GetRun(id);
                 if (TaskRunStateMachine.IsTerminal(run.Status)) throw new InvalidOperationException("Run is terminal.");
                 if (run.PauseScope is null)
-                    await runs.PauseAsync(new(Guid.NewGuid(), id, run.RunVersion, PauseScope.EntireRun), stopping.Token).ConfigureAwait(false);
+                    await runs.PauseAsync(new(Guid.NewGuid(), id, run.RunVersion, PauseScope.EntireRun, reason), stopping.Token).ConfigureAwait(false);
                 await runs.ConfirmDesktopPauseAsync(id, stopping.Token).ConfigureAwait(false);
             }
             var snapshot = desktop.Snapshot;

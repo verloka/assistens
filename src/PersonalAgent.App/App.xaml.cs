@@ -13,6 +13,7 @@ public partial class App : Application
     private CancellationTokenRegistration _stoppingRegistration;
     private bool _shutdownStarted;
     private TakeControlHotkeyService? _takeControl;
+    private UserActivityPauseService? _activity;
     private DesktopShell? _shell;
     private DesktopNotificationSink? _notificationSink;
 
@@ -39,6 +40,10 @@ public partial class App : Application
             if (!_takeControl.Start())
                 MessageBox.Show("Ctrl+Shift+F10 is unavailable. Desktop automation remains blocked; see diagnostic output.",
                     "Take Control shortcut unavailable", MessageBoxButton.OK, MessageBoxImage.Warning);
+            _activity = host.Services.GetRequiredService<UserActivityPauseService>();
+            if (!await _activity.StartAsync(host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping))
+                _logger.LogWarning("Input observation is unavailable; desktop automation remains blocked.");
+            if (_shutdownStarted) return;
             MainWindow = host.Services.GetRequiredService<MainWindow>();
             var tray = new WindowsTrayIcon();
             _shell = new DesktopShell((MainWindow)MainWindow, host.Services.GetRequiredService<ControlWindow>(),
@@ -72,6 +77,7 @@ public partial class App : Application
         _stoppingRegistration.Dispose();
         try
         {
+            if (_activity is not null) { await _activity.DisposeAsync(); _activity = null; }
             _takeControl?.Dispose(); _takeControl = null;
             _notificationSink?.Detach(); _notificationSink = null;
             _shell?.Dispose(); _shell = null;

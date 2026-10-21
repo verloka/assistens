@@ -60,6 +60,32 @@ API references: [keyboard callback](https://learn.microsoft.com/windows/win32/wi
 [keyboard flags](https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-kbdllhookstruct),
 [mouse flags](https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-msllhookstruct).
 
+PA-111: `--filter ActivityAutoPauseTests` covers actual App/Core/SQLite plus a
+dedicated dispatcher and controlled input events. Own injection leaves the lease
+current. Human/uncertain events close only an owned GUI gate synchronously while
+native input and SQLite are held; later batches cannot enter. Existing handoff
+confirmation waits for cleanup and durable storage, preserves AutoPause/UserActivity
+and never resumes itself. Failed checkpoints/observation cannot claim control is
+safely released; monitor unavailability vetoes later acquisition. Headless hosts
+do not install hooks. Running still cannot detect Windows silently removing a hook.
+
+Attended PA-111 acceptance is pending. Close the main App/other smoke windows that
+use Ctrl+Shift+F10, then run:
+
+```powershell
+dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --activity
+```
+
+Opening this fixture creates controls only. Choose `20 clicks`, deliberately press
+START, keep hands off during the3second countdown and until at least one own click,
+then move the mouse **inside this window** without a hotkey. After PA111 PAUSE OK,
+MOVE TARGET, press RESUME and keep hands off while the fresh-context check finishes.
+Repeat in `Unicode text` mode, moving the mouse after some text appears. Provide
+the PA111 PAUSE OK and PA111 RESUME OK lines for both modes. PAUSE must report stable
+nativeCalls, released modifiers, valid Unicode, checkpoint=True, AutoPause=True and
+ownEvents>0; RESUME must reject stale context and use a new generation/fresh capture.
+No real native success is recorded until the owner observes and returns these lines.
+
 PA-066: `--filter McpConnectionConfig` verifies generic configured connections,
 owner-approval/default denial, immutable settings/allowlists, scoped secret
 references, connection cancellation/timeouts and sanitized failed-handshake

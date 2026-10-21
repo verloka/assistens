@@ -14,5 +14,6 @@
     <ProjectReference Include="../../src/PersonalAgent.Agent/PersonalAgent.Agent.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Compile Include="../../src/PersonalAgent.App/Hosting/TakeControlHotkeyService.cs" Link="Production/TakeControlHotkeyService.cs" />
+    <Compile Include="../../src/PersonalAgent.App/Hosting/UserActivityPauseService.cs" Link="Production/UserActivityPauseService.cs" />
   </ItemGroup>
 </Project>

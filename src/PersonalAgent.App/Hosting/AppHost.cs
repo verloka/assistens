@@ -50,7 +50,11 @@ public static class AppHost
             services.AddSingleton<ControlWindow>();
             services.AddSingleton<ISystemIdleSource, WindowsSystemIdleSource>();
             services.AddSingleton<IDesktopAccessCoordinator>(provider => new DesktopAccessCoordinator(beforeAcquire:
-                (id, ct) => provider.GetService<ScheduledDesktopGate>()?.WaitAsync(id, ct) ?? Task.CompletedTask));
+                (id, ct) =>
+                {
+                    provider.GetRequiredService<UserActivityPauseService>().RequireAvailable();
+                    return provider.GetService<ScheduledDesktopGate>()?.WaitAsync(id, ct) ?? Task.CompletedTask;
+                }));
             services.AddSingleton<TaskRunCoordinator>();
             services.AddSingleton<ChannelMessageRouter>();
             services.AddSingleton<INotificationSubscriptionSource>(new FixedNotificationSubscriptions([]));
@@ -63,6 +67,7 @@ public static class AppHost
             services.AddSingleton<IModelProvider>(provider => provider.GetRequiredService<AnthropicModelProvider>());
             services.AddSingleton<IModelProvider>(provider => provider.GetRequiredService<OpenAiModelProvider>());
             services.AddSingleton<TakeControlHotkeyService>();
+            services.AddSingleton<UserActivityPauseService>();
             services.AddSingleton<ITaskCommands>(provider => provider.GetRequiredService<TaskRunCoordinator>());
             services.AddSingleton<FakeAgentRuntime>(provider => new FakeAgentRuntime(
                 [new("Read local task", TimeSpan.FromSeconds(1)), new("Prepare local result", TimeSpan.FromSeconds(1))],
