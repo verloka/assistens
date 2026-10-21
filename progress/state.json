@@ -1235,7 +1235,7 @@
                                        "evidence":  [
 
                                                     ],
-                                       "note":  "Implementation preserved: WPF-only SystemEvents session/power/display subscriptions; owned GUI uses existing exact-version takeover/durable DesktopEnvironmentChanged pause, recovery never resumes, no-owner MCP/future admission independent, setup failure blocks and shutdown unsubscribes. DesktopEnvironmentPauseTests7 and related76tests passed; full verify996passed before final bounded no-owner fix/startup-race test, final smoke build0warnings/errors. Real lock/unlock, sleep/wake and display cycles need owner-observed reports; agent does not lock/sleep/change settings. Built and opened --environment read-only stand (zero input/capture) awaiting three PA113 ENVIRONMENT OK lines. FDD002 S8 controlled PASS/native NOT TESTED, all Draft.114 depends113; no other independent ready work.",
+                                       "note":  "Implementation preserved: WPF-only SystemEvents session/power/display subscriptions; owned GUI uses existing exact-version takeover/durable DesktopEnvironmentChanged pause, recovery never resumes, no-owner MCP/future admission independent, setup failure blocks and shutdown unsubscribes. DesktopEnvironmentPauseTests7 and related76tests passed; full verify996passed before final bounded no-owner fix/startup-race test, final smoke build0warnings/errors. Native Lock/unlock accepted: sessionEvents=2,ownedLeaseRevoked/checkpoint/noAutoResume=True,nativeInputCalls=0,captures=0; remaining sleep/wake and display cycles need owner-observed reports; agent does not lock/sleep/change settings. Built and opened --environment read-only stand (zero input/capture) awaiting two remaining PA113 ENVIRONMENT OK lines (Sleep/wake,Display change). FDD002 S8 controlled PASS/native Lock/unlock PASS, sleep/display NOT TESTED, all Draft.114 depends113; no other independent ready work.",
                                        "attempts":  1
                                    },
                         "PA-114":  {
@@ -1360,5 +1360,5 @@
                                    }
                     },
     "last_task_id":  "PA-113",
-    "updated_at":  "2026-10-21T11:47:28.9734061+00:00"
+    "updated_at":  "2026-10-21T11:54:01.6114076+00:00"
 }
