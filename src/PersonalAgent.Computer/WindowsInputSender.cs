@@ -90,7 +90,7 @@ internal sealed class WindowsInputSender
         // before the coordinator permits release/new ownership. Diagnostic callback-only mode stays local.
         using var atomic = EnterAtomic();
         InputInsertion result;
-        try { result = native.Send(batch); }
+        try { result = native.Send(InputActivityAttribution.Stamp(batch)); }
         catch (Exception error)
         {
             faulted = true;
@@ -125,7 +125,7 @@ internal sealed class WindowsInputSender
         try
         {
             // Cleanup may outlive cancellation/revocation; never send to a locked/secure desktop.
-            cleaned = native.IsDesktopAvailable() && native.Send(releases).Count == releases.Length;
+            cleaned = native.IsDesktopAvailable() && native.Send(InputActivityAttribution.Stamp(releases)).Count == releases.Length;
             return cleaned;
         }
         catch { return false; }

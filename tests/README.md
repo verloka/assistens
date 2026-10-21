@@ -48,6 +48,13 @@ Windows can silently remove a slow low-level hook; Running reports installation
 and pump lifetime, not proof of continuous event coverage. Actual native hook,
 accessibility/RDP/lock behavior and attended auto-pause acceptance remain separate.
 Own-injection attribution and active-run policy are PA-110/111.
+PA-110 now stamps normal and cleanup SendInput copies after validation with one
+random native-width process marker. Only a matching injected event without
+lower-integrity flags is ignored; foreign, inconsistent or unknown metadata is a
+takeover candidate. Caller-supplied extra metadata stays invalid. This heuristic
+cannot authenticate physical origin or prevent same-session marker forgery.
+`--filter InputAttributionTests` covers five controlled driver/gate cases; actual
+native observer-to-injection roundtrip and App auto-pause remain separate.
 API references: [keyboard callback](https://learn.microsoft.com/windows/win32/winmsg/lowlevelkeyboardproc),
 [mouse callback](https://learn.microsoft.com/windows/win32/winmsg/lowlevelmouseproc),
 [keyboard flags](https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-kbdllhookstruct),

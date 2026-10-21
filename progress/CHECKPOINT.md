@@ -1,8 +1,8 @@
 # Agent checkpoint
-- Last completed task: PA-109 (explicit Windows input observation prototype).
-- Current task: none; PA-110 is next ready.
-- Modified files: WindowsInputObserver/WindowsActivityHooks, InputObservationTests, tests/README.md, state/LOG/checkpoint. Committed together; earlier PA-107 partial commit3535b02.
-- Verified build/test: dotnet build --no-restore -v minimal0warnings/errors; integration input/idle/scheduled/hotkey/shell59passed (input12+idle8 included). Dedicated idle-thread CPU<100ms/250ms,100000event burst; diff check passed. Earlier107 full verify137unit+814integration+3localfake=954passed.
-- Runtime blockers / waiting on user:107 corporate/live follow-up configuration absent under075;108 depends107.065 liveClaude deferred;026/030 two-monitor hardware. PA-109 native global hooks/accessibility/RDP/lock not run; prototype acceptance is scoped to lifecycle/metadata/resource limits.
-- Decisions: no automatic hooks/task effects. Reuse idle probe; dispatcher blocks without polling, activity metadata only/no queue; current hook coverage cannot be guaranteed after Windows silent removal. FDD not applicable to this isolated prototype; business integration111 will require FDD002 review.
-- Next instruction: run taskctl.ps1 next; inspect any in_progress first. PA-110 tag own SendInput and conservatively classify foreign/uncertain injected activity. Do not infer authority from dwExtraInfo.
+- Last completed task: PA-110 (own SendInput stamping and conservative attribution).
+- Current task: none; PA-111 next ready.
+- Modified files: InputActivityAttribution/WindowsInputSender, attribution and sender tests, FDD002/index/tests README, state/LOG/checkpoint. Code and tracker committed together; prior3535b02(107partial),3a1753a(109).
+- Verified build/test: full powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 locked restore/build0warnings/errors;137unit+831integration+3localfake=971passed. Target input regression71passed;60FDD refs/stageddiff check pass.
+- Runtime blockers / waiting on user:107 approved corporate/live provider/tool configuration under075;108 depends107.065 deferredClaude;026/030 two-monitor hardware. Native hook-to-SendInput/accessibility/RDP/physical auto-pause acceptance NOT TESTED.
+- Decisions: validated normal and cleanup copies carry random process marker; caller metadata remains denied. Only matching injected/non-lower event is ignored; all uncertain activity can trigger takeover. No marker-based permission. FDD002 S5 controlled local PASS, reverse001/003/007 and005 preserved, all Draft.
+- Next instruction: taskctl next, inspect in_progress.111 integrates current observer/attribution with existing TakeControl handoff; close gate synchronously, checkpoint outside hook callback, persist AutoPause reason, require explicit Resume/fresh observation and preserve MCP-only work.

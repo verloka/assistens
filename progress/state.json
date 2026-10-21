@@ -1196,14 +1196,15 @@
                                        "attempts":  1
                                    },
                         "PA-110":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-21T10:14:40.1898852+00:00",
+                                       "completed_at":  "2026-10-21T10:19:40.2558404+00:00",
                                        "evidence":  [
-
+                                                        "InputActivityAttribution and WindowsInputSender tag private copies of every validated normal/cleanup batch with random process marker; only matching injected/non-lower metadata suppresses takeover. Five InputAttributionTests cover actual drivers/partial cleanup/current Core lease and hostile metadata. FDD002 S5 controlled local PASS; reverse001/003/007 and005 boundaries preserved, all Draft; attended native/accessibility attribution remains NOT TESTED.",
+                                                        "Verification: Target dotnet test integration --no-restore --filter InputAttributionTests|ComputerInputSenderTests|ComputerClickTests|ComputerTypeTests|ComputerKey:71passed. Full powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1: locked restore/build0warnings/errors;137unit+831integration+3localfake=971passed.60FDD refs resolve; staged diff check passes."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-111":  {
                                        "status":  "pending",
@@ -1356,6 +1357,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-109",
-    "updated_at":  "2026-10-21T10:14:28.4777389+00:00"
+    "last_task_id":  "PA-110",
+    "updated_at":  "2026-10-21T10:19:40.2668611+00:00"
 }

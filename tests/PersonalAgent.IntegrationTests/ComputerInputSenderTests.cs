@@ -93,7 +93,7 @@ public sealed class ComputerInputSenderTests
         Assert.Equal(win32, error.NativeError);
         Assert.True(error.CleanupSucceeded);
         Assert.Equal(calls, native.Batches.Count);
-        if (inserted == 1) Assert.Equal(Pair()[1], Assert.Single(native.Batches[1]));
+        if (inserted == 1) Assert.Equal(InputActivityAttribution.Stamp(Pair())[1], Assert.Single(native.Batches[1]));
         error = await Assert.ThrowsAsync<ComputerInputException>(() => sender.SendAsync(Pair(), 1));
         Assert.Equal("InputStateUnknown", error.Code);
         Assert.Equal(calls, native.Batches.Count);
@@ -132,7 +132,7 @@ public sealed class ComputerInputSenderTests
         var error = await Assert.ThrowsAsync<ComputerInputException>(() => new WindowsInputSender(() => (true, 1), native).SendAsync(
             [NativeInput.Mouse(0xc001, 0, 0), NativeInput.Mouse(2), NativeInput.Mouse(4)], 1));
         Assert.True(error.CleanupSucceeded);
-        Assert.Equal(NativeInput.Mouse(4), Assert.Single(native.Batches[1]));
+        Assert.Equal(Assert.Single(InputActivityAttribution.Stamp([NativeInput.Mouse(4)])), Assert.Single(native.Batches[1]));
     }
 
     [Fact]
