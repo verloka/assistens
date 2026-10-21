@@ -57,6 +57,17 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
             return runId is null ? Task.CompletedTask : BeginHandoff(runId, PauseReason.AutoPause, desktop.Snapshot.PauseVersion);
         }
     }
+    public Task PauseForDesktopEnvironmentChange()
+    {
+        lock (sync)
+        {
+            if (disposed) return Task.CompletedTask;
+            var runId = desktop.TakeControlIfOwned();
+            // Already-paused events must not advance the version of an in-flight checkpoint.
+            // No owner means no live GUI context to invalidate; do not freeze unrelated MCP-only work.
+            return runId is null ? Task.CompletedTask : BeginHandoff(runId, PauseReason.DesktopEnvironmentChanged, desktop.Snapshot.PauseVersion);
+        }
+    }
     private Task BeginHandoff(Guid? runId, PauseReason? reason = null, long? activityPauseVersion = null)
     {
         lock (sync)
@@ -78,7 +89,11 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
                 if (run.PauseScope is null)
                 {
                     if (activityPauseVersion is { } version)
-                        await runs.PauseForUserActivityAsync(id, version, stopping.Token).ConfigureAwait(false);
+                    {
+                        if (reason == PauseReason.DesktopEnvironmentChanged)
+                            await runs.PauseForDesktopEnvironmentChangeAsync(id, version, stopping.Token).ConfigureAwait(false);
+                        else await runs.PauseForUserActivityAsync(id, version, stopping.Token).ConfigureAwait(false);
+                    }
                     else await runs.PauseAsync(new(Guid.NewGuid(), id, run.RunVersion, PauseScope.EntireRun, reason), stopping.Token).ConfigureAwait(false);
                 }
                 await runs.ConfirmDesktopPauseAsync(id, stopping.Token).ConfigureAwait(false);

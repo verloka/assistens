@@ -139,6 +139,9 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
     public Task<TaskRun> PauseForUserActivityAsync(Guid runId, long expectedPauseVersion, CancellationToken ct = default) =>
         PauseCore(new(Guid.NewGuid(), runId, 0, PauseScope.EntireRun, PauseReason.AutoPause), ct, expectedPauseVersion);
 
+    public Task<TaskRun> PauseForDesktopEnvironmentChangeAsync(Guid runId, long expectedPauseVersion, CancellationToken ct = default) =>
+        PauseCore(new(Guid.NewGuid(), runId, 0, PauseScope.EntireRun, PauseReason.DesktopEnvironmentChanged), ct, expectedPauseVersion);
+
     private Task<TaskRun> PauseCore(PauseRunCommand command, CancellationToken cancellationToken, long? activityPauseVersion = null) =>
         ChangeAsync(command.RunId, change =>
         {
@@ -186,7 +189,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             AddEvent(change, RunEventType.DesktopPauseConfirmed, "Desktop input drained and lease released; explicit resume required");
             change.Events[^1] = change.Events[^1] with { Payload = JsonSerializer.SerializeToElement(new
             {
-                released.Generation, InputReleased = true, Reason = change.Run.Reason == nameof(PauseReason.AutoPause) ? "UserActivity" : "UserTakeControl"
+                released.Generation, InputReleased = true, Reason = change.Run.Reason switch
+                { nameof(PauseReason.AutoPause) => "UserActivity", nameof(PauseReason.DesktopEnvironmentChanged) => "DesktopEnvironmentChanged", _ => "UserTakeControl" }
             }) };
         }, cancellationToken).ConfigureAwait(false);
     }
@@ -406,7 +410,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
                 if (change.Run.Status == RunStatus.Cancelled) throw new OperationCanceledException("Run cancelled.", change.Entry.Cancellation.Token);
                 change.Entry.Cancellation.Token.ThrowIfCancellationRequested();
                 if (change.Run.Status == RunStatus.Pausing) Move(change, RunStatus.Paused,
-                    change.Run.Reason == nameof(PauseReason.AutoPause) ? nameof(PauseReason.AutoPause) : "Safe step boundary reached", change.Run.PauseScope);
+                    change.Run.Reason is nameof(PauseReason.AutoPause) or nameof(PauseReason.DesktopEnvironmentChanged) ? change.Run.Reason : "Safe step boundary reached", change.Run.PauseScope);
             }, cancellationToken).ConfigureAwait(false);
             Task? wait;
             lock (sync)

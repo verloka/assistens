@@ -14,6 +14,7 @@ public partial class App : Application
     private bool _shutdownStarted;
     private TakeControlHotkeyService? _takeControl;
     private UserActivityPauseService? _activity;
+    private DesktopEnvironmentPauseService? _environment;
     private DesktopShell? _shell;
     private DesktopNotificationSink? _notificationSink;
 
@@ -43,6 +44,9 @@ public partial class App : Application
             _activity = host.Services.GetRequiredService<UserActivityPauseService>();
             if (!await _activity.StartAsync(host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping))
                 _logger.LogWarning("Input observation is unavailable; desktop automation remains blocked.");
+            if (_shutdownStarted) return;
+            _environment = host.Services.GetRequiredService<DesktopEnvironmentPauseService>();
+            if (!await _environment.StartAsync()) _logger.LogWarning("Desktop environment observation is unavailable; GUI remains blocked.");
             if (_shutdownStarted) return;
             MainWindow = host.Services.GetRequiredService<MainWindow>();
             var tray = new WindowsTrayIcon();
@@ -77,6 +81,7 @@ public partial class App : Application
         _stoppingRegistration.Dispose();
         try
         {
+            if (_environment is not null) { await _environment.DisposeAsync(); _environment = null; }
             if (_activity is not null) { await _activity.DisposeAsync(); _activity = null; }
             _takeControl?.Dispose(); _takeControl = null;
             _notificationSink?.Detach(); _notificationSink = null;

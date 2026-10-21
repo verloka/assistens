@@ -3,17 +3,21 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsTestProject>false</IsTestProject>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
     <ProjectReference Include="../../src/PersonalAgent.Computer/PersonalAgent.Computer.csproj" />
     <ProjectReference Include="../../src/PersonalAgent.Persistence/PersonalAgent.Persistence.csproj" />
     <ProjectReference Include="../../src/PersonalAgent.Agent/PersonalAgent.Agent.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Compile Include="../../src/PersonalAgent.App/Hosting/TakeControlHotkeyService.cs" Link="Production/TakeControlHotkeyService.cs" />
     <Compile Include="../../src/PersonalAgent.App/Hosting/UserActivityPauseService.cs" Link="Production/UserActivityPauseService.cs" />
+    <Compile Include="../../src/PersonalAgent.App/Hosting/DesktopEnvironmentPauseService.cs" Link="Production/DesktopEnvironmentPauseService.cs" />
   </ItemGroup>
 </Project>

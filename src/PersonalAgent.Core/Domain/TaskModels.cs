@@ -38,7 +38,7 @@ public enum RunStatus
 public enum PauseScope { GuiOnly, EntireRun }
 
 [JsonConverter(typeof(JsonStringEnumConverter<PauseReason>))]
-public enum PauseReason { AutoPause }
+public enum PauseReason { AutoPause, DesktopEnvironmentChanged }
 
 public sealed record TaskRun
 {

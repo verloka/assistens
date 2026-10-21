@@ -1229,14 +1229,14 @@
                                        "attempts":  1
                                    },
                         "PA-113":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-21T11:31:42.8756880+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Implementation preserved: WPF-only SystemEvents session/power/display subscriptions; owned GUI uses existing exact-version takeover/durable DesktopEnvironmentChanged pause, recovery never resumes, no-owner MCP/future admission independent, setup failure blocks and shutdown unsubscribes. DesktopEnvironmentPauseTests7 and related76tests passed; full verify996passed before final bounded no-owner fix/startup-race test, final smoke build0warnings/errors. Real lock/unlock, sleep/wake and display cycles need owner-observed reports; agent does not lock/sleep/change settings. Built and opened --environment read-only stand (zero input/capture) awaiting three PA113 ENVIRONMENT OK lines. FDD002 S8 controlled PASS/native NOT TESTED, all Draft.114 depends113; no other independent ready work.",
+                                       "attempts":  1
                                    },
                         "PA-114":  {
                                        "status":  "pending",
@@ -1359,6 +1359,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-112",
-    "updated_at":  "2026-10-21T11:30:52.1185215+00:00"
+    "last_task_id":  "PA-113",
+    "updated_at":  "2026-10-21T11:47:28.9734061+00:00"
 }

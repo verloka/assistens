@@ -53,6 +53,7 @@ public static class AppHost
                 (id, ct) =>
                 {
                     provider.GetRequiredService<UserActivityPauseService>().RequireAvailable();
+                    provider.GetRequiredService<DesktopEnvironmentPauseService>().RequireAvailable();
                     return provider.GetService<ScheduledDesktopGate>()?.WaitAsync(id, ct) ?? Task.CompletedTask;
                 }));
             services.AddSingleton<TaskRunCoordinator>();
@@ -68,6 +69,7 @@ public static class AppHost
             services.AddSingleton<IModelProvider>(provider => provider.GetRequiredService<OpenAiModelProvider>());
             services.AddSingleton<TakeControlHotkeyService>();
             services.AddSingleton<UserActivityPauseService>();
+            services.AddSingleton<DesktopEnvironmentPauseService>();
             services.AddSingleton<ITaskCommands>(provider => provider.GetRequiredService<TaskRunCoordinator>());
             services.AddSingleton<FakeAgentRuntime>(provider => new FakeAgentRuntime(
                 [new("Read local task", TimeSpan.FromSeconds(1)), new("Prepare local result", TimeSpan.FromSeconds(1))],

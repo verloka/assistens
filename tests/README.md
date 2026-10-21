@@ -93,6 +93,33 @@ Counters contain no keys, text, coordinates or raw process markers. A separate
 read-only hook counter can prove event delivery, but cannot prove own-injection
 classification or durable pause/resume acceptance.
 
+PA-113: `--filter DesktopEnvironmentPauseTests` checks session, suspend/resume and
+display changes using controlled notifications with actual App/Core/SQLite and
+in-memory native geometry. An owned lease closes before atomic drain; duplicate
+notifications do not invalidate the pending checkpoint. Recovery stays paused;
+explicit Resume requires a new lease and fresh evaluated capture. MCP-only/no-owner
+work stays independent. Headless hosts never subscribe. Real WPF startup explicitly
+subscribes to SystemEvents on a worker (no captured UI context) and unsubscribes on
+shutdown; setup failure blocks GUI. Subscription success cannot establish continuous
+OS notification coverage. No forced lock, sleep, resolution or focus change is automated.
+
+Attended Windows event acceptance is pending:
+
+```powershell
+dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --environment
+```
+
+Opening creates controls only. Select `Lock/unlock`, press ARM, lock Windows yourself
+(Win+L), unlock normally, then CHECK. Copy `PA113 ENVIRONMENT OK` or the full failure.
+After OK choose `Sleep/wake`, ARM, put Windows to sleep yourself and wake it, then
+CHECK. Finally choose `Display change`, ARM, manually change/restore an available
+display resolution, then CHECK. Send all three reports. Each ARM creates only a
+synthetic lease and temporary SQLite metadata; there is no native input/capture,
+clipboard, model call, external service or automatic system-setting change.
+CHECK requires observed events, revoked lease, durable environment checkpoint and
+no automatic resume. ARM of a new cycle is deliberate; no screenshot is claimed.
+Real screenshot/input restoration and multi-monitor coverage remain separate gates.
+
 PA-066: `--filter McpConnectionConfig` verifies generic configured connections,
 owner-approval/default denial, immutable settings/allowlists, scoped secret
 references, connection cancellation/timeouts and sanitized failed-handshake

@@ -18,10 +18,11 @@ internal static class Program
     public static void Main(string[] args)
     {
         var activity = args.Contains("--activity", StringComparer.Ordinal);
+        var environment = args.Contains("--environment", StringComparer.Ordinal);
         var takeover = activity || args.Contains("--takeover", StringComparer.Ordinal);
         var liveOpenAi = args.Contains("--live-openai", StringComparer.Ordinal);
-        var app = new Application { ShutdownMode = takeover || liveOpenAi ? ShutdownMode.OnExplicitShutdown : ShutdownMode.OnMainWindowClose };
-        app.Run(liveOpenAi ? new LiveOpenAiWindow() : takeover ? new TakeoverWindow(activity) : new SmokeWindow());
+        var app = new Application { ShutdownMode = takeover || liveOpenAi || environment ? ShutdownMode.OnExplicitShutdown : ShutdownMode.OnMainWindowClose };
+        app.Run(environment ? new EnvironmentWindow() : liveOpenAi ? new LiveOpenAiWindow() : takeover ? new TakeoverWindow(activity) : new SmokeWindow());
     }
 }
 
