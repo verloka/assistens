@@ -1165,14 +1165,14 @@
                                        "attempts":  1
                                    },
                         "PA-107":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-21T10:00:26.0010899+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Partial implementation preserved: bundled follow-up freshness/clarification/no-replay policy; TelegramFollowupTests5 passed with actual hosted polling/Core/MAF/SQLite/loopback MCP/outbox and explicit test-only exact-peer read grant. Production Telegram still defaults local/no tools. Live E2E-06 requires the approved Teams/Jira endpoint, protected credentials, authorized source and explicit provider/tool configuration already missing under PA-075; no corporate/live acceptance claimed. Full verify: locked restore, build0warnings/errors,137unit+814integration+3localfake=954passed. Independent PA-109 can proceed; PA-108 remains dependency-blocked.",
+                                       "attempts":  1
                                    },
                         "PA-108":  {
                                        "status":  "pending",
@@ -1355,6 +1355,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-106",
-    "updated_at":  "2026-10-20T18:40:38.3840301+00:00"
+    "last_task_id":  "PA-107",
+    "updated_at":  "2026-10-21T10:10:52.5958337+00:00"
 }

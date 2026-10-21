@@ -20,6 +20,8 @@ A flow is one **complete user-observable outcome**, not a class, tool, API or da
 
 ## Unmapped Entry Points
 
+- PA-107 partial maps the bundled follow-up policy and controlled Telegram reply/read/clarification journey to FDD-006 S2, with reverse FDD-001/003/007 and MCP FDD-004/005. TelegramFollowupTests uses actual hosted Core/MAF/SQLite/loopback MCP and scripted transport/model; its exact-peer read grant is explicit test composition. Production channel tool configuration and live corporate E2E-06 remain unverified; no tool grant is inferred from a conversation. All Draft.
+
 - PA-106 neutral compaction and MafAgentRuntime context rendering map to FDD-006 S20 and reverse FDD-001/003/007. Bounded recent completed-work text and exact deduplicated source links reach the model across compatible restore/provider switch as untrusted data, with current permissions and no automatic write replay. ConversationHandoffTests/AgentContextWindowTests cover actual hosted Core/MAF/SQLite with scripted clients, local sandbox effect and size/compatibility limits. FDD-002/005 gates remain unchanged, all Draft; PA-107 fresh-source/live corporate follow-up remains separate.
 
 - PA-105 optional ProfileAgentRuntime/App session persistence maps to FDD-006 S19 and reverse FDD-001/003/007. Existing AgentSessions receive a nullable unique run link; only the latest completed compatible checkpoint can supply bounded filtered text to the actual pinned MAF session serializer. Fresh current policy/tool binding, neutral incompatible fallback and inert orphan snapshots preserve FDD-002/005 and no-replay. ConversationSessionTests uses actual hosted App/Core/MAF/SQLite with scripted clients; all Draft, live model acceptance separate. Compact handoff106 remains separate.

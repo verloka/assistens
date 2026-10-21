@@ -4,7 +4,7 @@ public static class AgentPromptPolicy
 {
     public const int Version = 1;
     private static readonly Lazy<string> instructions = new(() => string.Join("\n\n",
-        new[] { "system.md", "computer-use.md", "tool-selection.md", "summary.md" }.Select(Read)));
+        new[] { "system.md", "computer-use.md", "tool-selection.md", "conversation.md", "summary.md" }.Select(Read)));
     public static string Instructions => instructions.Value;
 
     private static string Read(string file)
