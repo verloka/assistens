@@ -103,7 +103,7 @@ subscribes to SystemEvents on a worker (no captured UI context) and unsubscribes
 shutdown; setup failure blocks GUI. Subscription success cannot establish continuous
 OS notification coverage. No forced lock, sleep, resolution or focus change is automated.
 
-Attended Windows event acceptance is pending:
+Attended Windows Lock/unlock passed. The owner explicitly deferred Sleep/wake and Display change for now; both remain NOT TESTED. Do not request those checks again until the owner resumes. The instructions below are retained for that later verification:
 
 ```powershell
 dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --environment
