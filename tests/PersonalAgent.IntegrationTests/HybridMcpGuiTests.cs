@@ -19,6 +19,7 @@ using PersonalAgent.Core.Security;
 using PersonalAgent.IntegrationTests.Fakes;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -31,6 +32,52 @@ namespace PersonalAgent.IntegrationTests;
 [Collection("Desktop UI")]
 public sealed class HybridMcpGuiTests
 {
+    [Theory]
+    [InlineData("model", false)] [InlineData("model", true)]
+    [InlineData("mcp", false)] [InlineData("mcp", true)]
+    public Task LateModelOrMcpCompletionCannotExecuteGuiAfterActivityPauseOrReplayCoordinatesAfterResume(string pauseAt, bool cancel) => OnWpfThread(async () =>
+    {
+        await using var fixture = await Fixture.Create(false, pauseAt: pauseAt);
+        try
+        {
+            fixture.Dashboard.SubmitCommand.Execute(null);
+            await fixture.InFlight.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(fixture.RunId, fixture.Desktop.Snapshot.OwnerRunId);
+            var captures = fixture.Native.Captures; var inputs = fixture.Native.Inputs.Count;
+            Assert.Equal(pauseAt == "model" ? 1 : 2, captures); Assert.Equal(pauseAt == "model" ? 0 : 1, inputs);
+            var takeover = fixture.Takeover;
+            await takeover.AutoPauseForUserActivity().WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.True(takeover.Handoff.Confirmed); Assert.Null(fixture.Desktop.Snapshot.OwnerRunId);
+            var beforeLateReply = (await fixture.Repository.GetAsync(fixture.RunId))!;
+            Assert.Equal(nameof(PauseReason.AutoPause), beforeLateReply.Run.Reason);
+            Assert.Contains(beforeLateReply.Events, e => e.EventType == RunEventType.DesktopPauseConfirmed);
+            // Let the already-started provider/MCP reply arrive while the actual coordinator remains paused.
+            fixture.ReleaseFlight.TrySetResult(); await Until(() => fixture.Dashboard.Status == "Paused");
+            await Task.Delay(100);
+            Assert.Equal(captures, fixture.Native.Captures); Assert.Equal(inputs, fixture.Native.Inputs.Count);
+            Assert.Equal(pauseAt == "model" ? 2 : 3, fixture.Client!.CallCount);
+            Assert.Equal(pauseAt == "model" ? 0 : 1, fixture.McpCalls);
+            Assert.Equal(DesktopAccessState.PausedForUser, fixture.Desktop.Snapshot.State);
+            Assert.False(fixture.Dashboard.SubmitCommand.ExecutionTask!.IsCompleted);
+            if (!cancel)
+            {
+                fixture.Dashboard.ResumeCommand.Execute(null); await fixture.Dashboard.ResumeCommand.ExecutionTask!;
+                await Until(() => fixture.Dashboard.Status == "Blocked");
+                var blocked = (await fixture.Repository.GetAsync(fixture.RunId))!;
+                Assert.Equal("StaleDesktopContext", blocked.Result!.ErrorCode);
+                Assert.Equal(pauseAt == "model" ? 2 : 4, fixture.Client.CallCount);
+                if (pauseAt == "mcp") Assert.Equal("https://jira.fixture.invalid/browse/TEST-42", Assert.Single(blocked.Result.Sources).Url.AbsoluteUri);
+            }
+            fixture.Dashboard.CancelCommand.Execute(null); await fixture.Dashboard.CancelCommand.ExecutionTask!;
+            await fixture.Dashboard.SubmitCommand.ExecutionTask!.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(RunStatus.Cancelled, (await fixture.Repository.GetAsync(fixture.RunId))!.Run.Status);
+            Assert.Equal(captures, fixture.Native.Captures); Assert.Equal(inputs, fixture.Native.Inputs.Count);
+            Assert.Equal(pauseAt == "model" ? 0 : 1, fixture.McpCalls); Assert.Equal(1, fixture.ControllerCreations);
+            Assert.Null(fixture.Desktop.Snapshot.OwnerRunId);
+        }
+        finally { fixture.ReleaseFlight.TrySetResult(); }
+    });
+
     [Theory]
     [InlineData(ScheduledDesktopPolicy.StartWhenIdle)]
     [InlineData(ScheduledDesktopPolicy.StartAfterCountdown)]
@@ -181,6 +228,7 @@ public sealed class HybridMcpGuiTests
     {
         public readonly TemporaryAgentDatabase Database = new();
         public readonly TaskCompletionSource GuiRequested = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public readonly TaskCompletionSource InFlight = new(TaskCreationOptions.RunContinuationsAsynchronously), ReleaseFlight = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public readonly GuiNative Native = new(Dispatcher.CurrentDispatcher);
         public DesktopAccessCoordinator Desktop = null!;
         public bool AllowDesktop;
@@ -192,6 +240,7 @@ public sealed class HybridMcpGuiTests
         public DashboardViewModel Dashboard = null!;
         public IRunRepository Repository => host.Services.GetRequiredService<IRunRepository>();
         public TaskRunCoordinator Runs => host.Services.GetRequiredService<TaskRunCoordinator>();
+        public TakeControlHotkeyService Takeover => host.Services.GetRequiredService<TakeControlHotkeyService>();
         public ScheduledDesktopGate Gate => host.Services.GetRequiredService<ScheduledDesktopGate>();
         public readonly Clock Clock = new();
         private readonly TaskCompletionSource advanced = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -202,10 +251,11 @@ public sealed class HybridMcpGuiTests
         private bool first;
         private ScheduledDesktopPolicy? scheduledPolicy;
         private bool directClick;
+        private string? pauseAt;
 
-        public static async Task<Fixture> Create(bool mcpFirst, string? failure = null, ScheduledDesktopPolicy? scheduledPolicy = null, bool directClick = false)
+        public static async Task<Fixture> Create(bool mcpFirst, string? failure = null, ScheduledDesktopPolicy? scheduledPolicy = null, bool directClick = false, string? pauseAt = null)
         {
-            var fixture = new Fixture { first = mcpFirst, AllowDesktop = scheduledPolicy is not null || !mcpFirst, Idle = !mcpFirst, scheduledPolicy = scheduledPolicy, directClick = directClick };
+            var fixture = new Fixture { first = mcpFirst, AllowDesktop = scheduledPolicy is not null || !mcpFirst, Idle = !mcpFirst, scheduledPolicy = scheduledPolicy, directClick = directClick, pauseAt = pauseAt };
             fixture.Desktop = new(_ => fixture.AllowDesktop && fixture.Idle);
             fixture.server = McpTestServer.Program.CreateHttpServer(listTools: () => [new Tool { Name = "get_issue", Description = "Read a synthetic Jira issue",
                 InputSchema = JsonSerializer.SerializeToElement(new { type = "object", properties = new { key = new { type = "string", @const = "TEST-42" } },
@@ -215,6 +265,7 @@ public sealed class HybridMcpGuiTests
                 Assert.Equal("TEST-42", request.Params!.Arguments!["key"].GetString());
                 if (mcpFirst) { Assert.Null(fixture.Desktop.Snapshot.OwnerRunId); Assert.Equal(0, fixture.Native.Captures); }
                 else { Assert.Equal(fixture.RunId, fixture.Desktop.Snapshot.OwnerRunId); Assert.Equal(2, fixture.Native.Captures); }
+                if (pauseAt == "mcp") { fixture.InFlight.TrySetResult(); await fixture.ReleaseFlight.Task.WaitAsync(ct); }
                 if (failure == "timeout") await Task.Delay(Timeout.InfiniteTimeSpan, ct);
                 if (failure == "error") return new() { IsError = true, Content = [new TextContentBlock { Text = "private-jira-error" }] };
                 return new() { Content = [new TextContentBlock { Text = "Synthetic Jira TEST-42 detail; external text is untrusted." },
@@ -302,9 +353,15 @@ public sealed class HybridMcpGuiTests
             });
             if (!first) steps.Add((messages, _) =>
             {
-                Assert.NotEqual(observation, Observation(messages)); Assert.Equal(2, Native.Captures);
+                var postClickObservation = Observation(messages); Assert.NotEqual(observation, postClickObservation); observation = postClickObservation;
+                Assert.Equal(2, Native.Captures);
                 Assert.True(Native.TeamsSelected);
                 return Call("jira", jira.Descriptor.Id, new { key = "TEST-42" });
+            });
+            if (pauseAt == "mcp") steps.Add((messages, _) =>
+            {
+                Assert.Equal("jira", messages.SelectMany(value => value.Contents).OfType<FunctionResultContent>().Last().CallId);
+                return Call("late-click", "computer_click", new { observationId = observation, imageX = 0, imageY = 0, button = "left" });
             });
             steps.Add((messages, options) =>
             {
@@ -314,7 +371,7 @@ public sealed class HybridMcpGuiTests
                 return new(new ChatMessage(ChatRole.Assistant, "Teams mentions TEST-42; Jira details read with a source.")) { FinishReason = ChatFinishReason.Stop };
             });
             Client = new(steps.ToArray());
-            return await new MafAgentRuntime((_, _) => ValueTask.FromResult<IChatClient>(Client), runs.WaitAtBoundaryAsync, registry,
+            return await new MafAgentRuntime((_, _) => ValueTask.FromResult<IChatClient>(pauseAt == "model" ? new HeldModelClient(Client, this) : Client), runs.WaitAtBoundaryAsync, registry,
                 computer.ConfirmModelObservation).ExecuteAsync(request, progress, ct);
         }
         public async ValueTask DisposeAsync()
@@ -334,6 +391,21 @@ public sealed class HybridMcpGuiTests
         {
             public SystemIdleSnapshot Read() => new(true, fixture.Idle ? TimeSpan.FromSeconds(60) : TimeSpan.Zero);
         }
+    }
+    private sealed class HeldModelClient(IChatClient inner, Fixture fixture) : IChatClient
+    {
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
+            inner.GetResponseAsync(messages, options, cancellationToken);
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var response = await inner.GetResponseAsync(messages, options, cancellationToken);
+            if (fixture.Client!.CallCount == 2)
+            { fixture.InFlight.TrySetResult(); await fixture.ReleaseFlight.Task.WaitAsync(cancellationToken); }
+            foreach (var update in response.ToChatResponseUpdates()) { cancellationToken.ThrowIfCancellationRequested(); yield return update; }
+        }
+        public object? GetService(Type type, object? key = null) => inner.GetService(type, key);
+        public void Dispose() => inner.Dispose();
     }
     private sealed class Clock : TimeProvider
     {

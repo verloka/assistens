@@ -1218,14 +1218,15 @@
                                        "attempts":  3
                                    },
                         "PA-112":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-21T11:26:14.7475684+00:00",
+                                       "completed_at":  "2026-10-21T11:30:52.1087317+00:00",
                                        "evidence":  [
-
+                                                        "Existing MafAgentRuntime per-update/tool boundaries, ToolRegistry run checks and ComputerToolSession revoked-observation refusal reused; no production code changes. HybridMcpGuiTests.LateModelOrMcpCompletionCannotExecuteGuiAfterActivityPauseOrReplayCoordinatesAfterResume adds4cases with actual App/Core/MAF/loopback MCP/SQLite and controlled model/native: delayed reply while owner revoked, durable AutoPause, fixed paused model/native counts, Cancel or explicit Resume with StaleDesktopContext, one MCP read and preserved typed source. FDD002 S7 PASS, reverse001/003/007 and004/005/006 preserved; all Draft.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter LateModelOrMcpCompletion -v minimal:4passed; dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter HybridMcpGuiTests|MafAgentRuntimeTests|ComputerToolTests|ToolDispatchTests|ToolDispatchRecoveryTests|ActivityAutoPauseTests|SafeResumePersistenceTests|McpExecutionTests|PauseScopePersistenceTests -v minimal:89passed; dotnet build PersonalAgent.sln --no-restore -v minimal:0warnings/errors; no paid/corporate/native E2E claimed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-113":  {
                                        "status":  "pending",
@@ -1358,6 +1359,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-111",
-    "updated_at":  "2026-10-21T11:24:45.6243551+00:00"
+    "last_task_id":  "PA-112",
+    "updated_at":  "2026-10-21T11:30:52.1185215+00:00"
 }
