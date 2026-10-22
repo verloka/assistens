@@ -1365,14 +1365,14 @@
                                                                  ]
                                    },
                         "PA-123":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-22T15:42:18.1208481+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "All ten scenarios audited in docs/QUALITY_GATES.md against1112passing local tests and dated native/live-read-only/crash evidence. Full E2E01/02/04/06/07/10 remain partial/blocked: literal app-opening/input, approved corporate Teams/Jira and real Telegram/tool/data scope, semantic Teams recipient binding, live Claude. Ordinary production ProfileAgentRuntime/Telegram still expose no tools; test-only DI registries do not close that composition/permission gap. Need reviewed production scope/implementation and real owner-authorized external reports. No new paid/corporate/native checks or blanket tool grants. PA124 depends on blocked123/065/075; no named deferral inferred.",
+                                       "attempts":  1
                                    },
                         "PA-124":  {
                                        "status":  "pending",
@@ -1395,6 +1395,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-122",
-    "updated_at":  "2026-10-22T15:42:03.5935395+00:00"
+    "last_task_id":  "PA-123",
+    "updated_at":  "2026-10-22T15:47:11.8597963+00:00"
 }
