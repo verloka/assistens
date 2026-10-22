@@ -1175,14 +1175,22 @@
                                        "attempts":  1
                                    },
                         "PA-108":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-22T09:35:33.3549824+00:00",
+                                       "completed_at":  "2026-10-22T09:40:38.9876459+00:00",
                                        "evidence":  [
-
+                                                        "ConversationRegressionTests4 combines real App/Core/MAF/SQLite with Desktop-\u003eTelegram-\u003eDesktop, two host restarts, same/switched fake provider, one sandbox tool effect, current empty follow-up grants, denied old-write request, duplicate admissions before/after restart without model execution, unchanged root snapshot and no function-content transfer. Existing implementation reused,no src/schema/package changes. FDD006S17/S19/S20 and reverse001/003/007 plus002/004/005 preserved,allDraft;20test paths resolve. PA107 remainsblocked/live acceptance deferred by recorded owner decision and mandatory for release.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter FullyQualifiedName~ConversationRegressionTests -v minimal:4passed9s; dotnet test --no-restore --filter Conversation -v minimal:11unit+53integration passed0failed/0skipped,integration34s,no E2E match. dotnet build --no-restore -v minimal:fullsolution0warnings/errors. taskctl doctor and git diff --check passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1,
+                                       "deferred_dependencies":  [
+                                                                     {
+                                                                         "id":  "PA-107",
+                                                                         "reason":  "Owner explicitly instructed leaving remaining external acceptance checks until the end, then requested starting new tasks. Continue independent fake-LLM/session/restart regression PA108 while PA107 live Teams/Jira follow-up acceptance stays blocked and required for release. No credential/tool grant or live success inferred.",
+                                                                         "recorded_at":  "2026-10-22T09:35:33.3310359+00:00"
+                                                                     }
+                                                                 ]
                                    },
                         "PA-109":  {
                                        "status":  "done",
@@ -1368,6 +1376,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-115",
-    "updated_at":  "2026-10-22T09:31:05.6585062+00:00"
+    "last_task_id":  "PA-108",
+    "updated_at":  "2026-10-22T09:40:38.9966447+00:00"
 }
