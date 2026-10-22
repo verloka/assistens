@@ -1039,9 +1039,9 @@ boundaries unless explicitly stated otherwise.
 | --- | --- | --- |
 | E2E-03: hotkey during clicks and long Unicode input | PA-115 owner-returned PAUSE/RESUME passed in both modes on 2026-10-22; `TakeoverStressTests` and `TakeControlPersistenceTests` | Passed for the guarded own-window native path; full model-driven re-evaluation is separate. |
 | E2E-03: automatic pause on human activity | PA-115 owner-returned PA111 PAUSE/RESUME passed in both modes on 2026-10-22; `ActivityAutoPauseTests` | Passed for the guarded own-window native path. |
-| E2E-03: tray and window switching | PA-043 attended tray/mini-window on 2026-10-18; `DesktopShellTests` | Verify tray Take Control on an owned GUI run, then use another harmless window while paused; return explicitly and require fresh observation before input. Existing standalone input fixtures have no tray, so their reports alone cannot pass this row. |
-| E2E-04: scheduled GUI while keyboard is active | `ScheduledDesktopTests`, including concurrent due ticks, one warning, busy idle, expiry and restart | With an explicitly configured GUI test run due in 15 seconds and StartWhenIdle, type in a harmless local window. Confirm no focus change/capture/input, deferred or skipped durable state and no repeated warning storm. |
-| E2E-05: first GUI after MCP read | `HybridMcpGuiTests`: real loopback MCP/MAF/Core/SQLite with scripted model, idle and native boundary | In an explicitly authorized test composition, confirm MCP read owns no desktop; first GUI waits for current warning/idle/lease, cannot change focus early, and does not repeat the read after pause/cancel. |
+| E2E-03: tray and window switching | PA-115 native tray PAUSE/RESUME and explicit free other-window observation; `DesktopShellTests` | Passed2026-10-22: checkpoint,stable capture count,stale denial,new generation and fresh capture. |
+| E2E-04: scheduled GUI while keyboard is active | PA-115 real scheduled occurrence/Windows idle/typing/nonactivating warning; `ScheduledDesktopTests` | Passed2026-10-22:1warning,0capture/input/owner,durable explicit Skip; owner confirmed focus retained. |
+| E2E-05: first GUI after MCP read | PA-115 real loopback MCP/scripted MAF/registry/native own-window capture; `HybridMcpGuiTests` | Passed2026-10-22:1MCP read,0capture/owner before permission,1capture/1read/Completed afterward; owner confirmed focus retained. |
 
 For the existing own-window checks, build once and run one fixture at a time:
 
@@ -1063,8 +1063,8 @@ at144/2750 with nativeCalls=9->9 and generation3->4. Both confirmed released
 modifiers, valid Unicode, durable checkpoint, old/foreign context denial and
 fresh capture/click/Ctrl+A on explicit Resume. Exact reports are in progress/LOG.md.
 AutoPause=False/ownEvents=0 is expected in this manual-hotkey fixture; automatic
-activity was subsequently accepted as described below; tray/window switching and
-physical scheduled/late-MCP rows remain open.
+activity, tray/window switching and scheduled/late-MCP were subsequently accepted
+within the explicit local native scope described below.
 
 PA-115 automatic-activity regression also passed on2026-10-22: clicks4/20,
 nativeCalls4->4, ownEvents12, generation1->2; Unicode80/2750, nativeCalls5->5,
@@ -1083,19 +1083,22 @@ Scheduled busy-keyboard native acceptance subsequently passed: one warning,
 244typing events,64real busy-idle samples, zero capture/input/desktop owner and
 durable Skipped after explicit CHECK/Skip. The owner explicitly confirmed the
 warning did not steal focus from the typing field. Exact reports and answers are
-in progress/LOG.md. MCP then GUI is the remaining pending physical row.
+in progress/LOG.md.
 
-Current blocker (2026-10-22): the remaining physical rows lack attended evidence.
-The shipped Dashboard profile path exposes no computer/MCP tool set, while the
-scheduled/hybrid automated fixtures replace native input and idle. Thus running
-a normal text schedule or passing those fixtures cannot demonstrate physical
-E2E-04/05. The new `--regression` fixture below prepares an attended, explicitly
-scoped native test composition; build/automated regressions do not establish its
-physical acceptance. `--takeover`/`--activity` cover only their listed rows.
-Corporate data and paid model access are not prerequisites for a local synthetic
-composition. No tool grant, external call or native regression pass is inferred.
-PA-115 is in progress while the owner performs attended verification; it cannot
-be marked done until the remaining physical evidence is obtained.
+MCP then GUI native acceptance passed with one warning,98typing events,87busy
+samples and one MCP read while capture/input/desktop owner remained zero. After
+explicit permission, one own-window screenshot completed the durable run without
+repeating the read. The owner confirmed focus stayed in the typing field. Reopened
+SQLite run3B796CA8-2DE5-4C3A-BE8E-5DB35DBD6F80 is Completed/version12, with exactly
+one ToolRequested/ToolExecuted pair for MCP and one for computer_screenshot.
+
+PA-115 local native regression acceptance is complete on2026-10-22. These are
+owner-observed own-window/real-input/real-idle checks with a scripted model and
+loopback MCP; corporate Teams/Jira, paid/live models, multi-monitor and deferred
+sleep/display acceptance remain separate release gaps. The shipped Dashboard
+still exposes no task computer/MCP tool set; this diagnostic grants none in
+production. Existing controlled tests alone did not establish physical success;
+exact attended reports and human confirmations are retained in progress/LOG.md.
 
 For each attended row retain date/build, entry point, RunId, policy, observed
 focus/input, pause/checkpoint and fresh-resume result, with fixed failure codes
@@ -1104,7 +1107,7 @@ PA-113 Sleep/wake and Display change remain separately deferred by the owner and
 are not part of this requested regression session. No second monitor is needed
 for the own-window checks; PA-026/030 hardware gates remain separate.
 
-### PA-115 remaining native checks
+### PA-115 native check procedure
 
 ```powershell
 dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --regression

@@ -1257,14 +1257,14 @@
                                                                  ]
                                    },
                         "PA-115":  {
-                                       "status":  "in_progress",
+                                       "status":  "done",
                                        "started_at":  "2026-10-22T08:54:22.1906378+00:00",
-                                       "completed_at":  null,
+                                       "completed_at":  "2026-10-22T09:31:05.6495114+00:00",
                                        "evidence":  [
-                                                        "Partial acceptance2026-10-22: owner-returned manual hotkey clicks5/20 native5->5 generation1->2; Unicode144/2750 native9->9 generation3->4; activity clicks4/20 native4->4 own12 generation1->2; Unicode80/2750 native5->5 own179 generation3->4. All checkpoint/modifier release/stale denial/fresh capture and Resume passed; exact reports progress/LOG.md. Tray/window-switch/scheduled/late-MCP rows remain NOT TESTED.",
-                                                        "WindowsSmoke --regression prepared with actual App tray/warning/gate/Windows idle, local scripted MAF/MCP and own-window masked capture; no injected input/paid/corporate calls. Full solution build0warnings/errors;61related integration +4RegressionStandTests passed. Launch/build is not physical acceptance."
+                                                        "Owner-attended real Windows local E2E03/04/05 regression accepted2026-10-22; raw hotkey/activity/tray/scheduled/MCP reports and focus confirmations progress/LOG.md; procedures tests/README.md; stand commits ad6ca49/70cf661 and acceptance77c42a7. MCP SQLite run3B796CA8-2DE5-4C3A-BE8E-5DB35DBD6F80 Completed/v12 with exactly1MCP+1screenshot tool pair. All native rows passed in explicit scripted-local scope; no corporate/paid/multi-monitor/PA113deferred acceptance inferred. FDD002/003 scoped PASS; reverse001/007 plus004/005/006 preserved,allDraft.",
+                                                        "Verification: dotnet build --no-restore -v minimal:fullsolution0warnings/errors. dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter FullyQualifiedName~RegressionStandTests|FullyQualifiedName~AttendedPauseTests -v minimal:6passed/0failed/0skipped,1s (filter quoted in actual command in LOG); related61passed44s and earlieraudit82passed. Actual owner reports:manual/activity click+Unicode PAUSE/RESUME OK,tray PAUSE/RESUME OK,scheduled WAIT/SKIP OK,MCP WAIT/Completed OK; focus retained.18affected-flow test paths resolve,doctor/diff passed."
                                                     ],
-                                       "note":  "Only PA115 per owner; others left until final review, no107dependency deferral. Hotkey/activity/tray+freshResume PASS; owner explicitly confirmed free other-window typing while paused. Scheduled native PASS:1warning,244typedEvents,64busySamples,0captures/input/owner,durableSkipped; owner confirmed no warning focus theft. Exact reports/answers LOG. Remaining physical row MCP then GUI; not done. Prior failed run retained, reporter bounded/staged;6targeted tests/build0warnings/errors retained.",
+                                       "note":  "Acceptance verified",
                                        "attempts":  2
                                    },
                         "PA-116":  {
@@ -1369,5 +1369,5 @@
                                    }
                     },
     "last_task_id":  "PA-115",
-    "updated_at":  "2026-10-22T08:54:22.2028215+00:00"
+    "updated_at":  "2026-10-22T09:31:05.6585062+00:00"
 }
