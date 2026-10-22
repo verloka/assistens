@@ -15,9 +15,9 @@
     <ProjectReference Include="../../src/PersonalAgent.Computer/PersonalAgent.Computer.csproj" />
     <ProjectReference Include="../../src/PersonalAgent.Persistence/PersonalAgent.Persistence.csproj" />
     <ProjectReference Include="../../src/PersonalAgent.Agent/PersonalAgent.Agent.csproj" />
+    <ProjectReference Include="../../src/PersonalAgent.App/PersonalAgent.App.csproj" />
+    <ProjectReference Include="../PersonalAgent.McpTestServer/PersonalAgent.McpTestServer.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <Compile Include="../../src/PersonalAgent.App/Hosting/TakeControlHotkeyService.cs" Link="Production/TakeControlHotkeyService.cs" />
-    <Compile Include="../../src/PersonalAgent.App/Hosting/UserActivityPauseService.cs" Link="Production/UserActivityPauseService.cs" />
-    <Compile Include="../../src/PersonalAgent.App/Hosting/DesktopEnvironmentPauseService.cs" Link="Production/DesktopEnvironmentPauseService.cs" />
+    <Compile Include="../PersonalAgent.IntegrationTests/Fakes/ScriptedChatClient.cs" Link="Fixture/ScriptedChatClient.cs" />
   </ItemGroup>
 </Project>

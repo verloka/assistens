@@ -1037,8 +1037,8 @@ boundaries unless explicitly stated otherwise.
 
 | Check | Existing evidence | Remaining physical acceptance |
 | --- | --- | --- |
-| E2E-03: hotkey during clicks and long Unicode input | PA-048 attended PAUSE/RESUME on 2026-10-19; `TakeoverStressTests` and `TakeControlPersistenceTests` | Re-run both `--takeover` modes after PA-114; record both PAUSE and RESUME lines, stable native counts, released modifiers and durable checkpoint. |
-| E2E-03: automatic pause on human activity | PA-111 attended click/Unicode PAUSE/RESUME on 2026-10-21; `ActivityAutoPauseTests` | Re-run both `--activity` modes; record AutoPause/checkpoint, stable native counts and fresh-resume evidence. |
+| E2E-03: hotkey during clicks and long Unicode input | PA-115 owner-returned PAUSE/RESUME passed in both modes on 2026-10-22; `TakeoverStressTests` and `TakeControlPersistenceTests` | Passed for the guarded own-window native path; full model-driven re-evaluation is separate. |
+| E2E-03: automatic pause on human activity | PA-115 owner-returned PA111 PAUSE/RESUME passed in both modes on 2026-10-22; `ActivityAutoPauseTests` | Passed for the guarded own-window native path. |
 | E2E-03: tray and window switching | PA-043 attended tray/mini-window on 2026-10-18; `DesktopShellTests` | Verify tray Take Control on an owned GUI run, then use another harmless window while paused; return explicitly and require fresh observation before input. Existing standalone input fixtures have no tray, so their reports alone cannot pass this row. |
 | E2E-04: scheduled GUI while keyboard is active | `ScheduledDesktopTests`, including concurrent due ticks, one warning, busy idle, expiry and restart | With an explicitly configured GUI test run due in 15 seconds and StartWhenIdle, type in a harmless local window. Confirm no focus change/capture/input, deferred or skipped durable state and no repeated warning storm. |
 | E2E-05: first GUI after MCP read | `HybridMcpGuiTests`: real loopback MCP/MAF/Core/SQLite with scripted model, idle and native boundary | In an explicitly authorized test composition, confirm MCP read owns no desktop; first GUI waits for current warning/idle/lease, cannot change focus early, and does not repeat the read after pause/cancel. |
@@ -1057,15 +1057,32 @@ Do not switch away during its active input sequence. Test window switching only
 after PAUSE OK; moving the target/window then Resume must reject the old frame.
 BLOCKED/FAILED/NO PAUSE is not a passing report.
 
-Current blocker (2026-10-22): there is no new owner-observed regression report.
+PA-115 manual-hotkey regression passed on 2026-10-22 with owner-returned reports:
+clicks stopped at5/20 with nativeCalls=5->5 and generation1->2; Unicode stopped
+at144/2750 with nativeCalls=9->9 and generation3->4. Both confirmed released
+modifiers, valid Unicode, durable checkpoint, old/foreign context denial and
+fresh capture/click/Ctrl+A on explicit Resume. Exact reports are in progress/LOG.md.
+AutoPause=False/ownEvents=0 is expected in this manual-hotkey fixture; automatic
+activity was subsequently accepted as described below; tray/window switching and
+physical scheduled/late-MCP rows remain open.
+
+PA-115 automatic-activity regression also passed on2026-10-22: clicks4/20,
+nativeCalls4->4, ownEvents12, generation1->2; Unicode80/2750, nativeCalls5->5,
+ownEvents179, generation3->4. Both report AutoPause/checkpoint=True, zero marker
+width mismatches, released modifiers and fresh Resume with stale/foreign denial.
+Exact owner-returned reports are in progress/LOG.md.
+
+Current blocker (2026-10-22): the remaining physical rows lack attended evidence.
 The shipped Dashboard profile path exposes no computer/MCP tool set, while the
 scheduled/hybrid automated fixtures replace native input and idle. Thus running
 a normal text schedule or passing those fixtures cannot demonstrate physical
-E2E-04/05. These rows require an attended, explicitly scoped native test composition;
-the existing `--takeover`/`--activity` fixtures cover only their listed rows.
+E2E-04/05. The new `--regression` fixture below prepares an attended, explicitly
+scoped native test composition; build/automated regressions do not establish its
+physical acceptance. `--takeover`/`--activity` cover only their listed rows.
 Corporate data and paid model access are not prerequisites for a local synthetic
 composition. No tool grant, external call or native regression pass is inferred.
-PA-115 remains blocked until the missing physical evidence is obtained.
+PA-115 is in progress while the owner performs attended verification; it cannot
+be marked done until the remaining physical evidence is obtained.
 
 For each attended row retain date/build, entry point, RunId, policy, observed
 focus/input, pause/checkpoint and fresh-resume result, with fixed failure codes
@@ -1073,6 +1090,50 @@ when unsuccessful. Do not retain screenshots, credentials or private window text
 PA-113 Sleep/wake and Display change remain separately deferred by the owner and
 are not part of this requested regression session. No second monitor is needed
 for the own-window checks; PA-026/030 hardware gates remain separate.
+
+### PA-115 remaining native checks
+
+```powershell
+dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --regression
+```
+
+Close other smoke/App windows using the hotkey first. Opening is unarmed; START
+creates the isolated synthetic database, production tray/control model and real
+Windows idle source. The diagnostic references the actual App assembly (the older
+fixtures now use those same production service types instead of compiling copies).
+No production tool exposure/settings change, paid model, injected input or
+corporate service. Captures copy only this foreground window on the primary
+monitor into an in-memory masked canvas, with no upload or image file. Synthetic
+database records remain under PersonalAgent.Regression in the temporary directory;
+typing contents are not logged. Run one case per launch, then close/relaunch.
+
+1. **Tray + window switching**: START and wait for `PA115 TRAY ARMED`. Use the
+   actual Personal Agent tray menu **Pause & Take Control**. Switch to a harmless
+   local window and type a little synthetic text, then return to the fixture and
+   CHECK. Expect `PA115 TRAY PAUSE OK`; deliberately press this window's RESUME,
+   not tray Resume, and keep the fixture foreground. Expect `PA115 TRAY RESUME OK`
+   with old-context denial/new generation/fresh capture. Return both lines and
+   explicitly confirm whether other-window work remained uninterrupted.
+2. **Scheduled busy keyboard**: START schedules a real one-time occurrence15seconds
+   ahead with StartWhenIdle. Type synthetic text continuously in the fixture's
+   field for about30seconds; the production warning is nonactivating and its
+   countdown is15seconds. Do not press its Start now. When CHECK enables, press it;
+   it verifies the busy wait and explicitly chooses Skip once. Return
+   `PA115 SCHEDULE WAIT` and `PA115 SCHEDULE` lines, and confirm no focus theft.
+   Required: one warning, real idle samples, zero captures/input/owner and durable
+   Skipped. This exercises explicit skip after deferral, not natural30minute expiry.
+3. **MCP then GUI**: START creates an ephemeral loopback MCP read-only server. A
+   scripted model through actual MAF/registry reads it once before requesting GUI.
+   Type synthetic text until CHECK enables after the warning countdown. CHECK
+   must report `PA115 MCP WAIT OK`, one MCP call and zero GUI/owner. Then press
+   this fixture's **RESUME / ALLOW own-window capture** and keep it foreground.
+   Expect `PA115 MCP OK`, one capture, one MCP call and durable Completed; confirm
+   no focus theft before permission. AskEveryTime permits this deliberate action;
+   it does not test automatic idle admission or a corporate/live-model workflow.
+
+Failed/blocked or premature focus/capture is not success. Return complete report
+lines before repeating. The tray fixture intentionally sends no input; already
+accepted click/Unicode fixtures supply the native input/cleanup regression.
 
 ## Attended native takeover/resume (PA-048; passed 2026-10-19)
 

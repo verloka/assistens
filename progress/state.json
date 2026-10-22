@@ -1257,14 +1257,15 @@
                                                                  ]
                                    },
                         "PA-115":  {
-                                       "status":  "blocked",
-                                       "started_at":  "2026-10-22T07:12:47.0893495+00:00",
+                                       "status":  "in_progress",
+                                       "started_at":  "2026-10-22T08:54:22.1906378+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
-
+                                                        "Partial acceptance2026-10-22: owner-returned manual hotkey clicks5/20 native5->5 generation1->2; Unicode144/2750 native9->9 generation3->4; activity clicks4/20 native4->4 own12 generation1->2; Unicode80/2750 native5->5 own179 generation3->4. All checkpoint/modifier release/stale denial/fresh capture and Resume passed; exact reports progress/LOG.md. Tray/window-switch/scheduled/late-MCP rows remain NOT TESTED.",
+                                                        "WindowsSmoke --regression prepared with actual App tray/warning/gate/Windows idle, local scripted MAF/MCP and own-window masked capture; no injected input/paid/corporate calls. Full solution build0warnings/errors;61related integration +4RegressionStandTests passed. Launch/build is not physical acceptance."
                                                     ],
-                                       "note":  "tests/README.md contains E2E-03/04/05 physical regression checklist and exact existing stand commands; original PA-048/043/111 attended evidence retained. Current targeted integration regression:82passed/0failed/0skipped,57s; actual build succeeded. No new owner-observed post-PA114 native regression report. Scheduled/hybrid fixtures control idle/native; shipped ProfileAgentRuntime denies task tool sets (ToolRegistryUnavailable), so ordinary text schedules cannot prove real E2E04/05. Missing attended physical focus/keyboard/scheduled/late-MCP evidence; no native session started or tool permission changed. PA-113 sleep/display remain separately deferred. FDD002/003 scoped controlled PASS, physical gaps NOT TESTED, all Draft. No ready independent task:108 depends blocked107;116 depends108. Need owner participation or explicit named dependency deferral; preserve release gates.",
-                                       "attempts":  1
+                                       "note":  "Only PA115 per owner; other tasks left until final review, no107dependency deferral. Hotkey/activity physical subsets PASS; new --regression stand unarmed for tray/window-switch, scheduled busy, late-MCP rows. Await owner reports; not done.",
+                                       "attempts":  2
                                    },
                         "PA-116":  {
                                        "status":  "pending",
@@ -1368,5 +1369,5 @@
                                    }
                     },
     "last_task_id":  "PA-115",
-    "updated_at":  "2026-10-22T07:15:43.3568701+00:00"
+    "updated_at":  "2026-10-22T08:54:22.2028215+00:00"
 }

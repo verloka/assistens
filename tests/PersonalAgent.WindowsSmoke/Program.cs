@@ -21,8 +21,9 @@ internal static class Program
         var environment = args.Contains("--environment", StringComparer.Ordinal);
         var takeover = activity || args.Contains("--takeover", StringComparer.Ordinal);
         var liveOpenAi = args.Contains("--live-openai", StringComparer.Ordinal);
-        var app = new Application { ShutdownMode = takeover || liveOpenAi || environment ? ShutdownMode.OnExplicitShutdown : ShutdownMode.OnMainWindowClose };
-        app.Run(environment ? new EnvironmentWindow() : liveOpenAi ? new LiveOpenAiWindow() : takeover ? new TakeoverWindow(activity) : new SmokeWindow());
+        var regression = args.Contains("--regression", StringComparer.Ordinal);
+        var app = new Application { ShutdownMode = takeover || liveOpenAi || environment || regression ? ShutdownMode.OnExplicitShutdown : ShutdownMode.OnMainWindowClose };
+        app.Run(regression ? new RegressionWindow() : environment ? new EnvironmentWindow() : liveOpenAi ? new LiveOpenAiWindow() : takeover ? new TakeoverWindow(activity) : new SmokeWindow());
     }
 }
 
