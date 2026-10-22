@@ -6,6 +6,8 @@ using PersonalAgent.Core.Persistence;
 using PersonalAgent.Core.Security;
 using PersonalAgent.Persistence;
 using System.Text.Json;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace PersonalAgent.RecoveryTestProcess;
 
@@ -13,6 +15,25 @@ public static class Program
 {
     public static async Task Main(string[] args)
     {
+        if (args.Length == 4 && args[0] == "--secret-roundtrip")
+        {
+            if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException();
+            var matched = false;
+            try
+            {
+                var value = await new WindowsDpapiSecretStore(args[1]).ReadAsync(args[2]);
+                if (value is not null)
+                {
+                    var clear = Encoding.UTF8.GetBytes(value);
+                    try { matched = CryptographicOperations.FixedTimeEquals(SHA256.HashData(clear), Convert.FromHexString(args[3])); }
+                    finally { CryptographicOperations.ZeroMemory(clear); }
+                }
+            }
+            catch (Exception error) { Console.WriteLine("SECRET_READ_FAILURE=" + error.GetType().Name); } // Type only, never value/body.
+            Console.WriteLine(matched ? "SECRET_ROUNDTRIP_OK" : "SECRET_UNAVAILABLE");
+            Environment.ExitCode = matched ? 0 : 1;
+            return;
+        }
         if (args.Length is not (2 or 3) || args.Length == 3 && args[2] != "--durable-dispatch")
             throw new ArgumentException("Expected temporary database, fake-effect file and optional durable dispatch fixture flag.");
         using var owner = new FileStream(args[0] + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);

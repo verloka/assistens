@@ -1374,3 +1374,24 @@ ScheduleMisfireTests and ScheduleCalculatorTests in the full suite supply the
 spring gap/fold and policy matrix. E2E-04 local acceptance uses controlled input
 idle/native boundaries and no physical focus/input. The optional real ten-minute
 smoke was not run; it remains distinct from these passing deterministic tests.
+
+### PA-116 protected credential persistence
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter ProtectedSecretStoreTests
+```
+
+Uses actual Windows CurrentUser DPAPI with random synthetic model/Telegram/MCP
+values. Three independent hidden child processes reopen the protected files and
+confirm a digest without plaintext in arguments/output; they use the integration
+host's runtime configuration because its output prunes shared Windows assemblies.
+The existing recovery harness has a separate fixed-output `--secret-roundtrip`
+mode; its crash/write modes remain unchanged.
+
+An actual consistent SQLite configuration backup/reopen retains validated opaque
+references but contains no plaintext or protected-file blobs. Copying this
+database without the separate secret directory cannot resolve its keys. Cancelled
+writes and malformed/path references are refused. Existing provider/UI tests
+cover secure model/channel/MCP save, missing/tampered values and error handling.
+The application storage implementation is reused; general settings export/import
+UI is PA-120, and cross-account/machine decryption is not claimed by these tests.

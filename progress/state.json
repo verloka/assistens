@@ -1276,14 +1276,15 @@
                                        "attempts":  2
                                    },
                         "PA-116":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-22T09:40:41.8587025+00:00",
+                                       "completed_at":  "2026-10-22T09:46:30.8744035+00:00",
                                        "evidence":  [
-
+                                                        "Existing WindowsDpapiSecretStore/model/MCP/channel repositories reused unchanged. ProtectedSecretStoreTests verifies actual CurrentUser DPAPI model/Telegram/MCP values through3independent hidden processes without plaintext args/output, real consistent SQLite config backup/reopen excluding plaintext/protected blobs, missing separate store cannot resolve keys, cancellation/path refusal. RecoveryTestProcess fixed-output digest mode only; crash modes preserved. FDD001/004/006 coverage and reverse003/005/007 preserved,allDraft. Export/import UI remains120; no alternate-account/machine/live credential acceptance inferred.",
+                                                        "Verification: dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter FullyQualifiedName~ProtectedSecretStoreTests -v minimal:5passed2s. Related protected/provider/model/MCP/channel/recovery filter in LOG:89passed0failed/0skipped28s. dotnet build --no-restore -v minimal:fullsolution0warnings/errors. doctor/diff passed; no schema change."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-117":  {
                                        "status":  "pending",
@@ -1376,6 +1377,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-108",
-    "updated_at":  "2026-10-22T09:40:38.9966447+00:00"
+    "last_task_id":  "PA-116",
+    "updated_at":  "2026-10-22T09:46:30.8834065+00:00"
 }
