@@ -19,7 +19,7 @@ public sealed class SqliteToolCallRepository(IDbContextFactory<AgentDbContext> f
         var previous = await db.ToolCalls.AsNoTracking().SingleOrDefaultAsync(row => row.RunId == invocation.RunId && row.ToolCallId == invocation.ToolCallId, ct);
         if (previous is not null) throw new ToolDispatchConflictException(Read(previous).Status != ToolCallDispatchStatus.Acknowledged);
         var approvalRow = await db.ApprovalRequests.AsNoTracking().SingleOrDefaultAsync(row => row.Id == approvalRequestId, ct);
-        if (approvalRow is null) throw new ToolDispatchDeniedException();
+        if (approvalRow is null || approvalRow.ActionJson.Length == 0) throw new ToolDispatchDeniedException();
         var approval = SqliteApprovalRepository.Read(approvalRow); var now = clock.GetUtcNow();
         if (tool.IsReadOnly || approval.Status != ApprovalStatus.Approved || approval.ExpiresAtUtc <= now
             || !await db.TaskRuns.AnyAsync(run => run.Id == invocation.RunId && run.ConversationId == invocation.ConversationId

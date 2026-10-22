@@ -34,7 +34,7 @@ public sealed class SqliteApprovalRepository(IDbContextFactory<AgentDbContext> f
         await using var db = await factory.CreateDbContextAsync(ct);
         await ExpireAsync(db, ct);
         var row = await db.ApprovalRequests.AsNoTracking().SingleOrDefaultAsync(row => row.Id == requestId, ct);
-        return row is null ? null : Read(row);
+        return row is null || row.ActionJson.Length == 0 ? null : Read(row);
     }
 
     public async Task<IReadOnlyList<ApprovalRequest>> ListPendingAsync(ApprovalOwner owner, CancellationToken ct = default)
@@ -52,7 +52,7 @@ public sealed class SqliteApprovalRepository(IDbContextFactory<AgentDbContext> f
         command.Owner.Validate();
         await using var db = await factory.CreateDbContextAsync(ct); await ExpireAsync(db, ct);
         var row = await db.ApprovalRequests.AsNoTracking().SingleOrDefaultAsync(row => row.Id == command.RequestId, ct);
-        if (row is null) throw new ApprovalConflictException();
+        if (row is null || row.ActionJson.Length == 0) throw new ApprovalConflictException();
         var request = Read(row); var now = clock.GetUtcNow();
         if (request.Owner != command.Owner || request.Version != command.ExpectedVersion || request.ActionHash != command.ActionHash
             || request.Status != ApprovalStatus.Pending || request.ExpiresAtUtc <= now) throw new ApprovalConflictException();

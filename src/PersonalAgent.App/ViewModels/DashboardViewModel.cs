@@ -20,11 +20,13 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
     private bool disposed;
     private string message = "Ready. The selected model will be used for the next task.";
     private TaskRun? selectedHistory;
+    private readonly System.Windows.Threading.Dispatcher dispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
 
     public DashboardViewModel(ITaskCommands commands, TaskRunCoordinator state, IHostApplicationLifetime host, ModelProfilesViewModel? profiles = null)
     {
         this.commands = commands;
         this.state = state;
+        state.HistoryContentCleared += OnHistoryContentCleared;
         Profiles = profiles;
         lifetime = CancellationTokenSource.CreateLinkedTokenSource(host.ApplicationStopping);
         SubmitCommand = new AsyncCommand(SubmitAsync, () => !active && !disposed && !lifetime.IsCancellationRequested && !string.IsNullOrWhiteSpace(Instructions));
@@ -147,6 +149,25 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         History.Clear();
         foreach (var run in state.GetRuns()) History.Add(run);
     }
+    private void OnHistoryContentCleared()
+    {
+        void Update()
+        {
+            if (disposed) return;
+            RefreshHistory();
+            if (selectedHistory is not null && state.GetRun(selectedHistory.Id).ContentClearedAtUtc is not null)
+            {
+                selectedHistory = state.GetRun(selectedHistory.Id); Changed(nameof(SelectedHistory));
+            }
+            if (currentRun is not null && state.GetRun(currentRun.Id).ContentClearedAtUtc is not null)
+            {
+                currentRun = state.GetRun(currentRun.Id);
+                Events.Clear(); foreach (var evt in state.GetEvents(currentRun.Id)) Events.Add(evt);
+                Refresh();
+            }
+        }
+        if (dispatcher.CheckAccess()) Update(); else dispatcher.BeginInvoke(Update);
+    }
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
-    public void Dispose() { if (disposed) return; disposed = true; lifetime.Cancel(); lifetime.Dispose(); }
+    public void Dispose() { if (disposed) return; disposed = true; state.HistoryContentCleared -= OnHistoryContentCleared; lifetime.Cancel(); lifetime.Dispose(); }
 }

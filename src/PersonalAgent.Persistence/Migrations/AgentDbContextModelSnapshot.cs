@@ -421,6 +421,25 @@ namespace PersonalAgent.Persistence.Migrations
                     b.ToTable("Conversations", (string)null);
                 });
 
+            modelBuilder.Entity("PersonalAgent.Persistence.Entities.HistoryRetentionRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Days")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HistoryRetention", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_HistoryRetention_Policy", "Id = 1 AND Days BETWEEN 1 AND 36500");
+                        });
+                });
+
             modelBuilder.Entity("PersonalAgent.Persistence.Entities.McpConnectionRow", b =>
                 {
                     b.Property<Guid>("Id")
@@ -680,6 +699,9 @@ namespace PersonalAgent.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
+
+                    b.Property<long?>("ContentClearedAtUtc")
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid>("ConversationId")
                         .HasColumnType("TEXT");

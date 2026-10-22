@@ -43,6 +43,7 @@ public static class AppHost
             services.AddSingleton<ApprovalsViewModel>();
             services.AddSingleton<SchedulesViewModel>();
             services.AddSingleton<ChannelsViewModel>();
+            services.AddSingleton<PrivacyViewModel>();
             services.AddSingleton(provider => new TelegramConnectionProbe(provider.GetRequiredService<ISecretStore>(), provider.GetService<Func<System.Net.Http.HttpMessageHandler>>()?.Invoke()));
             services.AddSingleton(_ =>
             {
@@ -113,6 +114,9 @@ public static class AppHost
                 services.AddSingleton<IToolCallRepository>(provider => new SqliteToolCallRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IScheduleRepository>(provider => new SqliteScheduleRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
                 services.AddHostedService<RunHistoryService>();
+                services.AddSingleton<IHistoryRetentionRepository>(provider => new SqliteHistoryRetentionRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddSingleton<HistoryRetentionService>();
+                services.AddHostedService(provider => provider.GetRequiredService<HistoryRetentionService>());
                 services.AddSingleton<INotificationOutbox>(provider => new SqliteNotificationOutbox(provider.GetRequiredService<SqliteAgentDbContextFactory>(), provider.GetService<TimeProvider>()));
                 services.AddSingleton<NotificationDispatcher>();
                 services.AddSingleton<IOutboundChannel>(provider => new DesktopOutboundChannel(provider.GetRequiredService<ApprovalOwner>().UserId,

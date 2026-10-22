@@ -1287,14 +1287,15 @@
                                        "attempts":  1
                                    },
                         "PA-117":  {
-                                       "status":  "blocked",
-                                       "started_at":  "2026-10-22T09:46:33.4560335+00:00",
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-22T10:01:26.2863868+00:00",
+                                       "completed_at":  "2026-10-22T10:13:23.1480286+00:00",
                                        "evidence":  [
-
+                                                        "PrivacyConsoleFormatter and AppHost metadata-only defaults; PrivacyWindow/PrivacyViewModel; IHistoryRetentionRepository/SqliteHistoryRetentionRepository; HistoryRetentionService; HistoryRetention migration; HistoryRetentionTests, PrivacyUiTests, PrivacyLoggingTests; owner explicitly approved private-content cleanup preserving safety records 2026-10-22; Draft FDD001 S4/006 S21/007 S4 verified",
+                                                        "Verification: Final dotnet test IntegrationTests --no-restore --filter HistoryRetentionTests|PrivacyUiTests|PrivacyLoggingTests|PersistenceSchemaTests:28 passed 11s; broad persistence/recovery/approval/notification/conversation/dashboard/scheduler regression:180 passed with 1 new SQL-format assertion corrected and passed in final28; dotnet build --no-restore -v minimal:0 warnings/errors; dotnet ef migrations has-pending-model-changes --no-build: no changes; taskctl doctor125valid; git diff --check passed"
                                                     ],
-                                       "note":  "Partial logging hardening implemented and verified: metadata-only standard console/default provider, no state formatter/scopes/arbitrary strings/exception bodies/images; sanitized App Trace. PrivacyLogging/DesktopHost/HealthScreen10tests passed5s; fullsolutionbuild0warnings/errors. Need owner material retention decision: plan13 requires append-only RunEvents/immutable attempts while15.3 requests configurable history cleanup. Async question pending: may clear old terminal private content while retaining safety IDs/status/dedup and all incomplete/unknown outcomes, or keep history and clean diagnostics only? No retention-dependent data mutation implemented; preserve partial code. All other manual/live gates stay deferred;118depends117.",
-                                       "attempts":  1
+                                       "note":  "Acceptance verified",
+                                       "attempts":  2
                                    },
                         "PA-118":  {
                                        "status":  "pending",
@@ -1378,5 +1379,5 @@
                                    }
                     },
     "last_task_id":  "PA-117",
-    "updated_at":  "2026-10-22T09:54:28.3184348+00:00"
+    "updated_at":  "2026-10-22T10:13:23.1570289+00:00"
 }

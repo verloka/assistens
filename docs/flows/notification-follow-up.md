@@ -37,6 +37,7 @@ Status: Draft
 - Model-facing tools with dynamic recipients must bind trusted exact destination constraints to their validated arguments. A trusted fixed-route adapter retains its configured route; external content cannot choose a new outbound channel or obtain protected-store credentials.
 
 ## Invariants
+- PA-117: expired conversation content is removed from messages, run/request/result fallbacks and provider sessions together; continuation cannot restore erased text. Delivery deduplication and channel correlation identities remain. Pending, sending and unknown delivery outcomes prevent cleanup; cleared source events cannot enqueue a late notification containing old content.
 - Communication channel does not contain task business logic.
 - Failed delivery does not rewrite an otherwise completed TaskRun.
 - Adding a second channel should require a new adapter/registration, not a Task Runner rewrite.
@@ -49,6 +50,7 @@ Status: Draft
 - None.
 
 ## Scenarios
+- S21: Given erased old conversation content, when continuing after restart or receiving a duplicate old update, then reuse its identity without execution replay or erased context/session restoration. Pending/unknown delivery prevents cleanup; late old-content publication is denied. [test: tests/PersonalAgent.IntegrationTests/HistoryRetentionTests.cs]
 - S20: Given a long conversation and previously completed work, when continuing after restart or provider switch, then retain the relevant issue, bounded requested/outcome context and exact source links; omit tool bodies and credentials, apply current permissions and never replay an old write from history. [test: tests/PersonalAgent.IntegrationTests/ConversationHandoffTests.cs] [test: tests/PersonalAgent.IntegrationTests/ConversationRegressionTests.cs] [test: tests/PersonalAgent.UnitTests/AgentContextWindowTests.cs]
 - S19: Given a successfully completed model run with a saved local SDK checkpoint, when an explicitly correlated follow-up executes after restart, then restore matching provider/model/format text history under current policy; mismatched, corrupt, incomplete or missing state falls back to neutral history without replay, authority inheritance or retrying a completed model call after checkpoint failure. [test: tests/PersonalAgent.IntegrationTests/ConversationSessionTests.cs]
 - S18: Given completed, blocked, failed or interrupted conversation runs, when history is reopened and a follow-up submitted, then retain ordered input/outcome, source references and error metadata, filter recognizable credentials and exclude tool bodies; duplicate admission and failed commits cannot append partial/duplicate history. [test: tests/PersonalAgent.IntegrationTests/ConversationHistoryTests.cs] [test: tests/PersonalAgent.UnitTests/ConversationPrivacyTests.cs]

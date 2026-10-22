@@ -1396,10 +1396,10 @@ cover secure model/channel/MCP save, missing/tampered values and error handling.
 The application storage implementation is reused; general settings export/import
 UI is PA-120, and cross-account/machine decryption is not claimed by these tests.
 
-### PA-117 standard logging privacy (retention decision pending)
+### PA-117 logging privacy and history retention
 
 ```powershell
-dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter PrivacyLoggingTests
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter 'FullyQualifiedName~PrivacyLoggingTests|FullyQualifiedName~HistoryRetentionTests|FullyQualifiedName~PrivacyUiTests'
 ```
 
 Default AppHost logging uses one metadata-only console formatter. It emits fixed
@@ -1410,5 +1410,27 @@ Tests poison every discarded field and use a formatter that must never execute;
 they also check the real host's default provider selection. Explicit test logger
 overrides remain available for recording lifecycle assertions.
 
-Screenshots remain RAM-only. History-retention deletion is not implemented while
-the owner decides its permitted relationship with immutable audit/replay records.
+Screenshots remain RAM-only. Open **Privacy**, Reload settings, choose 1..36500
+days, and Save to persist the automatic-expiry choice (off by default). Enabled
+expiry runs at startup and hourly. **Clear expired content now** applies the entered
+period once, even with automatic expiry off. This is destructive content cleanup;
+separate backups, SQLite free pages/WAL and external copies are not secure-erased.
+
+Only whole conversations whose runs all finished before the cutoff are eligible.
+Recent messages/sessions, nonterminal/interrupted work, pending approvals,
+unconsumed approved writes, dispatched/unknown tools, pending/sending/unknown
+deliveries, unsupported schemas and uncertain input release prevent cleanup.
+Independent eligible conversations still proceed. Private run/request/result,
+event, approval, delivered/failed notification and message contents are redacted;
+opaque sessions are removed. IDs/statuses/revisions/timestamps/submission hashes,
+ordered events, message identities, action hashes, channel correlations and
+delivery/dispatch tombstones remain. Task/schedule/model/channel configuration and
+protected credentials remain configuration, outside history cleanup.
+
+HistoryRetentionTests uses real migrated SQLite, restart/dedup/follow-up checks,
+an independent-conversation safety matrix, atomic rollback and late-writer denial.
+The migration keeps the no-delete event trigger and allows only canonical content
+redaction after a terminal run's privacy marker, preserving all event metadata.
+PrivacyUiTests loads actual unshown XAML and checks saved policy, invalid input,
+manual cleanup and the selected Dashboard history refresh without desktop input.
+No paid provider, live transport or physical desktop acceptance is inferred.

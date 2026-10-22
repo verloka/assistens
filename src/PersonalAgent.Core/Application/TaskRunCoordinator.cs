@@ -22,6 +22,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
     private readonly Dictionary<(string Source, string Key), (string Hash, Guid RunId)> submissions = [];
     private readonly Channel<Guid> queue = Channel.CreateUnbounded<Guid>(new UnboundedChannelOptions { SingleReader = true });
     private bool disposed, runnerAttached;
+    public event Action? HistoryContentCleared;
 
     public async Task<TaskRun> SubmitAsync(SubmitTaskCommand command, CancellationToken cancellationToken = default)
     {
@@ -255,6 +256,33 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
     { lock (sync) return Find(runId).Terminal.Task.WaitAsync(cancellationToken); }
 
     public Task LoadFinishedHistoryAsync(CancellationToken cancellationToken = default) => LoadHistoryAsync([], false, cancellationToken);
+
+    // Serialize privacy maintenance with submission/context capture and run changes. The store
+    // returns the committed sanitized snapshots, so no post-commit read can leave a stale cache.
+    public async Task<int> ClearExpiredHistoryAsync(IHistoryRetentionRepository retention, HistoryRetentionPolicy policy,
+        DateTimeOffset now, CancellationToken ct = default)
+    {
+        policy.Validate();
+        await writes.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            var cleared = await retention.ClearExpiredAsync(now.AddDays(-policy.Days), now, ct).ConfigureAwait(false);
+            lock (sync)
+            {
+                foreach (var stored in cleared)
+                {
+                    if (runs.Remove(stored.Run.Id, out var old)) old.Cancellation.Dispose();
+                    var entry = new Entry(stored.Run, stored.Request) { Result = stored.Result };
+                    entry.Events.AddRange(stored.Events);
+                    entry.Terminal.TrySetResult(stored.Run);
+                    runs[stored.Run.Id] = entry;
+                }
+            }
+            if (cleared.Count > 0) HistoryContentCleared?.Invoke();
+            return cleared.Count;
+        }
+        finally { writes.Release(); }
+    }
     public Task RestoreHistoryAsync(IReadOnlyList<Guid> safeQueuedRuns, CancellationToken cancellationToken = default) => LoadHistoryAsync(safeQueuedRuns, true, cancellationToken);
 
     private async Task LoadHistoryAsync(IReadOnlyList<Guid> safeQueuedRuns, bool includePending, CancellationToken cancellationToken)
@@ -521,7 +549,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
     {
         if (conversationId is not { } id) return new();
         IReadOnlyList<TaskRun> history = repository is null ? GetRuns() : await repository.ListAsync(ct).ConfigureAwait(false);
-        var prior = history.Where(run => run.ConversationId == id && run.Status == RunStatus.Completed)
+        var prior = history.Where(run => run.ConversationId == id && run.Status == RunStatus.Completed && run.ContentClearedAtUtc is null)
             .OrderBy(run => run.EndedAtUtc).ThenBy(run => run.CreatedAtUtc).TakeLast(4).ToArray();
         var messages = conversations is null ? [] : await conversations.ReadMessagesAsync(id, ct).ConfigureAwait(false);
         // Tool bodies and opaque AgentSessions are intentionally not used for conversation transfer.

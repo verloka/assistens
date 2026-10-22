@@ -37,6 +37,7 @@ public sealed class TaskRunRow
     public DateTimeOffset CreatedAtUtc { get; set; }
     public DateTimeOffset? StartedAtUtc { get; set; }
     public DateTimeOffset? EndedAtUtc { get; set; }
+    public DateTimeOffset? ContentClearedAtUtc { get; set; }
     public string? Summary { get; set; }
     public string? ErrorCode { get; set; }
     public string SourcesJson { get; set; } = "[]";

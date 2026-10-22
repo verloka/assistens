@@ -10,6 +10,7 @@ namespace PersonalAgent.Persistence;
 public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : DbContext(options)
 {
     public DbSet<ConversationRow> Conversations => Set<ConversationRow>();
+    public DbSet<HistoryRetentionRow> HistoryRetention => Set<HistoryRetentionRow>();
     public DbSet<TaskDefinitionRow> TaskDefinitions => Set<TaskDefinitionRow>();
     public DbSet<TaskRunRow> TaskRuns => Set<TaskRunRow>();
     public DbSet<RunEventRow> RunEvents => Set<RunEventRow>();
@@ -29,6 +30,10 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        var retention = model.Entity<HistoryRetentionRow>();
+        retention.ToTable("HistoryRetention", table => table.HasCheckConstraint("CK_HistoryRetention_Policy", "Id = 1 AND Days BETWEEN 1 AND 36500"));
+        retention.HasKey(row => row.Id);
+        retention.Property(row => row.Id).ValueGeneratedNever();
         var channelConfigurations = model.Entity<ChannelConfigurationRow>();
         channelConfigurations.ToTable("ChannelConfigurations");
         channelConfigurations.HasKey(row => row.Id);
@@ -169,6 +174,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
         runs.Property(row => row.CreatedAtUtc).HasConversion(utcTicks);
         runs.Property(row => row.StartedAtUtc).HasConversion(utcTicks);
         runs.Property(row => row.EndedAtUtc).HasConversion(utcTicks);
+        runs.Property(row => row.ContentClearedAtUtc).HasConversion(utcTicks);
 
         var events = model.Entity<RunEventRow>();
         events.ToTable("RunEvents", table => table.HasCheckConstraint("CK_RunEvents_Sequence", "Sequence > 0"));

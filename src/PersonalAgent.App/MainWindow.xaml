@@ -16,6 +16,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <DockPanel>
+            <Button x:Name="PrivacyButton" DockPanel.Dock="Right" Content="Privacy" Click="OpenPrivacyClicked" Padding="12,5" Margin="0,0,8,0" />
             <Button x:Name="ChannelsButton" DockPanel.Dock="Right" Content="Channels" Click="OpenChannelsClicked" Padding="12,5" Margin="0,0,8,0" />
             <Button x:Name="SchedulesButton" DockPanel.Dock="Right" Content="Schedules" Click="OpenSchedulesClicked" Padding="12,5" Margin="0,0,8,0" />
             <Button x:Name="ModelsButton" DockPanel.Dock="Right" Content="Models" Click="OpenModelsClicked" Padding="12,5" />

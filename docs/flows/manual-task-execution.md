@@ -21,6 +21,7 @@ Status: Draft
 6. Persist terminal outcome and request delivery via FDD-006; notification failure does not roll back run completion.
 
 ## Validations
+- Owner-approved PA-117 privacy exception (2026-10-22): configurable retention is disabled by default. Explicit cleanup, or enabled expiry, clears private content only from wholly old, safely terminal conversations. Keep run/event identities, order, statuses, revisions, submission hashes and operation/delivery ledgers. Preserve unfinished work, uncertain outcomes and input-release failures. This exception permits content redaction, never task replay or history identity deletion.
 - Authorized sender; supported model capabilities (vision and tool calls for GUI); limits; tool allowlist; active session for Windows GUI.
 
 ## Invariants
@@ -43,6 +44,7 @@ Profile setup observation (PA-051/059/062): the owner can explicitly disable rea
 - Flow: FDD-006 — notifications and follow-ups.
 
 ## Scenarios
+- S4: Given saved privacy settings and old safely terminal history, when the owner clears expired content or enables expiry, then clear private run/event/result/message/session content together, update the visible history, preserve safety identities, and keep recent/unfinished/uncertain conversations unchanged. Default expiry is off; invalid periods and storage failures cannot confirm cleanup. [test: tests/PersonalAgent.IntegrationTests/HistoryRetentionTests.cs] [test: tests/PersonalAgent.IntegrationTests/PrivacyUiTests.cs]
 - S1: Given an authorized user and available agent, when a read-only manual task is submitted, then a persisted result and notification are produced. [untested]
 - S2: Given an active run, when cancellation is requested, then no additional tool calls start after cancellation is observed and the outcome is `Cancelled`. [untested]
 - S3: Given a completed run with a failed delivery attempt, when delivery retries later, then the task remains `Completed`. [untested]

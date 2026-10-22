@@ -55,6 +55,7 @@ public sealed record TaskRun
     public required DateTimeOffset CreatedAtUtc { get; init; }
     public DateTimeOffset? StartedAtUtc { get; init; }
     public DateTimeOffset? EndedAtUtc { get; init; }
+    public DateTimeOffset? ContentClearedAtUtc { get; init; }
     public string? Summary { get; init; }
     public string? ErrorCode { get; init; }
     public IReadOnlyList<SourceLink> Sources { get; init; } = [];

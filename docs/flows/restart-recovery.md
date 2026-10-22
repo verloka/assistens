@@ -26,6 +26,7 @@ Status: Draft
 - Startup with exclusive store ownership converts dispatched calls lacking acknowledgement to OutcomeUnknown and marks their interrupted runs for outcome review. Persisted approval or a fresh SDK session cannot replay that operation.
 
 ## Invariants
+- PA-117 owner-approved privacy cleanup may redact private payloads of safely terminal, expired conversations, including event messages; event identities/order, terminal states, submission hashes and action/delivery tombstones remain immutable. Unfinished/unknown outcomes are excluded. Restart and repeated submission cannot execute erased attempts again; cleared approvals cannot authorize dispatch.
 - Unknown external outcomes never trigger blind automatic retries.
 - Notification retry cannot create a duplicate task run.
 - Restart does not silently elevate permissions or revive expired approvals.
@@ -41,6 +42,7 @@ Status: Draft
 - Flow: FDD-006 — notification outbox.
 
 ## Scenarios
+- S4: Given explicitly erased terminal history, when restarting or submitting an old trigger again, then retain terminal identity/status/hash and acknowledged operation/delivery ledgers without execution. Incomplete and unknown outcomes remain byte-equivalent; DB failure rolls all privacy changes back. Event identity mutation/deletion remains denied after redaction. [test: tests/PersonalAgent.IntegrationTests/HistoryRetentionTests.cs]
 - S1: Given an interruption after an external write whose result is unknown, when app restarts, then the write is not repeated automatically. [test: tests/PersonalAgent.IntegrationTests/ToolDispatchRecoveryTests.cs]
 - S2: Given a persisted queued read-only run, when app restarts, then recovery safely requeues it at most once. [untested]
 - S3: Given a pending notification and completed run, when app restarts, then only delivery is retried. [test: tests/PersonalAgent.IntegrationTests/NotificationOutboxTests.cs] (Actual hosted SQLite recovery with scripted delivery; unknown previously Sending messages require review instead of retry.)

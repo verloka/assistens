@@ -14,6 +14,9 @@ public sealed class SqliteNotificationOutbox(IDbContextFactory<AgentDbContext> f
         if (eventId == Guid.Empty) throw new ArgumentException("Notification requires a source event.");
         message = message.Snapshot(); var json = JsonSerializer.Serialize(message); var route = message.Destination; var now = clock.GetUtcNow().ToUniversalTime();
         await using var db = await factory.CreateDbContextAsync(ct);
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        if (await db.TaskRuns.AnyAsync(run => run.ContentClearedAtUtc != null && (run.Id == message.RunId
+            || db.RunEvents.Any(evt => evt.Id == eventId && evt.RunId == run.Id)), ct)) throw new NotificationConflictException();
         await db.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO NotificationOutbox (Id,EventId,ChannelId,ConnectionId,DestinationId,MessageJson,PayloadSchemaVersion,Status,Attempts,Version,CreatedAtUtc,UpdatedAtUtc,NextAttemptAtUtc)
             VALUES ({message.Id},{eventId},{route.ChannelId},{route.ConnectionId},{route.DestinationId},{json},1,'Pending',0,0,{now.UtcTicks},{now.UtcTicks},{now.UtcTicks})
@@ -22,7 +25,9 @@ public sealed class SqliteNotificationOutbox(IDbContextFactory<AgentDbContext> f
         var row = await db.NotificationOutbox.AsNoTracking().SingleOrDefaultAsync(row => row.EventId == eventId && row.ChannelId == route.ChannelId
             && row.ConnectionId == route.ConnectionId && row.DestinationId == route.DestinationId, ct);
         if (row is null || row.Id != message.Id || row.MessageJson != json) throw new NotificationConflictException();
-        return Read(row);
+        var delivery = Read(row);
+        await transaction.CommitAsync(ct);
+        return delivery;
     }
     public async Task<NotificationDelivery?> GetAsync(Guid messageId, CancellationToken ct = default)
     {

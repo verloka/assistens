@@ -24,6 +24,7 @@ public sealed class RunNotificationPublisher(IRunRepository runs, INotificationS
             var configuration = JsonSerializer.Serialize(routes); var count = 0; var failed = false;
             foreach (var run in await runs.ListAsync(ct).ConfigureAwait(false))
             {
+                if (run.ContentClearedAtUtc is not null) continue;
                 if (published.TryGetValue(run.Id, out var prior) && prior == (run.RunVersion, configuration)) continue;
                 var stored = await runs.GetAsync(run.Id, ct).ConfigureAwait(false);
                 if (stored is null) continue;

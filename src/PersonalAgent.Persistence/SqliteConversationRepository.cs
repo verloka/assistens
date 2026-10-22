@@ -15,10 +15,13 @@ public sealed class SqliteConversationRepository(IDbContextFactory<AgentDbContex
         if (message.Id == Guid.Empty || message.ConversationId == Guid.Empty || message.Sequence <= 0 || !Enum.IsDefined(message.Role))
             throw new ArgumentException("Message requires identities, a positive sequence and a known role.");
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await RequireContentAvailableAsync(db, message.ConversationId, message.RunId, cancellationToken);
         if (message.RunId is { } runId && !await db.TaskRuns.AnyAsync(run => run.Id == runId && run.ConversationId == message.ConversationId, cancellationToken))
             throw new ArgumentException("Message run belongs to another conversation or is missing.");
         db.ConversationMessages.Add(ToRow(message));
         await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<ConversationMessage>> ReadMessagesAsync(Guid conversationId, CancellationToken cancellationToken = default)
@@ -53,6 +56,8 @@ public sealed class SqliteConversationRepository(IDbContextFactory<AgentDbContex
         ArgumentException.ThrowIfNullOrWhiteSpace(session.ProviderId);
         ArgumentException.ThrowIfNullOrWhiteSpace(session.ModelId);
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await RequireContentAvailableAsync(db, session.ConversationId, session.RunId, cancellationToken);
         if (session.RunId is { } runId)
         {
             var run = await db.TaskRuns.AsNoTracking().SingleOrDefaultAsync(run => run.Id == runId && run.ConversationId == session.ConversationId, cancellationToken);
@@ -67,6 +72,14 @@ public sealed class SqliteConversationRepository(IDbContextFactory<AgentDbContex
             ModelId = session.ModelId, SchemaVersion = session.SchemaVersion, SerializedState = session.SerializedState, TimestampUtc = session.TimestampUtc, RunId = session.RunId
         });
         await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    private static async Task RequireContentAvailableAsync(AgentDbContext db, Guid conversationId, Guid? runId, CancellationToken ct)
+    {
+        if (await db.TaskRuns.AnyAsync(run => run.ConversationId == conversationId && run.ContentClearedAtUtc != null
+            && (runId == null || run.Id == runId), ct))
+            throw new InvalidOperationException("Private history was cleared; old content cannot be restored.");
     }
 
     public async Task<AgentSessionSnapshot?> TryReadSessionAsync(Guid sessionId, string providerId, string modelId, int schemaVersion, CancellationToken cancellationToken = default)

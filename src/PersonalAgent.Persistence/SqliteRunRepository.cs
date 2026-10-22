@@ -215,14 +215,14 @@ public sealed class SqliteRunRepository(IDbContextFactory<AgentDbContext> contex
         Origin = Read<TaskOrigin>(row.OriginJson), Instructions = row.Instructions, ModelProfileId = row.ModelProfileId,
         Status = row.Status, RunVersion = row.RunVersion, PauseScope = row.PauseScope, Reason = row.Reason,
         CreatedAtUtc = row.CreatedAtUtc, StartedAtUtc = row.StartedAtUtc, EndedAtUtc = row.EndedAtUtc,
-        Summary = row.Summary, ErrorCode = row.ErrorCode, Sources = Read<SourceLink[]>(row.SourcesJson)
+        Summary = row.Summary, ErrorCode = row.ErrorCode, Sources = Read<SourceLink[]>(row.SourcesJson), ContentClearedAtUtc = row.ContentClearedAtUtc
     };
     private static RunEventRow ToRow(RunEvent value) => new()
     {
         Id = value.Id, RunId = value.RunId, Sequence = value.Sequence, EventType = value.EventType, TimestampUtc = value.TimestampUtc,
         Message = value.Message, ToolId = value.ToolId, ToolCallId = value.ToolCallId, PayloadJson = value.Payload?.GetRawText()
     };
-    private static RunEvent ToDomain(RunEventRow row) => new()
+    internal static RunEvent ToDomain(RunEventRow row) => new()
     {
         Id = row.Id, RunId = row.RunId, Sequence = row.Sequence, EventType = row.EventType, TimestampUtc = row.TimestampUtc,
         Message = row.Message, ToolId = row.ToolId, ToolCallId = row.ToolCallId,

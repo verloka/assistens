@@ -21,6 +21,8 @@ public partial class MainWindow : Window
     private ApprovalsWindow? approvals;
     private SchedulesWindow? schedules;
     private ChannelsWindow? channels;
+    private PrivacyWindow? privacy;
+    private readonly PersonalAgent.App.ViewModels.PrivacyViewModel? privacyModel;
     private readonly PersonalAgent.App.ViewModels.ChannelsViewModel? channelModel;
     private readonly PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel;
     private readonly ScheduledDesktopWarnings? desktopWarnings;
@@ -28,7 +30,8 @@ public partial class MainWindow : Window
     private readonly PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel;
     public MainWindow(PersonalAgent.App.ViewModels.HealthViewModel viewModel, PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections = null,
         PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel = null, PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel = null,
-        PersonalAgent.Core.Application.ScheduledDesktopGate? scheduledDesktopGate = null, PersonalAgent.App.ViewModels.ChannelsViewModel? channelModel = null)
+        PersonalAgent.Core.Application.ScheduledDesktopGate? scheduledDesktopGate = null, PersonalAgent.App.ViewModels.ChannelsViewModel? channelModel = null,
+        PersonalAgent.App.ViewModels.PrivacyViewModel? privacyModel = null)
     {
         InitializeComponent();
         DataContext = viewModel;
@@ -36,10 +39,19 @@ public partial class MainWindow : Window
         this.approvalModel = approvalModel;
         this.scheduleModel = scheduleModel;
         this.channelModel = channelModel;
+        this.privacyModel = privacyModel;
         if (scheduledDesktopGate is not null) desktopWarnings = new(this, scheduledDesktopGate);
         Closed += (_, _) => desktopWarnings?.Dispose();
     }
 
+    private void OpenPrivacyClicked(object sender, RoutedEventArgs e)
+    {
+        if (privacyModel is null) return;
+        if (privacy is not null) { privacy.Activate(); return; }
+        privacy = new PrivacyWindow(privacyModel) { Owner = this };
+        privacy.Closed += (_, _) => privacy = null;
+        privacy.Show();
+    }
     private void OpenModelsClicked(object sender, RoutedEventArgs e) => OpenModels();
     private void OpenChannelsClicked(object sender, RoutedEventArgs e) => OpenChannels();
     public void OpenChannels()
