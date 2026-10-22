@@ -1235,18 +1235,26 @@
                                        "evidence":  [
 
                                                     ],
-                                       "note":  "Implementation preserved: WPF-only SystemEvents session/power/display subscriptions; owned GUI uses existing exact-version takeover/durable DesktopEnvironmentChanged pause, recovery never resumes, no-owner MCP/future admission independent, setup failure blocks and shutdown unsubscribes. DesktopEnvironmentPauseTests7 and related76tests passed; full verify996passed before final bounded no-owner fix/startup-race test, final smoke build0warnings/errors. Native Lock/unlock accepted: sessionEvents=2,ownedLeaseRevoked/checkpoint/noAutoResume=True,nativeInputCalls=0,captures=0; owner explicitly deferred Sleep/wake and Display change manual cycles for now; keep NOT TESTED, do not request again until owner resumes; agent does not lock/sleep/change settings. Read-only stand is not running now; do not relaunch for the deferred cycles. Native gaps retained for PA-125 release verification; dependent114 remains pending. FDD002 S8 controlled PASS/native Lock/unlock PASS, sleep/display NOT TESTED, all Draft.114 depends113; no other independent ready work.",
+                                       "note":  "Implementation preserved: WPF-only SystemEvents session/power/display subscriptions; owned GUI uses existing generation-bound local takeover/durable DesktopEnvironmentChanged pause, recovery never resumes, no-owner MCP/future admission independent, setup failure blocks and shutdown unsubscribes. DesktopEnvironmentPauseTests7 and related76tests passed; full verify996passed before final bounded no-owner fix/startup-race test, final smoke build0warnings/errors. Native Lock/unlock accepted: sessionEvents=2,ownedLeaseRevoked/checkpoint/noAutoResume=True,nativeInputCalls=0,captures=0; owner explicitly deferred Sleep/wake and Display change manual cycles for now; keep NOT TESTED, do not request again until owner resumes; agent does not lock/sleep/change settings. Read-only stand is not running now; do not relaunch for the deferred cycles. Native gaps retained for PA-125 release verification; owner explicitly authorized114 via its recorded deferred dependency;113 native checks remain required for release. FDD002 S8 controlled PASS/native Lock/unlock PASS, sleep/display NOT TESTED, all Draft.PA-114 proceeds under recorded owner deferral; finish114 and stop per latest instruction.",
                                        "attempts":  1
                                    },
                         "PA-114":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-21T12:24:37.9513191+00:00",
+                                       "completed_at":  "2026-10-21T15:43:05.338628+03:00",
                                        "evidence":  [
-
+                                                        "TakeoverStressTests.cs:22 controlled cases/216 cycles per run; two reproduced handoff races fixed in TakeControlHotkeyService and TaskRunCoordinator; exact owner/generation binding, same-generation repeated veto checkpoint, distinct queued handoffs and current-version publication. TaskControlDependencyTests4 verifies explicit owner edge deferral and final release refusal. FDD002 S9 controlled PASS; reverse001/003/007 and004/005/006 preserved; all Draft. PA-113 remains blocked, native sleep/display checks deferred, not accepted.",
+                                                        "Verification: dotnet test --filter Takeover -v minimal:3unit+25integration passed; two sequential dotnet test --no-build --no-restore --filter Takeover -v minimal runs each3+25 passed,648stress cycles total. Stress+tracker26 passed; related31 passed. powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1:locked restore/build0warnings/errors,137unit+883integration+3localfake=1023 passed.64concrete FDD test paths/doctor/diff check passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified with controlled stress boundaries; PA-113 native gap retained under explicit owner deferral. Owner instructed finish current114 and STOP; do not start115 or other backlog work without renewed instruction.",
+                                       "attempts":  1,
+                                       "deferred_dependencies":  [
+                                                                     {
+                                                                         "id":  "PA-113",
+                                                                         "reason":  "Owner explicitly instructed continuing PA-114 while PA-113 stays partially blocked; Sleep/wake and Display change native checks deferred until final review, not accepted or waived for release.",
+                                                                         "recorded_at":  "2026-10-21T12:24:37.9352621+00:00"
+                                                                     }
+                                                                 ]
                                    },
                         "PA-115":  {
                                        "status":  "pending",
@@ -1359,6 +1367,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-113",
-    "updated_at":  "2026-10-21T11:58:26.9158457+00:00"
+    "last_task_id":  "PA-114",
+    "updated_at":  "2026-10-21T15:43:05.3488739+03:00"
 }

@@ -60,6 +60,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/taskctl.ps1 -Action 
 
 Then `next` will choose **another** dependency-ready pending task if available. After the prerequisite is provided, `unblock -Id PA-006` returns it to the queue. Blocked tasks are never treated as completed.
 
+If the owner explicitly authorizes continuing past a particular blocked dependency,
+record that decision on the dependent task without changing the catalog or accepting
+the missing verification:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/taskctl.ps1 -Action start -Id PA-114 -DeferDependency PA-113 -Note 'Owner explicitly deferred remaining PA-113 native checks to final review and authorized PA-114'
+```
+
+This accepts only the named declared blocked edge and stores its reason/time in
+`deferred_dependencies`. It requires an owner decision in `Note`; ordinary starts
+still require completed dependencies. PA-113 remains blocked. Final PA-125 completion
+requires every other task done, including any explicitly deferred prerequisites.
+
 Report current progress:
 
 ```powershell
@@ -68,7 +81,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/taskctl.ps1 -Action 
 
 ## Tracking semantics
 
-- `pending`: untouched, can start when all dependencies `done`.
+- `pending`: untouched, can start when all dependencies `done` or a particular blocked edge was explicitly deferred by the owner as above.
 - `in_progress`: work underway. Always resumed before starting new work.
 - `blocked`: cannot verify/complete now; reason required. Work on another ready task.
 - `done`: independently verified; evidence and test outcome required.

@@ -120,6 +120,25 @@ CHECK requires observed events, revoked lease, durable environment checkpoint an
 no automatic resume. ARM of a new cycle is deliberate; no screenshot is claimed.
 Real screenshot/input restoration and multi-monitor coverage remain separate gates.
 
+PA-114 repeated stress:
+
+```powershell
+dotnet test --filter Takeover -v minimal
+dotnet test --no-build --no-restore --filter Takeover -v minimal
+dotnet test --no-build --no-restore --filter Takeover -v minimal
+```
+
+TakeoverStressTests adds22 cases, including216 cycles per execution across
+click/type/chord, success/partial insertion/unknown native exception and pause/cancel.
+The actual drivers, App handoff, Core gate and SQLite must release held inputs,
+reject12 queued stale writes per cycle and preserve a waiting run's exclusive fresh
+lease. Separate barriers reproduce100 repeated takeovers behind a held writer and
+a new generation's takeover before the previous worker publishes completion.
+Old consent cannot pause a newer generation; obsolete completion cannot replace
+the latest handoff. All input/capture boundaries are controlled; no real desktop
+input, screenshots, OS-cycle changes, provider or credentials are involved.
+PA-113 Sleep/wake and Display change stay explicitly deferred until final review.
+
 PA-066: `--filter McpConnectionConfig` verifies generic configured connections,
 owner-approval/default denial, immutable settings/allowlists, scoped secret
 references, connection cancellation/timeouts and sanitized failed-handshake

@@ -142,11 +142,18 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
     public Task<TaskRun> PauseForDesktopEnvironmentChangeAsync(Guid runId, long expectedPauseVersion, CancellationToken ct = default) =>
         PauseCore(new(Guid.NewGuid(), runId, 0, PauseScope.EntireRun, PauseReason.DesktopEnvironmentChanged), ct, expectedPauseVersion);
 
-    private Task<TaskRun> PauseCore(PauseRunCommand command, CancellationToken cancellationToken, long? activityPauseVersion = null) =>
+    // Repeated local takeover signals can advance PauseVersion while the same revoked lease drains.
+    // They may share its checkpoint; a resumed/replaced generation must never inherit this request.
+    public Task<TaskRun> PauseForLocalTakeoverAsync(Guid runId, long expectedPauseVersion, long expectedGeneration,
+        PauseReason? reason = null, CancellationToken ct = default) =>
+        PauseCore(new(Guid.NewGuid(), runId, 0, PauseScope.EntireRun, reason), ct, expectedPauseVersion, expectedGeneration);
+
+    private Task<TaskRun> PauseCore(PauseRunCommand command, CancellationToken cancellationToken, long? activityPauseVersion = null, long? generation = null) =>
         ChangeAsync(command.RunId, change =>
         {
             if (activityPauseVersion is { } expected && (desktopAccess?.Snapshot is not { } state
-                || state.PauseVersion != expected || state.HumanControlOwnerRunId != command.RunId
+                || (generation is { } ownerGeneration ? state.Generation != ownerGeneration || state.PauseVersion < expected : state.PauseVersion != expected)
+                || state.HumanControlOwnerRunId != command.RunId
                 || state.State is not (DesktopAccessState.Pausing or DesktopAccessState.PausedForUser)))
                 throw new DesktopAccessException("ActivityTakeoverSuperseded");
             if (!Enum.IsDefined(command.Scope)) throw new ArgumentOutOfRangeException(nameof(command.Scope));

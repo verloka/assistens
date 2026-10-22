@@ -7,7 +7,8 @@ param(
   [string]$Id = '',
   [string]$Note = '',
   [string]$Evidence = '',
-  [string]$Test = ''
+  [string]$Test = '',
+  [string]$DeferDependency = ''
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -16,6 +17,7 @@ $statePath = Join-Path $root 'progress/state.json'
 $catalog = Get-Content $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
 $tasks = @($catalog.tasks | Sort-Object sequence)
+if ($DeferDependency -and $Action -ne 'start') { throw 'DeferDependency is only valid for start with an explicit owner decision in Note.' }
 
 function StateFor([string]$taskId) {
   $prop = $state.task_states.PSObject.Properties[$taskId]
@@ -27,10 +29,17 @@ function TaskFor([string]$taskId) {
   if ($found.Count -ne 1) { throw "Unknown task id $taskId" }
   return $found[0]
 }
+function DependencySatisfied($t, [string]$dependency) {
+  $status = (StateFor $dependency).status
+  if ($status -eq 'done') { return $true }
+  if ($status -ne 'blocked') { return $false }
+  $deferred = @((StateFor $t.id).deferred_dependencies | Where-Object { $_.id -eq $dependency -and -not [string]::IsNullOrWhiteSpace($_.reason) })
+  return $deferred.Count -eq 1
+}
 function IsReady($t) {
   if ((StateFor $t.id).status -ne 'pending') { return $false }
   foreach ($dependency in @($t.depends_on)) {
-    if ((StateFor $dependency).status -ne 'done') { return $false }
+    if (-not (DependencySatisfied $t $dependency)) { return $false }
   }
   return $true
 }
@@ -73,6 +82,9 @@ function PrintTask($task) {
   foreach ($check in @($task.verification)) { Write-Output (' - ' + $check) }
   if ($task.requires_user_or_environment) { Write-Output 'ATTENTION: requires manual / external environment validation.' }
   if ($st.note) { Write-Output ('Last note: ' + $st.note) }
+  foreach ($deferred in @($st.deferred_dependencies)) {
+    if ($null -ne $deferred) { Write-Output ('DEFERRED dependency ' + $deferred.id + ': ' + $deferred.reason) }
+  }
 }
 function Doctor() {
   $issues = New-Object System.Collections.Generic.List[string]
@@ -91,11 +103,20 @@ function Doctor() {
       if ((TaskFor $dep).sequence -ge $t.sequence) { $issues.Add('Dependency order violation for ' + $t.id + ' -> ' + $dep) }
     }
     $s = StateFor $t.id
+    $deferredIds = @{}
+    foreach ($deferred in @($s.deferred_dependencies)) {
+      if ($null -eq $deferred) { continue }
+      if (@($t.depends_on) -notcontains $deferred.id -or [string]::IsNullOrWhiteSpace($deferred.reason) -or
+          [string]::IsNullOrWhiteSpace($deferred.recorded_at) -or $deferredIds.ContainsKey([string]$deferred.id)) {
+        $issues.Add('Invalid deferred dependency for ' + $t.id)
+      }
+      $deferredIds[[string]$deferred.id] = $true
+    }
     if (@('pending','in_progress','blocked','done') -notcontains $s.status) { $issues.Add('Invalid status for ' + $t.id) }
     if ($s.status -eq 'done') {
       if (@($s.evidence).Count -eq 0 -or [string]::IsNullOrWhiteSpace($s.completed_at)) { $issues.Add('Completed task without evidence: ' + $t.id) }
       foreach ($dep in @($t.depends_on)) {
-        if ((StateFor $dep).status -ne 'done') { $issues.Add('Completed task with incomplete dependency: ' + $t.id + ' -> ' + $dep) }
+        if (-not (DependencySatisfied $t $dep)) { $issues.Add('Completed task with incomplete dependency: ' + $t.id + ' -> ' + $dep) }
       }
     }
     if ($s.status -eq 'in_progress' -and [string]::IsNullOrWhiteSpace($s.started_at)) { $issues.Add('In progress but missing started_at: ' + $t.id) }
@@ -146,6 +167,15 @@ switch ($Action) {
     $active = @(ActiveTasks)
     if ($active.Count -gt 0 -and $active[0].id -ne $Id) { throw ('Resume ' + $active[0].id + ' first, or block it with a reason.') }
     if ($s.status -eq 'in_progress') { Write-Output ('RESUME ' + $Id); PrintTask $t; break }
+    if ($DeferDependency) {
+      if ([string]::IsNullOrWhiteSpace($Note)) { throw 'Deferring a dependency requires an explicit owner decision in Note.' }
+      if (@($t.depends_on) -notcontains $DeferDependency -or (StateFor $DeferDependency).status -ne 'blocked') {
+        throw 'Only a declared blocked dependency can be explicitly deferred.'
+      }
+      $remaining = @($s.deferred_dependencies | Where-Object { $null -ne $_ -and $_.id -ne $DeferDependency })
+      $remaining += [pscustomobject]@{ id = $DeferDependency; reason = $Note; recorded_at = [DateTimeOffset]::UtcNow.ToString('o') }
+      $s | Add-Member -NotePropertyName deferred_dependencies -NotePropertyValue $remaining -Force
+    }
     if (-not (IsReady $t)) { throw ('Task ' + $Id + ' is not ready; dependencies or status block it.') }
     $s.status = 'in_progress'; $s.started_at = [DateTimeOffset]::UtcNow.ToString('o')
     $s.attempts = [int]$s.attempts + 1
@@ -164,7 +194,10 @@ switch ($Action) {
     $t = TaskFor $Id; $s = StateFor $Id
     if ($s.status -ne 'in_progress') { throw ('Only an in_progress task can be completed: ' + $Id) }
     foreach ($dep in @($t.depends_on)) {
-      if ((StateFor $dep).status -ne 'done') { throw ('Dependency ' + $dep + ' not done') }
+      if (-not (DependencySatisfied $t $dep)) { throw ('Dependency ' + $dep + ' not done or explicitly deferred') }
+    }
+    if ($Id -eq 'PA-125' -and @($tasks | Where-Object { $_.id -ne $Id -and (StateFor $_.id).status -ne 'done' }).Count -gt 0) {
+      throw 'Final release requires every other task done; deferred dependencies do not satisfy the release gate.'
     }
     $s.status = 'done'; $s.completed_at = [DateTimeOffset]::UtcNow.ToString('o')
     $s.evidence = @($Evidence, ('Verification: ' + $Test))

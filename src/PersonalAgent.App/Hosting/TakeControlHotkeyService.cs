@@ -17,6 +17,7 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
     private bool disposed;
     private readonly object sync = new();
     private Task pending = Task.CompletedTask;
+    private long handoffVersion;
     private DesktopHandoff handoff = new(null, 0, false, null);
     public Task Completion { get { lock (sync) return pending; } }
     public DesktopHandoff Handoff => Volatile.Read(ref handoff);
@@ -36,11 +37,10 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
     public void TakeControl() => _ = TakeControlAsync();
     public Task TakeControlAsync(Guid? targetRunId = null)
     {
-        if (disposed) return Task.CompletedTask;
-        var owner = desktop.TakeControl(); // Synchronous local gate first, no model/store/UI wait.
         lock (sync)
         {
-            if (!pending.IsCompleted) return pending;
+            if (disposed) return Task.CompletedTask;
+            var owner = desktop.TakeControl(); // Gate and pending task are published under the same local lock.
             var runId = owner ?? desktop.Snapshot.HumanControlOwnerRunId ?? targetRunId ??
                 runs.GetRuns().FirstOrDefault(run => !TaskRunStateMachine.IsTerminal(run.Status) && run.Status != RunStatus.Blocked)?.Id;
             return BeginHandoff(runId);
@@ -54,7 +54,7 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
             if (disposed) return Task.CompletedTask;
             var runId = desktop.TakeControlIfOwned();
             // Completion readers cannot observe a closed gate with the previous completed handoff task.
-            return runId is null ? Task.CompletedTask : BeginHandoff(runId, PauseReason.AutoPause, desktop.Snapshot.PauseVersion);
+            return runId is null ? Task.CompletedTask : BeginHandoff(runId, PauseReason.AutoPause);
         }
     }
     public Task PauseForDesktopEnvironmentChange()
@@ -65,20 +65,26 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
             var runId = desktop.TakeControlIfOwned();
             // Already-paused events must not advance the version of an in-flight checkpoint.
             // No owner means no live GUI context to invalidate; do not freeze unrelated MCP-only work.
-            return runId is null ? Task.CompletedTask : BeginHandoff(runId, PauseReason.DesktopEnvironmentChanged, desktop.Snapshot.PauseVersion);
+            return runId is null ? Task.CompletedTask : BeginHandoff(runId, PauseReason.DesktopEnvironmentChanged);
         }
     }
-    private Task BeginHandoff(Guid? runId, PauseReason? reason = null, long? activityPauseVersion = null)
+    private Task BeginHandoff(Guid? runId, PauseReason? reason = null)
     {
         lock (sync)
         {
-            if (!pending.IsCompleted) return pending;
-            Volatile.Write(ref handoff, new(runId, desktop.Snapshot.Generation, false, null));
+            var snapshot = desktop.Snapshot;
+            if (!pending.IsCompleted && handoff.RunId == runId && handoff.Generation == snapshot.Generation) return pending;
+            var previous = pending; var version = ++handoffVersion;
+            Volatile.Write(ref handoff, new(runId, snapshot.Generation, false, null));
             // Never hold this shared callback lock across even a synchronously completing store operation.
-            return pending = Task.Run(() => PauseOwnerAsync(runId, reason, activityPauseVersion));
+            return pending = Task.Run(async () =>
+            {
+                await previous.ConfigureAwait(false);
+                await PauseOwnerAsync(runId, reason, snapshot, version).ConfigureAwait(false);
+            });
         }
     }
-    private async Task PauseOwnerAsync(Guid? runId, PauseReason? reason = null, long? activityPauseVersion = null)
+    private async Task PauseOwnerAsync(Guid? runId, PauseReason? reason, DesktopAccessSnapshot requested, long version)
     {
         try
         {
@@ -88,25 +94,22 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
                 if (TaskRunStateMachine.IsTerminal(run.Status)) throw new InvalidOperationException("Run is terminal.");
                 if (run.PauseScope is null)
                 {
-                    if (activityPauseVersion is { } version)
-                    {
-                        if (reason == PauseReason.DesktopEnvironmentChanged)
-                            await runs.PauseForDesktopEnvironmentChangeAsync(id, version, stopping.Token).ConfigureAwait(false);
-                        else await runs.PauseForUserActivityAsync(id, version, stopping.Token).ConfigureAwait(false);
-                    }
-                    else await runs.PauseAsync(new(Guid.NewGuid(), id, run.RunVersion, PauseScope.EntireRun, reason), stopping.Token).ConfigureAwait(false);
+                    if (requested.HumanControlOwnerRunId == id)
+                        await runs.PauseForLocalTakeoverAsync(id, requested.PauseVersion, requested.Generation, reason, stopping.Token).ConfigureAwait(false);
+                    else // Explicit manual Take Control may also pause a selected MCP-only run without a GUI lease.
+                        await runs.PauseAsync(new(Guid.NewGuid(), id, run.RunVersion, PauseScope.EntireRun, reason), stopping.Token).ConfigureAwait(false);
                 }
                 await runs.ConfirmDesktopPauseAsync(id, stopping.Token).ConfigureAwait(false);
             }
             var snapshot = desktop.Snapshot;
             if (snapshot.InputCleanupUncertain || snapshot.OwnerRunId is not null || snapshot.State != DesktopAccessState.PausedForUser)
                 throw new DesktopAccessException("DesktopPauseUnconfirmed");
-            Volatile.Write(ref handoff, new(runId, snapshot.Generation, true, null));
+            Publish(version, new(runId, snapshot.Generation, true, null));
         }
         catch (OperationCanceledException) when (stopping.IsCancellationRequested) { }
         catch (Exception)
         {
-            Volatile.Write(ref handoff, new(runId, desktop.Snapshot.Generation, false, "PauseUnconfirmed"));
+            Publish(version, new(runId, desktop.Snapshot.Generation, false, "PauseUnconfirmed"));
             if (runId is { } id && desktop.Snapshot.InputCleanupUncertain)
             {
                 try { await runs.BlockUncertainInputAsync(id, stopping.Token).ConfigureAwait(false); }
@@ -115,6 +118,8 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
             logger.LogWarning("Desktop access was revoked; safe pause could not be confirmed. Manual review required.");
         }
     }
+    private void Publish(long version, DesktopHandoff value)
+    { lock (sync) if (version == handoffVersion) Volatile.Write(ref handoff, value); }
     public void Dispose()
     {
         if (disposed) return;
