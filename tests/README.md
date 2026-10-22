@@ -1434,3 +1434,43 @@ redaction after a terminal run's privacy marker, preserving all event metadata.
 PrivacyUiTests loads actual unshown XAML and checks saved policy, invalid input,
 manual cleanup and the selected Dashboard history refresh without desktop input.
 No paid provider, live transport or physical desktop acceptance is inferred.
+
+### PA-118 run diagnostics and local metrics
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter 'FullyQualifiedName~RunDiagnosticsTests|FullyQualifiedName~PrivacyLoggingTests'
+```
+
+Open **Run diagnostics** for read-only statuses, event kinds/IDs, tool fingerprints,
+counts, completed duration, known usage/cost, fixed pause/error classifications and
+safe next steps. The current desktop generation is shown only for its bound owner;
+historical generations are logged only from persisted pause confirmation. The
+delivery tab shows the latest100 outstanding/failed metadata rows; unknown
+delivery requires real-world review, never a diagnostic retry. No message JSON,
+instructions, summaries, scopes, provider errors, screenshots or raw tool IDs
+are displayed. Standard logs use event IDs2100..2111 for RunEventType ordinal,
+2200 for NotificationAttempted and2199 for unavailable observation. Known
+provider names are fixed labels; arbitrary provider/tool identifiers are hashed.
+
+The built-in **PersonalAgent** Meter exposes `personalagent.operations` and
+`personalagent.duration` (seconds), with only fixed `operation`/`outcome` enum
+tags: Run, Model, Tool, Mcp, Gui, Screenshot, GuiBusyAdmission, PauseGateClose,
+Resume, FailureAfterResume, ScheduleDuplicate, DeliveryAttempt and DeliveryRetry.
+Model/tool spans measure the application call, including any boundary wait within
+that call; they are not provider-only latency. GuiBusyAdmission counts scheduled
+admissions initially blocked by known busy input. PauseGateClose measures local
+gate revocation, not drain/checkpoint time; its listeners run off the control
+callback. Input/output counters (`personalagent.tokens.input/output`) record
+reported result usage, including blocked results; `personalagent.cost.estimate`
+emits only a configured known nominal estimate, with fixed/Other currency tags.
+Unknown usage/cost remains unknown. These are process-local observations, not
+durable billing or exactly-once totals; startup baselines restored history instead
+of replaying it. No exporter/network destination is enabled by this task.
+
+RunDiagnosticsTests verifies actual App/Core/MAF/SQLite with a scripted model and
+synthetic read tool; poison payloads stay out of the real formatter and diagnostic
+DTO/XAML. It also covers known blocked usage, unknown usage, one resumed failure,
+persisted unknown-delivery review across two restarts, inert refresh and throwing
+metric listeners. Existing ComputerTool/AgentLimits/ScheduledDesktop/Scheduler/
+NotificationOutbox/GlobalHotkey/SafePause regressions protect dispatch/control.
+No paid provider, live delivery or physical pause-latency benchmark is claimed.

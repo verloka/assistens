@@ -1,3 +1,4 @@
+using PersonalAgent.Core.Diagnostics;
 using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Computer;
 using System.Text.Json;
@@ -56,9 +57,13 @@ public sealed class ComputerToolSession : IAsyncDisposable
                     lease = await access.WaitAcquireAsync(runId, ct).ConfigureAwait(false);
                     controller = createController(lease);
                 }
+                using (var measured = AgentTelemetry.Measure(AgentOperation.Screenshot))
+                {
                 frame = await controller!.ScreenshotAsync(options, ct).ConfigureAwait(false);
                 frame.Validate();
                 if (!access.IsCurrent(lease) || frame.DesktopGeneration != lease.Generation) { frame = null; return Blocked("StaleDesktopContext"); }
+                measured.Outcome = AgentOperationOutcome.Success;
+                }
                 captureOptions = options;
                 observationId = Guid.NewGuid().ToString("N");
                 return new()

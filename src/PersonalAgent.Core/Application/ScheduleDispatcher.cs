@@ -33,6 +33,7 @@ public sealed class ScheduleDispatcher(IScheduleRepository schedules, ITaskComma
                 try
                 {
                     runId = await schedules.FindOccurrenceRunAsync(scheduled.Schedule.Id, occurrence, ct).ConfigureAwait(false);
+                    if (runId is not null) Diagnostics.AgentTelemetry.Record(Diagnostics.AgentOperation.ScheduleDuplicate);
                     if (runId is null)
                     {
                         if (await schedules.HasActiveRunAsync(scheduled.Schedule.Id, ct).ConfigureAwait(false))

@@ -1,3 +1,4 @@
+using PersonalAgent.Core.Diagnostics;
 using Microsoft.Extensions.Logging;
 using PersonalAgent.Computer;
 using PersonalAgent.Core.Application;
@@ -40,10 +41,12 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
         lock (sync)
         {
             if (disposed) return Task.CompletedTask;
+            var started = System.Diagnostics.Stopwatch.GetTimestamp();
             var owner = desktop.TakeControl(); // Gate and pending task are published under the same local lock.
+            var gateDelay = System.Diagnostics.Stopwatch.GetElapsedTime(started);
             var runId = owner ?? desktop.Snapshot.HumanControlOwnerRunId ?? targetRunId ??
                 runs.GetRuns().FirstOrDefault(run => !TaskRunStateMachine.IsTerminal(run.Status) && run.Status != RunStatus.Blocked)?.Id;
-            return BeginHandoff(runId);
+            return BeginHandoff(runId, gateDelay: gateDelay);
         }
     }
     // Called from a low-level input callback: only local gate/metadata work here, never storage or UI waits.
@@ -52,9 +55,10 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
         lock (sync)
         {
             if (disposed) return Task.CompletedTask;
+            var started = System.Diagnostics.Stopwatch.GetTimestamp();
             var runId = desktop.TakeControlIfOwned();
             // Completion readers cannot observe a closed gate with the previous completed handoff task.
-            return runId is null ? Task.CompletedTask : BeginHandoff(runId, PauseReason.AutoPause);
+            return runId is null ? Task.CompletedTask : BeginHandoff(runId, PauseReason.AutoPause, System.Diagnostics.Stopwatch.GetElapsedTime(started));
         }
     }
     public Task PauseForDesktopEnvironmentChange()
@@ -62,13 +66,14 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
         lock (sync)
         {
             if (disposed) return Task.CompletedTask;
+            var started = System.Diagnostics.Stopwatch.GetTimestamp();
             var runId = desktop.TakeControlIfOwned();
             // Already-paused events must not advance the version of an in-flight checkpoint.
             // No owner means no live GUI context to invalidate; do not freeze unrelated MCP-only work.
-            return runId is null ? Task.CompletedTask : BeginHandoff(runId, PauseReason.DesktopEnvironmentChanged);
+            return runId is null ? Task.CompletedTask : BeginHandoff(runId, PauseReason.DesktopEnvironmentChanged, System.Diagnostics.Stopwatch.GetElapsedTime(started));
         }
     }
-    private Task BeginHandoff(Guid? runId, PauseReason? reason = null)
+    private Task BeginHandoff(Guid? runId, PauseReason? reason = null, TimeSpan? gateDelay = null)
     {
         lock (sync)
         {
@@ -79,6 +84,9 @@ public sealed class TakeControlHotkeyService(IDesktopAccessCoordinator desktop, 
             // Never hold this shared callback lock across even a synchronously completing store operation.
             return pending = Task.Run(async () =>
             {
+                // Never invoke metric listeners on the low-level input callback thread.
+                AgentTelemetry.Record(AgentOperation.PauseGateClose,
+                    duration: gateDelay);
                 await previous.ConfigureAwait(false);
                 await PauseOwnerAsync(runId, reason, snapshot, version).ConfigureAwait(false);
             });

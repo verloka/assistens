@@ -59,7 +59,7 @@ public sealed class PrivacyUiTests
         finally { window.Close(); main.Close(); await host.StopAsync(); }
     });
 
-    private static Task OnWpfThread(Func<Task> test)
+    internal static Task OnWpfThread(Func<Task> test)
     {
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>

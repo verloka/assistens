@@ -13,8 +13,8 @@ public sealed class PrivacyConsoleFormatter() : ConsoleFormatter(FormatterName)
     public const string FormatterName = "privacy";
     private static readonly HashSet<string> Keys = new(StringComparer.Ordinal)
     {
-        "RunId", "ConversationId", "ToolCallId", "McpConnectionId", "ConnectionId", "ProcessId",
-        "Duration", "LeaseGeneration", "InputTokens", "OutputTokens", "Attempt", "NativeError", "StderrCharacters", "OccurrenceUtc"
+        "RunId", "ConversationId", "ToolCallId", "NotificationId", "McpConnectionId", "ConnectionId", "ProcessId",
+        "Duration", "LeaseGeneration", "DesktopLeaseGeneration", "InputTokens", "OutputTokens", "Attempt", "NativeError", "StderrCharacters", "OccurrenceUtc"
     };
 
     public override void Write<TState>(in LogEntry<TState> entry, IExternalScopeProvider? scopeProvider, TextWriter writer)
@@ -28,8 +28,18 @@ public sealed class PrivacyConsoleFormatter() : ConsoleFormatter(FormatterName)
             try
             {
                 foreach (var (key, value) in fields)
+                {
                     if (Keys.Contains(key) && value is Guid or int or long or uint or ulong or bool or decimal or double or TimeSpan or DateTimeOffset)
                         writer.Write($" {key}={Convert.ToString(value, CultureInfo.InvariantCulture)}");
+                    else if (key == "ProviderId" && value is "openai" or "anthropic" or "fake")
+                        writer.Write($" ProviderId={value}");
+                    else if (key is "ToolId" or "ProviderId" && value is string identifier)
+                        writer.Write($" {key}={RunDiagnosticsService.Identifier(identifier)}");
+                    else if (key == "ErrorCode" && value is RunDiagnosticCode code && Enum.IsDefined(code))
+                        writer.Write($" ErrorCode={code}");
+                    else if (key == "Status" && value is PersonalAgent.Core.Domain.RunStatus or PersonalAgent.Core.Channels.NotificationDeliveryStatus)
+                        writer.Write($" Status={value}");
+                }
             }
             catch (Exception) { writer.Write(" MetadataUnavailable"); }
         }

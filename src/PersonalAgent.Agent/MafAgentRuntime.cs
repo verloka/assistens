@@ -7,6 +7,7 @@ using PersonalAgent.Core.Domain;
 using PersonalAgent.Core.Persistence;
 using System.Text.Json;
 using System.Security.Cryptography;
+using PersonalAgent.Core.Diagnostics;
 
 namespace PersonalAgent.Agent;
 
@@ -110,6 +111,8 @@ public sealed class MafAgentRuntime(
                 var role = ChatRole.Assistant;
                 // Override only the changing cap; the SDK combines default policy/tools with per-run options.
                 var turnOptions = new ChatOptions { MaxOutputTokens = OutputLimit(remaining) };
+                using (var measurement = AgentTelemetry.Measure(AgentOperation.Model))
+                {
                 await foreach (var update in agent.RunStreamingAsync(messages, session,
                     new ChatClientAgentRunOptions { ChatOptions = turnOptions }, ct).WithCancellation(ct).ConfigureAwait(false))
                 {
@@ -129,6 +132,8 @@ public sealed class MafAgentRuntime(
                             if (string.IsNullOrEmpty(content.Text)) continue;
                             receivedText = true; Report(AgentEventKind.Progress, content.Text);
                         }
+                }
+                measurement.Outcome = AgentOperationOutcome.Success;
                 }
                 await BoundaryAsync();
                 var response = updates.ToAgentResponse();

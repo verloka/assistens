@@ -1,3 +1,4 @@
+using PersonalAgent.Core.Diagnostics;
 using Json.Schema;
 using Microsoft.Extensions.AI;
 using PersonalAgent.Core.Agents;
@@ -194,7 +195,22 @@ public sealed partial class ToolRegistry
             try
             {
                 ct.ThrowIfCancellationRequested();
-                var result = await entry.Tool.ExecuteAsync(new(arguments.Clone()), context, ct).ConfigureAwait(false);
+                ToolResult result;
+                using (var measured = AgentTelemetry.Measure(AgentOperation.Tool))
+                using (var specific = descriptor.Source.Kind == ToolSourceKind.Mcp
+                    ? AgentTelemetry.Measure(AgentOperation.Mcp)
+                    : descriptor.RequiresDesktop ? AgentTelemetry.Measure(AgentOperation.Gui) : null)
+                {
+                    result = await entry.Tool.ExecuteAsync(new(arguments.Clone()), context, ct).ConfigureAwait(false);
+                    measured.Outcome = result.Status switch
+                    {
+                        ToolResultStatus.Success => AgentOperationOutcome.Success,
+                        ToolResultStatus.Blocked => AgentOperationOutcome.Blocked,
+                        ToolResultStatus.OutcomeUnknown => AgentOperationOutcome.Unknown,
+                        _ => AgentOperationOutcome.Failed
+                    };
+                    if (specific is not null) specific.Outcome = measured.Outcome;
+                }
                 if (dispatch is not null)
                 {
                     // Ack is local history, not another external operation; caller cancellation must not erase it.

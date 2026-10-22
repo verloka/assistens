@@ -1,0 +1,53 @@
+<Window x:Class="PersonalAgent.App.RunDiagnosticsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Run diagnostics" Width="1050" Height="650" MinWidth="750" MinHeight="500" ShowActivated="False">
+    <TabControl Margin="20">
+    <TabItem Header="Runs">
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/><RowDefinition Height="2*"/><RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock TextWrapping="Wrap" Margin="0,0,0,12" Text="Local diagnostics: metadata only. Refreshing grants no permission and never retries or resumes a task. Process metrics: PersonalAgent meter (counts, duration, known token usage/cost); historical runs are not recounted at startup."/>
+        <DataGrid x:Name="DiagnosticsRuns" Grid.Row="1" ItemsSource="{Binding Runs}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Run ID" Binding="{Binding RunId}" Width="*"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}"/>
+                <DataGridTextColumn Header="Diagnosis" Binding="{Binding Code}"/>
+                <DataGridTextColumn Header="Duration" Binding="{Binding Duration, TargetNullValue=unknown}"/>
+                <DataGridTextColumn Header="Tool requested/completed" Binding="{Binding ToolRequests}"/>
+                <DataGridTextColumn Header="Completed tools" Binding="{Binding ToolCompletions}"/>
+                <DataGridTextColumn Header="Resumes" Binding="{Binding Resumes}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBlock x:Name="DiagnosticNextStep" Grid.Row="2" Text="{Binding Selected.NextStep}" TextWrapping="Wrap" Margin="0,12"/>
+        <TextBlock x:Name="DiagnosticUsage" Grid.Row="3" Text="{Binding Selected.Usage}" TextWrapping="Wrap"/>
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,8">
+            <TextBlock Text="Current desktop generation (bound owner only): "/>
+            <TextBlock Text="{Binding Selected.DesktopLeaseGeneration, TargetNullValue=unknown}"/>
+        </StackPanel>
+        <DataGrid x:Name="DiagnosticEvents" Grid.Row="5" ItemsSource="{Binding Selected.Events}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="#" Binding="{Binding Sequence}"/>
+                <DataGridTextColumn Header="Event" Binding="{Binding Kind}"/>
+                <DataGridTextColumn Header="UTC" Binding="{Binding TimestampUtc}"/>
+                <DataGridTextColumn Header="ToolCall ID" Binding="{Binding ToolCallId}" Width="*"/>
+                <DataGridTextColumn Header="Tool fingerprint" Binding="{Binding Tool}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+    </TabItem>
+    <TabItem Header="Delivery problems (latest 100)">
+        <DataGrid ItemsSource="{Binding DeliveryProblems}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Margin="8">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Delivery ID" Binding="{Binding DeliveryId}"/>
+                <DataGridTextColumn Header="Run ID" Binding="{Binding RunId, TargetNullValue=unknown}"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}"/>
+                <DataGridTextColumn Header="Attempts" Binding="{Binding Attempts}"/>
+                <DataGridTextColumn Header="Next step" Binding="{Binding NextStep}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </TabItem>
+    </TabControl>
+</Window>

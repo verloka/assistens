@@ -71,6 +71,8 @@ public sealed class ScheduledDesktopGate(TaskRunCoordinator runs, IScheduleRepos
                 try { waiting = await runs.BeginScheduledDesktopWaitAsync(runId, current.RunVersion, ct).ConfigureAwait(false); }
                 catch (RunVersionConflictException) { continue; }
                 var entry = new Entry(waiting, task, waitStarted) { Idle = ReadIdle() };
+                if (entry.Idle.InputIdleTime is { } idleTime && idleTime < settings.IdleThreshold)
+                    Diagnostics.AgentTelemetry.Record(Diagnostics.AgentOperation.GuiBusyAdmission, Diagnostics.AgentOperationOutcome.Blocked);
                 lock (sync) pending.Add(entry.Id, entry);
                 try
                 {

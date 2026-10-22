@@ -4,8 +4,11 @@ using PersonalAgent.Core.Security;
 
 namespace PersonalAgent.Core.Application;
 
+public sealed record NotificationAttempt(Guid NotificationId, Guid? RunId, Guid? ConversationId, int Attempt, NotificationDeliveryStatus Status);
+
 public sealed class NotificationDispatcher
 {
+    public event Action<NotificationAttempt>? Attempted;
     private readonly INotificationOutbox outbox;
     private readonly ChannelMessageRouter router;
     private readonly TimeProvider clock;
@@ -19,6 +22,8 @@ public sealed class NotificationDispatcher
         {
             ct.ThrowIfCancellationRequested(); var delivery = await outbox.ClaimNextAsync(clock.GetUtcNow(), ct).ConfigureAwait(false);
             if (delivery is null) break;
+            Diagnostics.AgentTelemetry.Record(Diagnostics.AgentOperation.DeliveryAttempt);
+            if (delivery.Attempts > 1) Diagnostics.AgentTelemetry.Record(Diagnostics.AgentOperation.DeliveryRetry);
             var status = NotificationDeliveryStatus.Delivered; string? error = null; var now = clock.GetUtcNow(); var next = now;
             if (delivery.Attempts > options.MaxAttempts) { status = NotificationDeliveryStatus.Failed; error = "DeliveryAttemptsExhausted"; }
             else if (now - delivery.CreatedAtUtc >= options.MaxAge) { status = NotificationDeliveryStatus.Failed; error = "DeliveryExpired"; }
@@ -45,6 +50,8 @@ public sealed class NotificationDispatcher
             }
             // Persist cancellation/unknown outcome even when shutdown canceled the dispatch token.
             await outbox.FinishAsync(delivery.Message.Id, delivery.Version, status, clock.GetUtcNow(), next, error, CancellationToken.None).ConfigureAwait(false);
+            try { Attempted?.Invoke(new(delivery.Message.Id, delivery.Message.RunId, delivery.Message.ConversationId, delivery.Attempts, status)); }
+            catch (Exception) { } // Diagnostics cannot change the committed delivery outcome.
             processed++; ct.ThrowIfCancellationRequested();
         }
         return processed;

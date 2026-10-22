@@ -1298,14 +1298,15 @@
                                        "attempts":  2
                                    },
                         "PA-118":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-22T10:13:41.3670806+00:00",
+                                       "completed_at":  "2026-10-22T10:29:59.5676401+00:00",
                                        "evidence":  [
-
+                                                        "RunDiagnosticsService/ViewModel/Window; coherent TaskRunCoordinator snapshot; AgentTelemetry fixed-tag Meter with actual runtime/tool/computer/control/scheduler/delivery instrumentation; privacy formatter typed status/code, identifier hashes; RunDiagnosticsTests20; FDD001S5/007S5 actual diff verified, reverse002..006 preserved",
+                                                        "Verification: Final dotnet test IntegrationTests --no-restore --filter RunDiagnosticsTests|HybridMcpGuiTests|McpApprovalTests:35passed21s; diagnostics/privacy24passed6s; tool/control/scheduler/delivery/limits131passed31s; UI/history/retention/delivery74passed36s; blocked usage/health26passed10s; dotnet build --no-restore -v minimal:0warnings/errors2s; doctor125valid; git diff --check passed"
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1
                                    },
                         "PA-119":  {
                                        "status":  "pending",
@@ -1378,6 +1379,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-117",
-    "updated_at":  "2026-10-22T10:13:23.1570289+00:00"
+    "last_task_id":  "PA-118",
+    "updated_at":  "2026-10-22T10:29:59.5756624+00:00"
 }

@@ -252,6 +252,10 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
     public IReadOnlyList<TaskRun> GetRuns() { lock (sync) return runs.Values.Select(entry => entry.Run).OrderByDescending(run => run.CreatedAtUtc).ToArray(); }
     public IReadOnlyList<RunEvent> GetEvents(Guid runId) { lock (sync) return Find(runId).Events.ToArray(); }
     public AgentRunResult? GetResult(Guid runId) { lock (sync) return Find(runId).Result; }
+    public (TaskRun Run, IReadOnlyList<RunEvent> Events, AgentRunResult? Result) GetSnapshot(Guid runId)
+    {
+        lock (sync) { var entry = Find(runId); return (entry.Run, entry.Events.ToArray(), entry.Result); }
+    }
     public Task<TaskRun> WaitForTerminalAsync(Guid runId, CancellationToken cancellationToken = default)
     { lock (sync) return Find(runId).Terminal.Task.WaitAsync(cancellationToken); }
 

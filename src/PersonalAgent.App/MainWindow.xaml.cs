@@ -22,6 +22,8 @@ public partial class MainWindow : Window
     private SchedulesWindow? schedules;
     private ChannelsWindow? channels;
     private PrivacyWindow? privacy;
+    private RunDiagnosticsWindow? runDiagnostics;
+    private readonly PersonalAgent.App.ViewModels.RunDiagnosticsViewModel? runDiagnosticsModel;
     private readonly PersonalAgent.App.ViewModels.PrivacyViewModel? privacyModel;
     private readonly PersonalAgent.App.ViewModels.ChannelsViewModel? channelModel;
     private readonly PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel;
@@ -31,7 +33,8 @@ public partial class MainWindow : Window
     public MainWindow(PersonalAgent.App.ViewModels.HealthViewModel viewModel, PersonalAgent.App.ViewModels.McpConnectionsViewModel? mcpConnections = null,
         PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel = null, PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel = null,
         PersonalAgent.Core.Application.ScheduledDesktopGate? scheduledDesktopGate = null, PersonalAgent.App.ViewModels.ChannelsViewModel? channelModel = null,
-        PersonalAgent.App.ViewModels.PrivacyViewModel? privacyModel = null)
+        PersonalAgent.App.ViewModels.PrivacyViewModel? privacyModel = null,
+        PersonalAgent.App.ViewModels.RunDiagnosticsViewModel? runDiagnosticsModel = null)
     {
         InitializeComponent();
         DataContext = viewModel;
@@ -40,10 +43,19 @@ public partial class MainWindow : Window
         this.scheduleModel = scheduleModel;
         this.channelModel = channelModel;
         this.privacyModel = privacyModel;
+        this.runDiagnosticsModel = runDiagnosticsModel;
         if (scheduledDesktopGate is not null) desktopWarnings = new(this, scheduledDesktopGate);
         Closed += (_, _) => desktopWarnings?.Dispose();
     }
 
+    private void OpenRunDiagnosticsClicked(object sender, RoutedEventArgs e)
+    {
+        if (runDiagnosticsModel is null) return;
+        if (runDiagnostics is not null) { runDiagnostics.Activate(); return; }
+        runDiagnostics = new RunDiagnosticsWindow(runDiagnosticsModel) { Owner = this };
+        runDiagnostics.Closed += (_, _) => runDiagnostics = null;
+        runDiagnostics.Show();
+    }
     private void OpenPrivacyClicked(object sender, RoutedEventArgs e)
     {
         if (privacyModel is null) return;

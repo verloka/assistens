@@ -44,6 +44,8 @@ public static class AppHost
             services.AddSingleton<SchedulesViewModel>();
             services.AddSingleton<ChannelsViewModel>();
             services.AddSingleton<PrivacyViewModel>();
+            services.AddSingleton<RunDiagnosticsViewModel>();
+            services.AddSingleton<RunDiagnosticsService>();
             services.AddSingleton(provider => new TelegramConnectionProbe(provider.GetRequiredService<ISecretStore>(), provider.GetService<Func<System.Net.Http.HttpMessageHandler>>()?.Invoke()));
             services.AddSingleton(_ =>
             {
@@ -130,6 +132,7 @@ public static class AppHost
                 services.AddSingleton<ScheduledDesktopGate>();
                 services.AddHostedService<SchedulerService>();
             }
+            services.AddHostedService(provider => provider.GetRequiredService<RunDiagnosticsService>());
             services.AddHostedService<TaskRunnerService>();
         });
 }
