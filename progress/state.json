@@ -1257,14 +1257,14 @@
                                                                  ]
                                    },
                         "PA-115":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-22T07:12:47.0893495+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "tests/README.md contains E2E-03/04/05 physical regression checklist and exact existing stand commands; original PA-048/043/111 attended evidence retained. Current targeted integration regression:82passed/0failed/0skipped,57s; actual build succeeded. No new owner-observed post-PA114 native regression report. Scheduled/hybrid fixtures control idle/native; shipped ProfileAgentRuntime denies task tool sets (ToolRegistryUnavailable), so ordinary text schedules cannot prove real E2E04/05. Missing attended physical focus/keyboard/scheduled/late-MCP evidence; no native session started or tool permission changed. PA-113 sleep/display remain separately deferred. FDD002/003 scoped controlled PASS, physical gaps NOT TESTED, all Draft. No ready independent task:108 depends blocked107;116 depends108. Need owner participation or explicit named dependency deferral; preserve release gates.",
+                                       "attempts":  1
                                    },
                         "PA-116":  {
                                        "status":  "pending",
@@ -1367,6 +1367,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-114",
-    "updated_at":  "2026-10-21T15:43:05.3488739+03:00"
+    "last_task_id":  "PA-115",
+    "updated_at":  "2026-10-22T07:15:43.3568701+00:00"
 }

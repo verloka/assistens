@@ -1028,6 +1028,52 @@ No timing sleeps, randomized stress or desktop side effects are used.
 `dotnet test --filter DesktopAccess --no-restore` includes these unit cases and the
 existing fake-native driver gate suite; no matching physical E2E is implied.
 
+## Real Windows takeover regression checklist (PA-115)
+
+This checklist covers Development Plan E2E-03/04/05. Historical attended results
+below remain evidence for their original scope; they do not establish a new
+physical regression pass after PA-114. Automated cases use controlled native
+boundaries unless explicitly stated otherwise.
+
+| Check | Existing evidence | Remaining physical acceptance |
+| --- | --- | --- |
+| E2E-03: hotkey during clicks and long Unicode input | PA-048 attended PAUSE/RESUME on 2026-10-19; `TakeoverStressTests` and `TakeControlPersistenceTests` | Re-run both `--takeover` modes after PA-114; record both PAUSE and RESUME lines, stable native counts, released modifiers and durable checkpoint. |
+| E2E-03: automatic pause on human activity | PA-111 attended click/Unicode PAUSE/RESUME on 2026-10-21; `ActivityAutoPauseTests` | Re-run both `--activity` modes; record AutoPause/checkpoint, stable native counts and fresh-resume evidence. |
+| E2E-03: tray and window switching | PA-043 attended tray/mini-window on 2026-10-18; `DesktopShellTests` | Verify tray Take Control on an owned GUI run, then use another harmless window while paused; return explicitly and require fresh observation before input. Existing standalone input fixtures have no tray, so their reports alone cannot pass this row. |
+| E2E-04: scheduled GUI while keyboard is active | `ScheduledDesktopTests`, including concurrent due ticks, one warning, busy idle, expiry and restart | With an explicitly configured GUI test run due in 15 seconds and StartWhenIdle, type in a harmless local window. Confirm no focus change/capture/input, deferred or skipped durable state and no repeated warning storm. |
+| E2E-05: first GUI after MCP read | `HybridMcpGuiTests`: real loopback MCP/MAF/Core/SQLite with scripted model, idle and native boundary | In an explicitly authorized test composition, confirm MCP read owns no desktop; first GUI waits for current warning/idle/lease, cannot change focus early, and does not repeat the read after pause/cancel. |
+
+For the existing own-window checks, build once and run one fixture at a time:
+
+```powershell
+dotnet build tests/PersonalAgent.WindowsSmoke --no-restore
+dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --takeover
+dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --activity
+```
+
+Close the first fixture before launching the second. Follow the detailed PA-048
+and PA-111 instructions in this file; START is the explicit input/capture gesture.
+Do not switch away during its active input sequence. Test window switching only
+after PAUSE OK; moving the target/window then Resume must reject the old frame.
+BLOCKED/FAILED/NO PAUSE is not a passing report.
+
+Current blocker (2026-10-22): there is no new owner-observed regression report.
+The shipped Dashboard profile path exposes no computer/MCP tool set, while the
+scheduled/hybrid automated fixtures replace native input and idle. Thus running
+a normal text schedule or passing those fixtures cannot demonstrate physical
+E2E-04/05. These rows require an attended, explicitly scoped native test composition;
+the existing `--takeover`/`--activity` fixtures cover only their listed rows.
+Corporate data and paid model access are not prerequisites for a local synthetic
+composition. No tool grant, external call or native regression pass is inferred.
+PA-115 remains blocked until the missing physical evidence is obtained.
+
+For each attended row retain date/build, entry point, RunId, policy, observed
+focus/input, pause/checkpoint and fresh-resume result, with fixed failure codes
+when unsuccessful. Do not retain screenshots, credentials or private window text.
+PA-113 Sleep/wake and Display change remain separately deferred by the owner and
+are not part of this requested regression session. No second monitor is needed
+for the own-window checks; PA-026/030 hardware gates remain separate.
+
 ## Attended native takeover/resume (PA-048; passed 2026-10-19)
 
 Run `dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --takeover`.
