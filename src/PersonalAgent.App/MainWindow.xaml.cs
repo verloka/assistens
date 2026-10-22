@@ -24,6 +24,8 @@ public partial class MainWindow : Window
     private PrivacyWindow? privacy;
     private RunDiagnosticsWindow? runDiagnostics;
     private SetupWizardWindow? setup;
+    private SettingsWindow? settings;
+    private readonly PersonalAgent.App.ViewModels.SettingsViewModel? settingsModel;
     private readonly PersonalAgent.App.ViewModels.SetupWizardViewModel? setupModel;
     private readonly PersonalAgent.App.ViewModels.RunDiagnosticsViewModel? runDiagnosticsModel;
     private readonly PersonalAgent.App.ViewModels.PrivacyViewModel? privacyModel;
@@ -37,7 +39,8 @@ public partial class MainWindow : Window
         PersonalAgent.Core.Application.ScheduledDesktopGate? scheduledDesktopGate = null, PersonalAgent.App.ViewModels.ChannelsViewModel? channelModel = null,
         PersonalAgent.App.ViewModels.PrivacyViewModel? privacyModel = null,
         PersonalAgent.App.ViewModels.RunDiagnosticsViewModel? runDiagnosticsModel = null,
-        PersonalAgent.App.ViewModels.SetupWizardViewModel? setupModel = null)
+        PersonalAgent.App.ViewModels.SetupWizardViewModel? setupModel = null,
+        PersonalAgent.App.ViewModels.SettingsViewModel? settingsModel = null)
     {
         InitializeComponent();
         DataContext = viewModel;
@@ -48,11 +51,20 @@ public partial class MainWindow : Window
         this.privacyModel = privacyModel;
         this.runDiagnosticsModel = runDiagnosticsModel;
         this.setupModel = setupModel;
+        this.settingsModel = settingsModel;
         if (scheduledDesktopGate is not null) desktopWarnings = new(this, scheduledDesktopGate);
         Closed += (_, _) => desktopWarnings?.Dispose();
     }
 
     private void OpenSetupClicked(object sender, RoutedEventArgs e) => OpenSetup();
+    private void OpenSettingsClicked(object sender, RoutedEventArgs e)
+    {
+        if (settingsModel is null) return;
+        if (settings is not null) { settings.Activate(); return; }
+        settings = new SettingsWindow(settingsModel) { Owner = this };
+        settings.Closed += (_, _) => settings = null;
+        settings.Show();
+    }
     public void OpenSetup()
     {
         if (setupModel is null) return;

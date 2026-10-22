@@ -46,6 +46,8 @@ public static class AppHost
             services.AddSingleton<PrivacyViewModel>();
             services.AddSingleton<RunDiagnosticsViewModel>();
             services.AddSingleton<SetupWizardViewModel>();
+            services.AddSingleton(provider => new SettingsViewModel(provider.GetService<SettingsTransfer>(), provider.GetRequiredService<ApprovalOwner>(),
+                provider.GetRequiredService<IHostApplicationLifetime>(), provider.GetService<SqliteDatabaseMaintenance>()));
             services.AddSingleton<RunDiagnosticsService>();
             services.AddSingleton(provider => new TelegramConnectionProbe(provider.GetRequiredService<ISecretStore>(), provider.GetService<Func<System.Net.Http.HttpMessageHandler>>()?.Invoke()));
             services.AddSingleton(_ =>
@@ -95,6 +97,8 @@ public static class AppHost
             if (historyDatabasePath is not null)
             {
                 services.AddSingleton(new SqliteAgentDbContextFactory(historyDatabasePath));
+                services.AddSingleton(provider => new SettingsTransfer(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
+                services.AddSingleton<SqliteDatabaseMaintenance>();
                 services.AddSingleton<IRunRepository>(provider => new SqliteRunRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IConversationRepository>(provider => new SqliteConversationRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));
                 services.AddSingleton<IModelProfileRepository>(provider => new SqliteModelProfileRepository(provider.GetRequiredService<SqliteAgentDbContextFactory>()));

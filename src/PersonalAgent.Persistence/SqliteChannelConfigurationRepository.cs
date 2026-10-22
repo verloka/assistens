@@ -30,7 +30,8 @@ public sealed class SqliteChannelConfigurationRepository(IDbContextFactory<Agent
         {
             var prior = Read(row);
             if (prior.Version != expectedVersion || prior.Owner != configuration.Owner || prior.Route != configuration.Route || prior.SenderId != configuration.SenderId
-                || prior.SecretReference != configuration.SecretReference || configuration.SinceUtc < prior.SinceUtc
+                || prior.SecretReference != configuration.SecretReference && !(prior.SecretReference is null && !prior.Enabled && prior.RemoteIdentity is null && !configuration.Enabled)
+                || configuration.SinceUtc < prior.SinceUtc
                 || prior.RemoteIdentity is not null && prior.RemoteIdentity != configuration.RemoteIdentity) throw new ChannelConfigurationConflictException();
         }
         var saved = configuration with { Version = checked(expectedVersion + 1) };

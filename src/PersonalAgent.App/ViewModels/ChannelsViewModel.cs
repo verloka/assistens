@@ -107,12 +107,12 @@ public sealed class ChannelsViewModel : INotifyPropertyChanged, IDisposable
                 && long.TryParse(Sender, NumberStyles.None, CultureInfo.InvariantCulture, out var user) && user > 0)
             { route = new("telegram", id.ToString("N"), chat.ToString(CultureInfo.InvariantCulture)); peer = user.ToString(CultureInfo.InvariantCulture); }
             else { message = "Enter a numeric Telegram chat ID and a positive numeric user ID."; return; }
-            if (current is not null && (current.Route != route || current.SenderId != peer || secret.Length > 0))
+            if (current is not null && (current.Route != route || current.SenderId != peer || current.SecretReference is not null && secret.Length > 0))
             { message = "Create a new connection to change its token, channel or peer. Disable the old connection first."; return; }
-            if (channel == "telegram" && current is null && (secret.Length > 256 || !System.Text.RegularExpressions.Regex.IsMatch(secret, "^[0-9]+:[a-zA-Z0-9_-]+$")))
+            if (channel == "telegram" && current?.SecretReference is null && (secret.Length > 256 || !System.Text.RegularExpressions.Regex.IsMatch(secret, "^[0-9]+:[a-zA-Z0-9_-]+$")))
             { message = "Enter a valid bot token. It is stored only in the protected local secret store."; return; }
             var reference = current?.SecretReference;
-            if (channel == "telegram" && current is null) reference = await secrets.StoreAsync(secret, lifetime.Token);
+            if (channel == "telegram" && reference is null) reference = await secrets.StoreAsync(secret, lifetime.Token);
             var canEnable = requestedEnable && peerAllowed && (channel == "desktop" || current?.RemoteIdentity is not null);
             var since = current?.SinceUtc ?? DateTimeOffset.UtcNow;
             if (canEnable && current?.Enabled != true) since = DateTimeOffset.UtcNow;

@@ -26,6 +26,7 @@ Status: Draft
 - Startup with exclusive store ownership converts dispatched calls lacking acknowledgement to OutcomeUnknown and marks their interrupted runs for outcome review. Persisted approval or a fresh SDK session cannot replay that operation.
 
 ## Invariants
+- PA-120: under exclusive database ownership, pending upgrades of an existing database require a verified SQLite backup before any migration/recovery write; backup failure or unknown applied migrations prevent startup. Never automatically restore an old backup or replay effects. Versioned settings transfer excludes secrets/references/history/consent and imports only explicitly reviewed, disabled configuration; existing safety records remain unchanged.
 - PA-118 diagnostics classify uncertain dispatch/delivery/input release as manual-review cases; no diagnostic refresh or recommendation automatically resumes or retries work. Raw error/message bodies never become diagnostic labels or metric tags.
 - PA-117 owner-approved privacy cleanup may redact private payloads of safely terminal, expired conversations, including event messages; event identities/order, terminal states, submission hashes and action/delivery tombstones remain immutable. Unfinished/unknown outcomes are excluded. Restart and repeated submission cannot execute erased attempts again; cleared approvals cannot authorize dispatch.
 - Unknown external outcomes never trigger blind automatic retries.
@@ -43,6 +44,7 @@ Status: Draft
 - Flow: FDD-006 — notification outbox.
 
 ## Scenarios
+- S6: Given an existing older database under exclusive startup ownership, when upgrading, then first create and verify a consistent SQLite backup including committed WAL data and preserve legacy history. Backup failure or unknown newer migrations stop startup before migration/recovery; reopening current schema creates no redundant backup and never automatically restores an older copy. [test: tests/PersonalAgent.IntegrationTests/DatabaseMaintenanceTests.cs]
 - S5: Given an unknown delivery or external/input failure, when opening diagnostics before/after restart, then retain its safety state and show manual-review advice without message/provider-error bodies or automatic replay. Observing/restoring old runs cannot increment new execution counts. [test: tests/PersonalAgent.IntegrationTests/RunDiagnosticsTests.cs]
 - S4: Given explicitly erased terminal history, when restarting or submitting an old trigger again, then retain terminal identity/status/hash and acknowledged operation/delivery ledgers without execution. Incomplete and unknown outcomes remain byte-equivalent; DB failure rolls all privacy changes back. Event identity mutation/deletion remains denied after redaction. [test: tests/PersonalAgent.IntegrationTests/HistoryRetentionTests.cs]
 - S1: Given an interruption after an external write whose result is unknown, when app restarts, then the write is not repeated automatically. [test: tests/PersonalAgent.IntegrationTests/ToolDispatchRecoveryTests.cs]

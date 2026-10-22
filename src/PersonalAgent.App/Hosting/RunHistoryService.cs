@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using PersonalAgent.Core.Application;
 using PersonalAgent.Persistence;
@@ -18,8 +17,7 @@ public sealed class RunHistoryService(SqliteAgentDbContextFactory contexts, Task
         {
             // Recovery is valid only after the previous owner exited. The OS releases this lock on crash.
             ownership = new FileStream(contexts.DatabasePath + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-            await using var db = contexts.CreateDbContext();
-            await db.Database.MigrateAsync(cancellationToken);
+            await new SqliteDatabaseMaintenance(contexts).MigrateWithBackupAsync(cancellationToken);
             var safeQueued = await new RunRecovery(repository, toolCalls).RecoverAsync(cancellationToken);
             await coordinator.RestoreHistoryAsync(safeQueued, cancellationToken);
         }

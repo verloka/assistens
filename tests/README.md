@@ -1517,3 +1517,56 @@ the wizard. Never paste credentials or screenshots into the progress report.
 SetupWizardTests proves the local composed flow with fresh SQLite/actual DPAPI
 under the current Windows owner and scripted cloud clients; it does not claim
 another Windows-account or live-provider acceptance.
+
+### PA-120 settings transfer and database upgrades
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter 'FullyQualifiedName~SettingsTransferTests|FullyQualifiedName~DatabaseMaintenanceTests'
+```
+
+Open **Settings** deliberately. **Export settings** writes a schema-versioned,
+2 MiB maximum JSON template, without credentials, DPAPI references, run history,
+agent sessions, approvals, permissions, task instructions, MCP arguments or
+secret environment variables. HTTP endpoints transfer their origin only; review
+and re-enter paths/query and CLI arguments locally. Names and identifiers reject
+or redact recognizable credential patterns. Treat even non-secret configuration
+(hosts, model IDs and channel destinations) as local configuration.
+
+On the destination, first configure local model keys with matching profile IDs
+and providers. **Open import** validates and previews counts/IDs; **Apply reviewed
+import** commits once, atomically. Unknown versions/properties, duplicate JSON
+fields, invalid configuration, missing/mismatched local credentials or a failed
+write apply nothing. Existing model keys remain local. Imported MCP connections
+and schedules receive fresh identities and stay disabled/unapproved, without
+tool grants. Schedule instructions are a review placeholder. Channels bind the
+current local owner but stay disabled/unverified without receive permission or
+pairing consent; configure a local key and explicitly verify the peer before
+enabling. Existing active configurations/history/safety ledgers remain. The
+retention period transfers with automatic cleanup off. Restart to reload caches,
+then review each imported template before enabling it. Reimporting a file is an
+explicit new import, not an identity-preserving restore; a conflicting desktop
+route rejects the whole import.
+
+Startup owns the existing exclusive database lock before checking migrations.
+An existing database with pending migrations is backed up through SQLite's
+backup API (including committed WAL), checked with `PRAGMA quick_check`, then
+atomically published under `<database>.backups/history-<UTC>-<GUID>.db`. Only then
+may migration/recovery run. A backup failure or unknown newer applied migration
+stops startup; current schema produces no extra snapshot. **Create private DB
+backup** uses the same consistent-copy API on demand.
+
+DB backups contain private history and configuration references, and exclude the
+separate protected-secret directory. They are not portable settings, do not
+resolve credentials under another Windows owner, and are not erased by history
+retention. Keep this directory private; remove obsolete copies deliberately.
+Never automatically replace a live database with an old snapshot: later action
+receipts/dedup records could be missing. For manual recovery, exit all instances,
+preserve the current database and its WAL/SHM, and review external effects and
+uncertain operations before choosing a compatible backup. Retain the matching
+protected store on the original Windows account; do not export it as plaintext.
+
+SettingsTransferTests covers actual unshown WPF/SQLite/DPAPI and local key binding,
+secret canaries, strict parsing, atomic rollback and unchanged unknown-delivery
+records. DatabaseMaintenanceTests starts the actual host over historical raw SQL,
+checks the pre-upgrade snapshot/current history, committed WAL, failed backup and
+newer-schema refusal. No live provider/channel or another-account claim is made.

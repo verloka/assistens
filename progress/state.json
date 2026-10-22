@@ -1319,14 +1319,22 @@
                                        "attempts":  1
                                    },
                         "PA-120":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-22T11:03:51.7573964+00:00",
+                                       "completed_at":  "2026-10-22T15:24:54.2046367+00:00",
                                        "evidence":  [
-
+                                                        "SettingsWindow/SettingsViewModel and Persistence SettingsTransfer implement bounded versioned secret-free local templates, preview/atomic import, matching local model keys and disabled no-grant copies. SqliteDatabaseMaintenance backs up committed WAL before exclusive startup upgrade; failure/newer schema refuse startup. SettingsTransferTests and DatabaseMaintenanceTests verify actual XAML/SQLite/DPAPI and hosted legacy upgrades. FDD-001 S7/FDD-007 S6 scoped PASS, all Draft; owner explicitly deferred PA-119 only, release gate retained.",
+                                                        "Verification: dotnet test IntegrationTests --no-build --no-restore filtered settings/maintenance/upgrade/recovery/tool-dispatch/channels/models/MCP/schedules/retention/secrets/setup:94 passed42s (pa120.trx). After identity guard:settings+maintenance15passed10s; final settings incl manual backup11passed8s. dotnet build --no-restore -v minimal:0warnings/errors3s. taskctl doctor125valid;git diff --check passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1,
+                                       "deferred_dependencies":  [
+                                                                     {
+                                                                         "id":  "PA-119",
+                                                                         "reason":  "Owner explicitly answered 2026-10-22: defer PA-119 fresh Windows-profile acceptance and permit PA-120. PA-119 stays blocked and required for release.",
+                                                                         "recorded_at":  "2026-10-22T11:03:51.7383922+00:00"
+                                                                     }
+                                                                 ]
                                    },
                         "PA-121":  {
                                        "status":  "pending",
@@ -1379,6 +1387,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-119",
-    "updated_at":  "2026-10-22T10:39:21.7197000+00:00"
+    "last_task_id":  "PA-120",
+    "updated_at":  "2026-10-22T15:24:54.2126362+00:00"
 }
