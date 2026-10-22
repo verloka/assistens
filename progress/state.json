@@ -1309,14 +1309,14 @@
                                        "attempts":  1
                                    },
                         "PA-119":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-22T10:30:01.0505701+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Implementation and controlled tests complete. Need actual owner-observed setup launch/local read-only first task/reopen from a separate fresh Windows user profile; fresh SQLite/current Windows owner is not that evidence. See tests/README.md PA-119. SetupWizardTests5passed; setup/channel/upgrade/conversation43passed; fullbuild0warnings/errors. Owner asked whether to perform acceptance or explicitly defer PA-119 and permit dependent PA-120. No answer/bypass inferred.",
+                                       "attempts":  1
                                    },
                         "PA-120":  {
                                        "status":  "pending",
@@ -1379,6 +1379,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-118",
-    "updated_at":  "2026-10-22T10:29:59.5756624+00:00"
+    "last_task_id":  "PA-119",
+    "updated_at":  "2026-10-22T10:39:21.7197000+00:00"
 }

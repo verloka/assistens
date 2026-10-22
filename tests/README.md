@@ -1474,3 +1474,46 @@ persisted unknown-delivery review across two restarts, inert refresh and throwin
 metric listeners. Existing ComputerTool/AgentLimits/ScheduledDesktop/Scheduler/
 NotificationOutbox/GlobalHotkey/SafePause regressions protect dispatch/control.
 No paid provider, live delivery or physical pause-latency benchmark is claimed.
+
+### PA-119 first-run setup
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter 'FullyQualifiedName~SetupWizardTests|FullyQualifiedName~ModelProfilesTests|FullyQualifiedName~ModelCapabilityTests'
+```
+
+**Setup** opens the four-step wizard; it opens automatically on a normal WPF
+startup with no model profiles and no run history, or with `--setup` (the existing
+`--models` editor shortcut takes precedence). Headless hosts never open it.
+Local demo can proceed without credentials/API calls. Cloud requires a saved
+profile with image/tool support and an explicit successful current-profile probe;
+edits or selection changes invalidate that confirmation. Probe buttons disclose
+provider API use, and all requests use the existing bounded synthetic checks.
+Optional MCP/Telegram buttons open the existing owned settings windows and grant
+nothing to the first task. The first task is text-only, at most2steps/1024tokens/
+60seconds, no GUI/MCP/channel tools, one deliberate admission per wizard session.
+Blocked/error/unknown outcomes show fixed diagnostics advice and never retry.
+Closing a wizard does not cancel an admitted task; normal task controls remain.
+
+Manual acceptance still required for the catalog's **fresh Windows profile**:
+
+1. In a separate new Windows user profile, with this machine's .NET Desktop
+   runtime available, launch the built app (not a second instance sharing the
+   original user's history): `dotnet PersonalAgent.App.dll --setup`. Copy the
+   complete built output directory to a folder readable by that account if its
+   mapped drive differs. A clean machine without .NET belongs to PA-121.
+2. Confirm the wizard appears with **Local demo (no API)**, and opening it has
+   created no run and requested no credentials or connections.
+3. Next through the capability page without a probe, skip optional MCP/Telegram,
+   and click **Run first read-only task** once. Expect **Local demo completed**
+   after about2seconds and one Run ID. No input/screenshot or API is authorized.
+4. Close/reopen the app. The same completed task must appear in history with no
+   repeat execution. Opening **Setup** again must remain an explicit action.
+5. Report the visible result, Run ID, whether it was a separate fresh Windows
+   account, and whether any unexpected input/network/credential prompt appeared.
+
+Optional paid cloud acceptance is a separate explicit action: configure a real
+vision/tools profile in Models, save, click its disclosed API test, then complete
+the wizard. Never paste credentials or screenshots into the progress report.
+SetupWizardTests proves the local composed flow with fresh SQLite/actual DPAPI
+under the current Windows owner and scripted cloud clients; it does not claim
+another Windows-account or live-provider acceptance.

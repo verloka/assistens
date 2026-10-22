@@ -1,0 +1,39 @@
+<Window x:Class="PersonalAgent.App.SetupWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Personal Agent setup" Width="650" Height="510" MinWidth="540" MinHeight="430" ShowActivated="False">
+    <Window.Resources><BooleanToVisibilityConverter x:Key="VisibleWhen"/></Window.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="24">
+        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"/>
+        <StackPanel Visibility="{Binding IsModelStep, Converter={StaticResource VisibleWhen}}">
+            <TextBlock TextWrapping="Wrap" Text="Choose Local demo to check setup without credentials, or configure a saved cloud model. API tests and cloud tasks run only when you click their buttons."/>
+            <ComboBox x:Name="SetupModelSelector" ItemsSource="{Binding Profiles.Choices}" SelectedItem="{Binding Profiles.Selected}" DisplayMemberPath="Label" IsEnabled="{Binding Available}" Margin="0,12"/>
+            <Button Content="Configure models" Click="OpenModelsClicked" HorizontalAlignment="Left" Padding="12,5"/>
+        </StackPanel>
+        <StackPanel Visibility="{Binding IsTestStep, Converter={StaticResource VisibleWhen}}">
+            <TextBlock TextWrapping="Wrap" Text="Cloud setup requires a saved profile with images and tools enabled. Testing uses bounded synthetic image/tool declarations and never executes a tool. Local demo can continue without a test."/>
+            <Button x:Name="SetupTestProfile" Content="Test saved profile (provider API)" Command="{Binding TestCommand}" HorizontalAlignment="Left" Padding="12,5" Margin="0,12"/>
+            <Button Content="Review model settings" Click="OpenModelsClicked" HorizontalAlignment="Left" Padding="12,5"/>
+        </StackPanel>
+        <StackPanel Visibility="{Binding IsConnectionsStep, Converter={StaticResource VisibleWhen}}">
+            <TextBlock TextWrapping="Wrap" Text="MCP and Telegram are optional. Review connection/destination permissions in their existing settings windows. Skipping them still permits the first read-only task; configuring them grants no tools to it."/>
+            <WrapPanel Margin="0,12">
+                <Button Content="MCP connections" Click="OpenMcpClicked" Padding="12,5" Margin="0,0,12,0"/>
+                <Button Content="Telegram / channels" Click="OpenChannelsClicked" Padding="12,5"/>
+            </WrapPanel>
+        </StackPanel>
+        <StackPanel Visibility="{Binding IsRunStep, Converter={StaticResource VisibleWhen}}">
+            <TextBlock TextWrapping="Wrap" Text="Start one bounded text-only setup check with the chosen model. It receives no GUI, MCP or channel tools and does not capture the screen or send input. Cloud selection uses the provider API and may incur charges. Closing this window leaves submitted work under the normal task controls."/>
+            <Button x:Name="SetupFirstRun" Content="Run first read-only task" Command="{Binding RunCommand}" Padding="12,5" HorizontalAlignment="Left" Margin="0,12"/>
+            <TextBlock Text="{Binding RunId, StringFormat='Run ID: {0}'}"/>
+        </StackPanel>
+        <TextBlock x:Name="SetupReadiness" Text="{Binding Readiness}" TextWrapping="Wrap" Margin="0,16,0,8"/>
+        <TextBlock x:Name="SetupMessage" Text="{Binding Message}" TextWrapping="Wrap"/>
+        <WrapPanel Margin="0,20,0,0">
+            <Button Content="Back" Command="{Binding BackCommand}" Padding="16,5" Margin="0,0,12,0"/>
+            <Button x:Name="SetupNext" Content="Next" Command="{Binding NextCommand}" Padding="16,5"/>
+        </WrapPanel>
+    </StackPanel>
+    </ScrollViewer>
+</Window>

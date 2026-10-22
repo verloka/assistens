@@ -158,8 +158,18 @@ public sealed class ChannelConfigurationTests
         }
         var profile = Profile(); var bindings = new SqliteChannelBindingRepository(database); var binding = await bindings.RequestPairingAsync(profile.Route, profile.SenderId, Owner);
         var message = new OutgoingMessage { Id = Guid.NewGuid(), Destination = profile.Route, Text = "Pending neutral notification", RunId = run.Id };
-        var outbox = new SqliteNotificationOutbox(database); var delivery = await outbox.EnqueueAsync(Guid.NewGuid(), message);
-        var before = JsonSerializer.Serialize(await repository.GetAsync(run.Id));
+        var outbox = new SqliteNotificationOutbox(database);
+        await using (var old = database.Open())
+        {
+            // Current admission guards query the newer privacy marker; seed this historical format directly.
+            await old.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO NotificationOutbox (Id,EventId,ChannelId,ConnectionId,DestinationId,MessageJson,PayloadSchemaVersion,Status,Attempts,Version,CreatedAtUtc,UpdatedAtUtc,NextAttemptAtUtc)
+                VALUES ({message.Id},{Guid.NewGuid()},{profile.Route.ChannelId},{profile.Route.ConnectionId},{profile.Route.DestinationId},
+                    {JsonSerializer.Serialize(message)},1,'Pending',0,0,{run.CreatedAtUtc.UtcTicks},{run.CreatedAtUtc.UtcTicks},{run.CreatedAtUtc.UtcTicks})
+                """);
+        }
+        var delivery = await outbox.GetAsync(message.Id);
+        var before = JsonSerializer.Serialize(new StoredRun(run, JsonSerializer.Deserialize<AgentRequest>(request)!, [], null));
         await using (var current = database.Open()) await current.Database.MigrateAsync();
         Assert.Equal(before, JsonSerializer.Serialize(await repository.GetAsync(run.Id)));
         Assert.Equal(binding, await bindings.FindAsync(profile.Route, profile.SenderId));

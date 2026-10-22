@@ -48,6 +48,7 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
     public AsyncCommand NewCommand { get; }
     public bool CanEdit => !busy && !disposed && !lifetime.IsCancellationRequested;
     public string Message => message;
+    public ModelProfile? VerifiedProfile { get; private set; }
     public bool HasUnsavedChanges => Selected?.Profile is not { } p || pendingSecret.Length != 0 || ProfileId.Trim() != p.Id
         || ProviderId != p.ProviderId || ModelId.Trim() != p.ModelId || SupportsImages != p.Capabilities.SupportsImages
         || SupportsToolCalling != p.Capabilities.SupportsToolCalling || MaxOutputTokens != (p.GenerationSettings.MaxOutputTokens ?? 4096)
@@ -80,7 +81,7 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
         }
     }
     // Transient password input is never a bindable/persisted profile property.
-    public void SetPendingSecret(string secret) { pendingSecret = secret; Refresh(); }
+    public void SetPendingSecret(string secret) { pendingSecret = secret; VerifiedProfile = null; Refresh(); }
 
     private async Task LoadAsync()
     {
@@ -129,10 +130,12 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
     {
         var profile = Selected?.Profile;
         if (profile is null) return;
-        busy = true; Refresh();
+        VerifiedProfile = null; busy = true; Refresh();
         try
         {
             var result = await providers[profile.ProviderId].TestConnectionAsync(profile, lifetime.Token);
+            if (result.Connected && result.VerifiedCapabilities == profile.Capabilities && Selected?.Profile == profile && !HasUnsavedChanges)
+                VerifiedProfile = profile;
             message = result.Connected ? "Connection and configured capabilities confirmed." : "Connection test failed: " + (result.ErrorCode ?? "Unavailable") + ".";
             // Show only application-owned diagnostics, never arbitrary provider text or returned arguments.
             message += result.Connected ? "" : result.ProbeDiagnostic switch
@@ -159,10 +162,11 @@ public sealed class ModelProfilesViewModel : INotifyPropertyChanged, IDisposable
     private void ClearSecret() { pendingSecret = ""; ClearSecretRequested?.Invoke(); }
     private static ModelProfileChoice Choice(ModelProfile profile) => new($"{profile.Id}: {profile.ProviderId} / {profile.ModelId}", profile);
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
-    private void EditorChanged([CallerMemberName] string? name = null) { Changed(name); Refresh(); }
+    private void EditorChanged([CallerMemberName] string? name = null) { VerifiedProfile = null; Changed(name); Refresh(); }
     private void Refresh()
     {
         Changed(nameof(CanEdit)); Changed(nameof(Message)); Changed(nameof(HasUnsavedChanges)); Changed(nameof(SaveStateMessage));
+        Changed(nameof(VerifiedProfile));
         SaveCommand.Refresh(); TestCommand.Refresh(); NewCommand.Refresh();
     }
     public void Dispose() { if (disposed) return; disposed = true; ClearSecret(); lifetime.Cancel(); lifetime.Dispose(); }

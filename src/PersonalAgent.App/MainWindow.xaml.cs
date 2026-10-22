@@ -23,6 +23,8 @@ public partial class MainWindow : Window
     private ChannelsWindow? channels;
     private PrivacyWindow? privacy;
     private RunDiagnosticsWindow? runDiagnostics;
+    private SetupWizardWindow? setup;
+    private readonly PersonalAgent.App.ViewModels.SetupWizardViewModel? setupModel;
     private readonly PersonalAgent.App.ViewModels.RunDiagnosticsViewModel? runDiagnosticsModel;
     private readonly PersonalAgent.App.ViewModels.PrivacyViewModel? privacyModel;
     private readonly PersonalAgent.App.ViewModels.ChannelsViewModel? channelModel;
@@ -34,7 +36,8 @@ public partial class MainWindow : Window
         PersonalAgent.App.ViewModels.ApprovalsViewModel? approvalModel = null, PersonalAgent.App.ViewModels.SchedulesViewModel? scheduleModel = null,
         PersonalAgent.Core.Application.ScheduledDesktopGate? scheduledDesktopGate = null, PersonalAgent.App.ViewModels.ChannelsViewModel? channelModel = null,
         PersonalAgent.App.ViewModels.PrivacyViewModel? privacyModel = null,
-        PersonalAgent.App.ViewModels.RunDiagnosticsViewModel? runDiagnosticsModel = null)
+        PersonalAgent.App.ViewModels.RunDiagnosticsViewModel? runDiagnosticsModel = null,
+        PersonalAgent.App.ViewModels.SetupWizardViewModel? setupModel = null)
     {
         InitializeComponent();
         DataContext = viewModel;
@@ -44,10 +47,20 @@ public partial class MainWindow : Window
         this.channelModel = channelModel;
         this.privacyModel = privacyModel;
         this.runDiagnosticsModel = runDiagnosticsModel;
+        this.setupModel = setupModel;
         if (scheduledDesktopGate is not null) desktopWarnings = new(this, scheduledDesktopGate);
         Closed += (_, _) => desktopWarnings?.Dispose();
     }
 
+    private void OpenSetupClicked(object sender, RoutedEventArgs e) => OpenSetup();
+    public void OpenSetup()
+    {
+        if (setupModel is null) return;
+        if (setup is not null) { setup.Activate(); return; }
+        setup = new SetupWizardWindow(setupModel) { Owner = this };
+        setup.Closed += (_, _) => setup = null;
+        setup.Show();
+    }
     private void OpenRunDiagnosticsClicked(object sender, RoutedEventArgs e)
     {
         if (runDiagnosticsModel is null) return;

@@ -58,6 +58,14 @@ public partial class App : Application
             MainWindow.Show();
             ((MainWindow)MainWindow).StartDesktopWarnings();
             if (e.Args.Contains("--models", StringComparer.Ordinal)) ((MainWindow)MainWindow).OpenModels();
+            else
+            {
+                var profiles = host.Services.GetRequiredService<ViewModels.ModelProfilesViewModel>();
+                await profiles.Initialization;
+                if (!_shutdownStarted && (e.Args.Contains("--setup", StringComparer.Ordinal)
+                    || profiles.Choices.Count == 1 && host.Services.GetRequiredService<PersonalAgent.Core.Application.TaskRunCoordinator>().GetRuns().Count == 0))
+                    ((MainWindow)MainWindow).OpenSetup();
+            }
         }
         catch (OperationCanceledException) when (_shutdownStarted)
         {

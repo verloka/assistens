@@ -45,6 +45,7 @@ public static class AppHost
             services.AddSingleton<ChannelsViewModel>();
             services.AddSingleton<PrivacyViewModel>();
             services.AddSingleton<RunDiagnosticsViewModel>();
+            services.AddSingleton<SetupWizardViewModel>();
             services.AddSingleton<RunDiagnosticsService>();
             services.AddSingleton(provider => new TelegramConnectionProbe(provider.GetRequiredService<ISecretStore>(), provider.GetService<Func<System.Net.Http.HttpMessageHandler>>()?.Invoke()));
             services.AddSingleton(_ =>
