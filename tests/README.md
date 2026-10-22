@@ -1072,6 +1072,19 @@ ownEvents179, generation3->4. Both report AutoPause/checkpoint=True, zero marker
 width mismatches, released modifiers and fresh Resume with stale/foreign denial.
 Exact owner-returned reports are in progress/LOG.md.
 
+Tray pause and explicit fresh Resume subsequently passed with owner-returned
+`PA115 TRAY PAUSE OK` (checkpoint/controlConfirmed=True,captures1->1) and
+`PA115 TRAY RESUME OK` (staleDenied=True,generation1->2,freshCapture=True,input0).
+The owner explicitly confirmed working freely in another window while paused.
+The earlier failed Resume record remains retained in LOG. Scheduled/late-MCP rows
+are tracked separately below.
+
+Scheduled busy-keyboard native acceptance subsequently passed: one warning,
+244typing events,64real busy-idle samples, zero capture/input/desktop owner and
+durable Skipped after explicit CHECK/Skip. The owner explicitly confirmed the
+warning did not steal focus from the typing field. Exact reports and answers are
+in progress/LOG.md. MCP then GUI is the remaining pending physical row.
+
 Current blocker (2026-10-22): the remaining physical rows lack attended evidence.
 The shipped Dashboard profile path exposes no computer/MCP tool set, while the
 scheduled/hybrid automated fixtures replace native input and idle. Thus running
@@ -1140,7 +1153,7 @@ accepted click/Unicode fixtures supply the native input/cleanup regression.
 Run `dotnet run --project tests/PersonalAgent.WindowsSmoke --no-build -- --takeover`.
 Launch alone performs no capture/input or hotkey registration. START explicitly
 registers Ctrl+Shift+F10 and starts an own-target test after a 3-second countdown.
-The fixture links the actual production TakeControlHotkeyService source, uses the
+The fixture uses TakeControlHotkeyService from the actual App assembly and the
 real Core runner/resource and WindowsComputerController, and an isolated synthetic
 SQLite history under the dedicated PersonalAgent.Takeover temp directory, removed
 on close. Screenshots stay in memory; no upload, clipboard or LLM. Input guards

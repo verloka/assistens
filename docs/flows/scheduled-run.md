@@ -46,7 +46,7 @@ Status: Draft
 - Flow: FDD-006 — notification delivery.
 
 ## Scenarios
-- S1: Given scheduled GUI work and active keyboard use, when due, then the task defers rather than stealing input. [test: tests/PersonalAgent.IntegrationTests/ScheduledDesktopTests.cs] (Controlled busy/idle source with fake native effects; physical keyboard/focus acceptance remains [untested].)
+- S1: Given scheduled GUI work and active keyboard use, when due, then the task defers rather than stealing input. [test: tests/PersonalAgent.IntegrationTests/ScheduledDesktopTests.cs] [test: tests/PersonalAgent.WindowsSmoke/RegressionWindow.cs] (Controlled tests plus PA-115 attended real-idle/keyboard acceptance on2026-10-22:1warning,244typing events,64busy samples,0capture/input/owner,durable explicit Skip; owner confirmed no focus theft. Synthetic local scripted model; corporate/live-model acceptance remains separate.)
 - S2: Given restart after missed occurrences, when RunOnce misfire policy is active, then at most one catch-up run starts. [test: tests/PersonalAgent.IntegrationTests/SchedulerTests.cs] [test: tests/PersonalAgent.IntegrationTests/ScheduleMisfireTests.cs]
 - S3: Given the same occurrence observed twice, when scheduler tries to enqueue twice, then only one run is created. [test: tests/PersonalAgent.IntegrationTests/SchedulerTests.cs]
 - S4: Given a missed occurrence older than the jitter grace under Skip, when the scheduler observes it, then a durable Skipped run is recorded without runtime execution. [test: tests/PersonalAgent.IntegrationTests/ScheduleMisfireTests.cs]
