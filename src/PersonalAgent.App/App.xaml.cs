@@ -102,7 +102,7 @@ public partial class App : Application
 
     private void ReportFailure(Exception exception, string message)
     {
-        _logger?.LogError(exception, "{Message}", message);
-        Trace.TraceError("{0} {1}", message, exception);
+        _logger?.LogError(exception, "{Message}", message); // The standard formatter exposes only metadata/type.
+        Trace.TraceError("Personal Agent failure ({0}).", exception.GetType().Name);
     }
 }

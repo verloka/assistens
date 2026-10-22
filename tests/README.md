@@ -1395,3 +1395,20 @@ writes and malformed/path references are refused. Existing provider/UI tests
 cover secure model/channel/MCP save, missing/tampered values and error handling.
 The application storage implementation is reused; general settings export/import
 UI is PA-120, and cross-account/machine decryption is not claimed by these tests.
+
+### PA-117 standard logging privacy (retention decision pending)
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter PrivacyLoggingTests
+```
+
+Default AppHost logging uses one metadata-only console formatter. It emits fixed
+module/event/type and allowlisted typed IDs/counts/timestamps, with no message
+templates, arbitrary strings, scopes, exception messages/inner/stack, image bytes
+or SDK payloads. App failure Trace output contains only the exception type.
+Tests poison every discarded field and use a formatter that must never execute;
+they also check the real host's default provider selection. Explicit test logger
+overrides remain available for recording lifecycle assertions.
+
+Screenshots remain RAM-only. History-retention deletion is not implemented while
+the owner decides its permitted relationship with immutable audit/replay records.

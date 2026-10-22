@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using PersonalAgent.App.ViewModels;
 using PersonalAgent.Agent;
 using PersonalAgent.Core.Agents;
@@ -24,6 +26,12 @@ public static class AppHost
     // A path opts into persistent history. Tests/diagnostics can compose an isolated memory-only host.
     public static IHostBuilder CreateBuilder(string[] args, string? historyDatabasePath = null) => Host.CreateDefaultBuilder(args)
         .UseContentRoot(AppContext.BaseDirectory)
+        .ConfigureLogging(logging =>
+        {
+            logging.ClearProviders();
+            logging.AddConsole(options => options.FormatterName = PrivacyConsoleFormatter.FormatterName)
+                .AddConsoleFormatter<PrivacyConsoleFormatter, ConsoleFormatterOptions>();
+        })
         .ConfigureServices(services =>
         {
             services.Configure<HostOptions>(options => options.ShutdownTimeout = TimeSpan.FromSeconds(10));
