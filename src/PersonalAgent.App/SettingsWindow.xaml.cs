@@ -10,7 +10,11 @@ namespace PersonalAgent.App;
 public partial class SettingsWindow : Window
 {
     private readonly SettingsViewModel model;
-    public SettingsWindow(SettingsViewModel model) { InitializeComponent(); this.model = model; DataContext = model; }
+    public SettingsWindow(SettingsViewModel model)
+    {
+        InitializeComponent(); this.model = model; DataContext = model;
+        Loaded += (_, _) => model.ReloadStartup();
+    }
     private async void ExportClicked(object sender, RoutedEventArgs args)
     {
         var dialog = new SaveFileDialog { Filter = "Settings JSON|*.json", FileName = "personal-agent-settings.json", OverwritePrompt = true };
@@ -37,4 +41,6 @@ public partial class SettingsWindow : Window
     }
     private async void ApplyClicked(object sender, RoutedEventArgs args) => await model.ApplyAsync();
     private async void BackupClicked(object sender, RoutedEventArgs args) => await model.BackupAsync();
+    private void ReloadStartupClicked(object sender, RoutedEventArgs args) => model.ReloadStartup();
+    private void SaveStartupClicked(object sender, RoutedEventArgs args) => model.SaveStartup();
 }

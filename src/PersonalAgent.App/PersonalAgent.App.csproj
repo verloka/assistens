@@ -8,6 +8,11 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/agent.ico</ApplicationIcon>
+    <Version>1.0.0-preview.1</Version>
+    <PublishRuntimeIdentifier>win-x64</PublishRuntimeIdentifier>
+    <PublishSelfContained>true</PublishSelfContained>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishSingleFile>false</PublishSingleFile>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../PersonalAgent.Core/PersonalAgent.Core.csproj" />

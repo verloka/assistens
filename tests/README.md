@@ -1570,3 +1570,28 @@ secret canaries, strict parsing, atomic rollback and unchanged unknown-delivery
 records. DatabaseMaintenanceTests starts the actual host over historical raw SQL,
 checks the pre-upgrade snapshot/current history, committed WAL, failed backup and
 newer-schema refusal. No live provider/channel or another-account claim is made.
+
+### PA-121 Windows package and optional login startup
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter 'FullyQualifiedName~LoginStartupTests|FullyQualifiedName~DesktopShellTests|FullyQualifiedName~DesktopHostTests|FullyQualifiedName~SettingsTransferTests|FullyQualifiedName~SetupWizardTests'
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish-windows.ps1
+```
+
+See [distribution instructions](../docs/DISTRIBUTION.md) for the ZIP, version,
+SHA256, private app data, upgrade and explicit startup/disable/removal procedure.
+LoginStartupTests uses real isolated HKCU keys under Software/PersonalAgent/Tests,
+never the user's Run registration. It checks default/no-save inertness, actual
+Save button, quoted Unicode/space-containing paths, explicit disable/path update,
+unrelated values and missing/development/foreign refusal. Existing shell/host
+tests preserve exit/disposal and close-to-tray behavior. No autostart consent is
+included in Settings export/import.
+
+The publish script's actual executable diagnostic requires locally bundled
+CoreCLR/WPF, loads unshown XAML and performs one durable local demo in temporary
+SQLite; it opens no windows, registers no hooks/startup and makes no provider/tool
+calls. Empty DOTNET_ROOT/DOTNET_ROOT_X64 and a local host trace supplement the
+assembly-location checks. This is controlled package evidence on this developer
+machine. Clean Windows without .NET, real sign-out/in autostart and disable
+observations require the separate acceptance checklist in DISTRIBUTION.md;
+do not infer them from successful publishing or synthetic registry keys.

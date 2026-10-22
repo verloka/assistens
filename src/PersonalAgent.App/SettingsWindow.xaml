@@ -4,6 +4,16 @@
         Title="Settings transfer and backups" Width="700" Height="510" MinWidth="560" MinHeight="400" ShowActivated="False">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="24">
+        <TextBlock Text="Start with Windows" FontSize="22" FontWeight="SemiBold"/>
+        <StackPanel IsEnabled="{Binding StartupAvailable}" Margin="0,12">
+            <CheckBox x:Name="LoginStartupCheckBox" Content="Start Personal Agent when I sign in (this Windows user only)" IsChecked="{Binding LoginStartupEnabled}"/>
+            <WrapPanel Margin="0,8">
+                <Button x:Name="ReloadLoginStartup" Content="Reload startup setting" Click="ReloadStartupClicked" Padding="12,5" Margin="0,0,8,0"/>
+                <Button x:Name="SaveLoginStartup" Content="Save startup choice" Click="SaveStartupClicked" Padding="12,5"/>
+            </WrapPanel>
+            <TextBlock Text="{Binding StartupMessage}" TextWrapping="Wrap"/>
+            <TextBlock Text="Off on a fresh profile. Changes take effect only after Save. This opens the normal app at sign-in; it grants no automation permissions. Tray Exit stops this session; disable startup here before moving/removing the installed folder." TextWrapping="Wrap" Margin="0,8,0,12"/>
+        </StackPanel>
         <TextBlock Text="Settings export / import" FontSize="22" FontWeight="SemiBold"/>
         <TextBlock TextWrapping="Wrap" Margin="0,12" Text="Export contains no protected credentials, references, history or approvals. Task text and MCP arguments/URL path/query are omitted. Import requires matching local model credentials; it adds disabled connections/schedules with no permissions. Model settings and retention period update locally; automatic retention stays off. Restart after import."/>
         <WrapPanel IsEnabled="{Binding Available}">

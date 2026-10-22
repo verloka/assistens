@@ -1337,14 +1337,14 @@
                                                                  ]
                                    },
                         "PA-121":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
+                                       "status":  "blocked",
+                                       "started_at":  "2026-10-22T15:25:13.6352881+00:00",
                                        "completed_at":  null,
                                        "evidence":  [
 
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Implemented and locally verified self-contained win-x64 ZIP/autostart opt-in. Real published exe smoke PASS with bundled CoreCLR/WPF, isolated SQLite/XAML/local demo;28 regressions passed. Acceptance still requires clean Windows x64 without preinstalled .NET and actual sign-out/in enable/disable observation. No clean VM/WindowsSandbox or owner report available; keep release gate and do not infer PA-122 dependency deferral.",
+                                       "attempts":  1
                                    },
                         "PA-122":  {
                                        "status":  "pending",
@@ -1387,6 +1387,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-120",
-    "updated_at":  "2026-10-22T15:24:54.2126362+00:00"
+    "last_task_id":  "PA-121",
+    "updated_at":  "2026-10-22T15:33:33.7724291+00:00"
 }

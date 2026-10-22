@@ -21,6 +21,12 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (e.Args.SequenceEqual(["--package-smoke"]))
+        {
+            try { await PackageSmoke.RunAsync(); Shutdown(0); }
+            catch (Exception) { Console.Error.WriteLine("PACKAGE SMOKE FAILED"); Shutdown(1); }
+            return;
+        }
         try
         {
             var host = AppHost.CreateBuilder(e.Args, AppHost.DefaultHistoryPath).Build();

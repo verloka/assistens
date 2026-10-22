@@ -6,13 +6,16 @@ using System.ComponentModel;
 namespace PersonalAgent.App.ViewModels;
 
 public sealed class SettingsViewModel(SettingsTransfer? transfer, ApprovalOwner owner, IHostApplicationLifetime lifetime,
-    SqliteDatabaseMaintenance? maintenance = null) : INotifyPropertyChanged
+    SqliteDatabaseMaintenance? maintenance = null, WindowsLoginStartup? startup = null) : INotifyPropertyChanged
 {
     private SettingsPackage? pending;
     private bool busy, applied;
     public event PropertyChangedEventHandler? PropertyChanged;
     public bool Available => transfer is not null && !busy && !lifetime.ApplicationStopping.IsCancellationRequested;
     public bool CanApply => Available && pending is not null && !applied;
+    public bool StartupAvailable => startup is not null && !busy && !lifetime.ApplicationStopping.IsCancellationRequested;
+    public bool LoginStartupEnabled { get; set; }
+    public string StartupMessage { get; private set; } = "Login startup is optional. Reload to read this Windows user's saved setting; only Save changes it.";
     public string Preview { get; private set; } = "Export contains configuration templates only. Import adds disabled copies and requires local model credentials with matching IDs/providers. Restart to load imported settings.";
     public string Message { get; private set; } = "No transfer has run.";
     public async Task<string?> ExportAsync()
@@ -49,6 +52,25 @@ public sealed class SettingsViewModel(SettingsTransfer? transfer, ApprovalOwner 
         Message = "Private database backup saved locally: " + path;
     });
     public void FileFailure() { pending = null; Message = "File operation failed. No successful transfer was confirmed."; Refresh(); }
+    public void ReloadStartup()
+    {
+        if (!StartupAvailable) return;
+        try { LoginStartupEnabled = startup!.ReadEnabled(); StartupMessage = "Saved login startup setting loaded. Save explicitly to change it."; }
+        catch (Exception) { StartupMessage = "Cannot read login startup. Review the current user's startup settings locally."; }
+        Refresh();
+    }
+    public void SaveStartup()
+    {
+        if (!StartupAvailable) return;
+        try
+        {
+            startup!.SetEnabled(LoginStartupEnabled);
+            StartupMessage = LoginStartupEnabled ? "Login startup enabled for this Windows user. Keep the installed folder at its current path."
+                : "Login startup disabled for this Windows user.";
+        }
+        catch (Exception) { StartupMessage = "Login startup was not confirmed. Use the installed PersonalAgent.App.exe and check local startup permissions/settings."; }
+        Refresh();
+    }
     private async Task RunAsync(Func<Task> action)
     {
         busy = true; Refresh();

@@ -46,8 +46,9 @@ public static class AppHost
             services.AddSingleton<PrivacyViewModel>();
             services.AddSingleton<RunDiagnosticsViewModel>();
             services.AddSingleton<SetupWizardViewModel>();
+            services.AddSingleton(_ => new WindowsLoginStartup(Environment.ProcessPath));
             services.AddSingleton(provider => new SettingsViewModel(provider.GetService<SettingsTransfer>(), provider.GetRequiredService<ApprovalOwner>(),
-                provider.GetRequiredService<IHostApplicationLifetime>(), provider.GetService<SqliteDatabaseMaintenance>()));
+                provider.GetRequiredService<IHostApplicationLifetime>(), provider.GetService<SqliteDatabaseMaintenance>(), provider.GetRequiredService<WindowsLoginStartup>()));
             services.AddSingleton<RunDiagnosticsService>();
             services.AddSingleton(provider => new TelegramConnectionProbe(provider.GetRequiredService<ISecretStore>(), provider.GetService<Func<System.Net.Http.HttpMessageHandler>>()?.Invoke()));
             services.AddSingleton(_ =>
