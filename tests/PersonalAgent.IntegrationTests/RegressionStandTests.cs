@@ -1,5 +1,8 @@
 using PersonalAgent.WindowsSmoke;
+using PersonalAgent.Core.Agents;
+using PersonalAgent.Core.Computer;
 using System.Reflection;
+using System.Windows.Controls;
 using System.Windows.Threading;
 
 namespace PersonalAgent.IntegrationTests;
@@ -7,6 +10,22 @@ namespace PersonalAgent.IntegrationTests;
 [Collection("Desktop UI")]
 public sealed class RegressionStandTests
 {
+    [Fact]
+    public Task RuntimeBoundaryFailureIsReportedAsBlockedWithStageAndFixedCode() => OnWpfThread(async () =>
+    {
+        var window = new RegressionWindow(() => { });
+        var desktop = new DesktopAccessCoordinator(); // Denied before any native operation.
+        typeof(RegressionWindow).GetField("desktop", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(window, desktop);
+        var method = typeof(RegressionWindow).GetMethod("ExecuteAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var request = new AgentRequest { RunId = Guid.NewGuid(), ConversationId = Guid.NewGuid(), ModelProfileId = "fake", Instructions = "Synthetic diagnostic" };
+        var result = await (Task<AgentRunResult>)method.Invoke(window, [request, new Progress<AgentEvent>(), CancellationToken.None])!;
+        Assert.Equal(AgentResultStatus.Blocked, result.Status); Assert.Equal("DesktopAccessDenied", result.ErrorCode);
+        var report = (TextBox)typeof(RegressionWindow).GetField("report", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(window)!;
+        Assert.Contains("PA115 BLOCKED; stage=tray-initial-acquire", report.Text);
+        Assert.Contains("code=DesktopAccessDenied", report.Text);
+        window.Close(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+    });
+
     [Fact]
     public Task UnarmedConstructionAndCloseDoNotCreateRuntimeTrayOrServer() => OnWpfThread(async () =>
     {

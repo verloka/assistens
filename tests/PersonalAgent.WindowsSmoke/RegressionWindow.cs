@@ -70,6 +70,8 @@ internal sealed class RegressionWindow : Window
     private volatile bool armed, paused, nativeViolation;
     private long firstGeneration;
     private string busyReport = "";
+    private string executionStage = "not-started";
+    private DesktopLease? acquiredLease;
 
     internal bool HasResources => runs is not null || tray is not null || server is not null;
     internal bool IsArmed => armed;
@@ -160,10 +162,25 @@ internal sealed class RegressionWindow : Window
 
     private async Task<AgentRunResult> ExecuteAsync(AgentRequest request, IProgress<AgentEvent> progress, CancellationToken ct)
     {
+        try { return await ExecuteCoreAsync(request, progress, ct); }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+        catch (Exception error)
+        {
+            var code = error switch { ScreenCaptureException value => value.Code, DesktopAccessException value => value.Code, _ => "DiagnosticExecutionFailed" };
+            Write($"PA115 BLOCKED; stage={executionStage}; type={error.GetType().Name}; code={code}; ownForeground={Native.GetForegroundWindow() == handle}; desktopState={desktop?.Snapshot.State}; no retry.");
+            return new() { Status = AgentResultStatus.Blocked, ErrorCode = code, Summary = "Native diagnostic stopped; review the fixed stage/code report before retrying." };
+        }
+        finally { if (acquiredLease is { } lease) await desktop!.ReleaseAsync(lease); }
+    }
+
+    private async Task<AgentRunResult> ExecuteCoreAsync(AgentRequest request, IProgress<AgentEvent> progress, CancellationToken ct)
+    {
         runId = request.RunId;
         if (selected == 0)
         {
+            executionStage = "tray-initial-acquire";
             var lease = await desktop!.AcquireAsync(request.RunId, ct); firstGeneration = lease.Generation;
+            executionStage = "tray-initial-capture";
             var controller = Controller(lease); await controller.ScreenshotAsync(new(), ct);
             Write("PA115 TRAY ARMED; use the Personal Agent tray menu: Pause & Take Control. This run owns the desktop but sends no input. Then switch to a harmless window, return and CHECK.");
             while (runs!.GetRun(request.RunId).PauseScope is null) await Task.Delay(50, ct);
@@ -171,15 +188,19 @@ internal sealed class RegressionWindow : Window
             await AttendedPause.WaitForResumeAsync(runs, request.RunId, () => { capturesAtPause = captures; paused = true; }, ct);
             // Even a tray Resume cannot trigger capture without the fixture's own explicit button.
             await allowResume.Task.WaitAsync(ct);
+            executionStage = "tray-resume-acquire";
             var next = await desktop.AcquireAsync(request.RunId, ct);
             bool staleDenied;
+            executionStage = "tray-stale-capture-denial";
             try { await controller.ScreenshotAsync(new(), ct); staleDenied = false; }
             catch (ScreenCaptureException) { staleDenied = true; }
+            executionStage = "tray-fresh-capture";
             await Controller(next).ScreenshotAsync(new(), ct);
             var ok = checkedPause && staleDenied && next.Generation > firstGeneration && captures == capturesAtPause + 1;
             Write($"PA115 TRAY RESUME {(ok ? "OK" : "FAILED")}; staleDenied={staleDenied}; generation={firstGeneration}->{next.Generation}; freshCapture={captures == capturesAtPause + 1}; nativeInput=0; otherWindowObservationRequired=True.");
             return new() { Status = AgentResultStatus.Completed, Summary = "Synthetic native tray check ended." };
         }
+        executionStage = "scheduled-maf-tools";
         await using var computer = new ComputerToolSession(request.RunId, desktop!, Controller);
         var tools = computer.Tools.Where(tool => tool.Descriptor.Id == "computer_screenshot").ToList();
         if (mcp is not null) tools.Add(mcp);
@@ -194,8 +215,11 @@ internal sealed class RegressionWindow : Window
         return result;
     }
 
-    private WindowsComputerController Controller(DesktopLease lease) => new(desktop!, lease, new OwnCapture(this), new NoInput(),
-        () => new WindowsCaptureNative().GetMonitors());
+    private WindowsComputerController Controller(DesktopLease lease)
+    {
+        acquiredLease = lease;
+        return new(desktop!, lease, new OwnCapture(this), new NoInput(), () => new WindowsCaptureNative().GetMonitors());
+    }
     private static ChatResponse Call(string tool) => new(new ChatMessage(ChatRole.Assistant,
         [new FunctionCallContent(Guid.NewGuid().ToString("N"), tool, new Dictionary<string, object?>())])) { FinishReason = ChatFinishReason.ToolCalls };
 
@@ -283,7 +307,12 @@ internal sealed class RegressionWindow : Window
                 var warning = gate!.GetWarnings().Single();
                 if (!gate.Decide(warning.Id, ScheduledDesktopDecision.StartNow)) throw new InvalidOperationException("AdmissionRejected");
             }
-            while (!TaskRunStateMachine.IsTerminal(runs!.GetRun(id).Status)) await Task.Delay(50, lifetime.ApplicationStopping);
+            var terminal = await runs!.WaitForTerminalAsync(id, lifetime.ApplicationStopping).WaitAsync(TimeSpan.FromSeconds(10), lifetime.ApplicationStopping);
+            if (terminal.Status != RunStatus.Completed)
+            {
+                Write($"PA115 {(selected == 0 ? "TRAY" : "MCP")} RESUME BLOCKED; durableStatus={terminal.Status}; code={terminal.ErrorCode ?? "NoCompletedResult"}; stage={executionStage}; no retry.");
+                return;
+            }
             if (selected == 2)
             {
                 var stored = (await repository!.GetAsync(id))!;
@@ -329,12 +358,13 @@ internal sealed class RegressionWindow : Window
         public BitmapSource CaptureBitmap(ScreenBounds bounds, IReadOnlyList<ScreenMonitor> monitors) => window.Dispatcher.Invoke(() =>
         {
             window.RequireForeground();
-            if (Native.DwmGetWindowAttribute(window.handle, 9, out var rect, Marshal.SizeOf<Native.Rect>()) != 0) throw new InvalidOperationException("OwnWindowBoundsUnavailable");
+            if (Native.DwmGetWindowAttribute(window.handle, 9, out var rect, Marshal.SizeOf<Native.Rect>()) != 0)
+                throw new ScreenCaptureException("OwnWindowBoundsUnavailable", "The authorized test window bounds are unavailable.");
             var own = new ScreenBounds(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
             if (!bounds.Contains(new(own.X, own.Y)) || !bounds.Contains(new(own.X + own.Width - 1, own.Y + own.Height - 1)))
-                throw new InvalidOperationException("KeepWholeWindowOnPrimaryMonitor");
+                throw new ScreenCaptureException("KeepWholeWindowOnPrimaryMonitor", "Keep the complete authorized test window on the primary monitor.");
             var bitmap = GdiScreenCapture.Capture(bounds, [own]);
-            if (!IsDesktopAvailable()) throw new InvalidOperationException("OwnWindowLostForeground");
+            if (!IsDesktopAvailable()) throw new ScreenCaptureException("OwnWindowLostForeground", "The authorized test window lost foreground.");
             Interlocked.Increment(ref window.captures); return bitmap;
         });
     }
