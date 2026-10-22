@@ -38,6 +38,8 @@ public static class AppHost
             services.AddSingleton<MainWindow>();
             services.AddSingleton<HealthViewModel>();
             services.AddSingleton<DashboardViewModel>();
+            services.AddSingleton<TaskToolsViewModel>();
+            services.AddSingleton<SelectedToolsRuntime>();
             services.AddSingleton<ModelProfilesViewModel>();
             services.AddSingleton<McpConnectionsViewModel>();
             services.AddSingleton<ApprovalsViewModel>();
@@ -91,7 +93,7 @@ public static class AppHost
                 provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync));
             services.AddSingleton<IAgentRuntime>(provider => new ProfileAgentRuntime(provider.GetRequiredService<FakeAgentRuntime>(),
                 provider.GetServices<IModelProvider>(), provider.GetRequiredService<TaskRunCoordinator>().WaitAtBoundaryAsync,
-                provider.GetService<IConversationRepository>()));
+                provider.GetService<IConversationRepository>(), provider.GetRequiredService<SelectedToolsRuntime>().ExecuteAsync));
             services.AddSingleton<TaskRunner>();
             services.AddHostedService<LifecycleLoggingService>();
             services.AddHostedService<McpLifecycleService>();

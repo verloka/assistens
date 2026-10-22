@@ -21,6 +21,7 @@ Status: Draft
 6. Unknown outcomes require checking real-world state before retrying.
 
 ## Validations
+- PA-123 per-task tool selection is scope only, not an action approval. GUI input and screenshot disclosure retain exact owner confirmation; MCP mutations additionally require explicit per-run exact target constraints. A GUI call waiting for approval releases desktop ownership, then requires a fresh byte/geometry-identical screen before its single approved call can execute. Changed UI yields denial, never coordinate substitution, a fresh action approval, or an automatic retry. This does not implement semantic Teams recipient/message consent.
 - Channel approval presentation requires a current Approved exact peer binding to the local owner, shows the complete bounded operation/destination/arguments and stores only hashes of random callback tokens with exact peer/owner/run/request/version/action-hash/expiry scope. Presentation alone cannot decide or dispatch; unsupported oversized review falls back to local app without buttons. Callback consumption reauthenticates the current owner/peer, matches the exact pending request/action/run revision and TTL, and uses the common atomic decision handler and existing dispatch ledger; untrusted text never decides an operation.
 - Identity, destination allowlist, action hash/ID, expiration and single-use acknowledgement.
 - Trusted run access contexts may restrict explicit action categories and are bound to the run and conversation. Categories grant no implicit higher or lower category; unknown classification is denied. Model/tool arguments cannot change that context, and passing this restriction never replaces tool/destination authorization or exact-action approval.
@@ -43,6 +44,8 @@ Status: Draft
 - None.
 
 ## Scenarios
+
+- S6: Given an explicitly selected desktop tool, when its exact action awaits consent, then selection alone causes no effect; rejection, takeover, cancellation, changed screen or revoked MCP grant prevents dispatch. Exact approved GUI input reacquires a fresh identical screen for that call only and requires a separately authorized post-input observation. [test: tests/PersonalAgent.IntegrationTests/ProductionTaskToolsTests.cs] [test: tests/PersonalAgent.IntegrationTests/ComputerToolTests.cs] (Scripted model/controlled native and loopback MCP; semantic Teams send remains unaccepted.)
 - S5: Given an exact channel approval scope and current owner binding, when callbacks race or are repeated, then one versioned decision wins and the existing dispatch ledger permits at most one effect; foreign peers, expiry, changed action/run and later restart cannot reuse consent. [test: tests/PersonalAgent.IntegrationTests/TelegramCallbackTests.cs]
 - S1: Given a pending send-message action, when the user approves its exact arguments, then it executes once. [test: tests/PersonalAgent.IntegrationTests/CommonToolPolicyTests.cs]
 - S2: Given an approval for one recipient, when model changes recipient, then new approval is required. [test: tests/PersonalAgent.IntegrationTests/ToolDispatchTests.cs]

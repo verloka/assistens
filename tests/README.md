@@ -1621,3 +1621,42 @@ the fake Discord adapter and official SDK/MCP/tool contracts already existed.
 FDD links remain Draft. This local matrix does not establish live Claude/Telegram,
 corporate permissions, physical multi-monitor/sleep/display, clean Windows/sign-in
 or all ten business E2E acceptances. Those tracker gates remain separate.
+
+### PA-123 ordinary desktop tool selection
+
+```powershell
+dotnet test tests/PersonalAgent.IntegrationTests --no-restore --filter 'FullyQualifiedName~ProductionTaskToolsTests|FullyQualifiedName~ComputerToolTests'
+```
+
+Select a saved vision/tool-capable model in the main window. Open **Tools… (off
+by default)** beside Start task, then Refresh. Refresh only reads available
+Computer declarations and already connected, saved/reviewed MCP tools; it makes
+no connection, capture, input or model call. Check individual tools; GUI input
+also needs screenshot. MCP mutations require exact JSON-pointer/literal rules,
+for example `[{"JsonPointer":"/ticketId","AllowedValues":["TEST-1"]}]` when
+that argument exists in the reviewed tool schema. Empty rules deny mutations.
+Close the selector and explicitly submit. The attempt consumes the selection;
+the next task, continuation, profile/history change and refresh start cleared.
+
+Open Approvals deliberately to review each sensitive exact call and acknowledge
+its complete arguments/destination. Tool selection is not action consent. Each
+screenshot disclosure needs approval; GUI input releases desktop ownership while
+waiting, then captures a fresh screen and dispatches only if pixels/geometry
+still match. An approved input's next screenshot requires another disclosure
+decision. Window changes can therefore safely block input; review the outcome
+before starting again. Pause/Resume never carries old coordinates/consent.
+
+ProductionTaskToolsTests exercises the actual App/ProfileAgentRuntime/MAF/tool
+registry/SQLite/UI composition with scripted models, real loopback MCP and fake
+native capture/input. It checks all four input tools, real checkbox binding and
+small-window button access, no-selection/continuation defaults, mutation target
+denial, approval/rejection/cancel/takeover, changed image/geometry, saved grant
+revocation, reconnect/reclassification before queued binding, immutable intent,
+dedup and restart review. ComputerToolTests additionally proves the private
+one-call revalidation cannot authorize changed arguments or another call ID.
+
+Channels/schedules receive no desktop grants. Local demo remains tool-free.
+These controlled checks do not certify live provider/native usability, semantic
+Teams recipient/message approval, corporate access or the complete ten E2E
+outcomes. See [distribution instructions](../docs/DISTRIBUTION.md) for the current
+package and [quality gates](../docs/QUALITY_GATES.md) for remaining acceptance.

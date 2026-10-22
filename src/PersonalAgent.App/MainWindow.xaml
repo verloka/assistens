@@ -1,4 +1,4 @@
-﻿<Window x:Class="PersonalAgent.App.MainWindow"
+<Window x:Class="PersonalAgent.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -61,6 +61,7 @@
             <TextBlock x:Name="DiagnosticStatusText" Text="{Binding DiagnosticStatus}" TextWrapping="Wrap" />
         </StackPanel>
         <GroupBox Grid.Row="4" Header="Task" DataContext="{Binding Dashboard}" Padding="12" Margin="0,16,0,0">
+            <ScrollViewer x:Name="TaskContentScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
@@ -70,6 +71,7 @@
                     <local:ModelProfilesControl x:Name="ModelsPanel" DataContext="{Binding Profiles}" />
                     <CheckBox x:Name="ContinueConversation" Content="Continue the selected task conversation"
                               IsChecked="{Binding ContinueConversation}" Margin="0,0,0,8" />
+
                     <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,0,0,8" />
                 </StackPanel>
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
@@ -89,6 +91,11 @@
                 <TextBox x:Name="TaskInstructions" Grid.Row="2" Text="{Binding Instructions, UpdateSourceTrigger=PropertyChanged}"
                          AcceptsReturn="True" MinHeight="48" TextWrapping="Wrap" />
                 <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8">
+                    <Button x:Name="TaskToolsButton" Content="Tools… (off by default)" Click="OpenTaskToolsClicked" HorizontalAlignment="Left" Padding="10,4" Margin="0,0,8,0">
+                        <Button.Style><Style TargetType="Button"><Style.Triggers>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger>
+                        </Style.Triggers></Style></Button.Style>
+                    </Button>
                     <Button x:Name="SubmitTaskButton" Content="Start task" Command="{Binding SubmitCommand}" Padding="10,5" Margin="0,0,8,0" />
                     <Button x:Name="PauseTaskButton" Content="Pause task" Command="{Binding PauseCommand}" Padding="10,5" Margin="0,0,8,0" />
                     <Button x:Name="ResumeTaskButton" Content="Resume" Command="{Binding ResumeCommand}" Padding="10,5" Margin="0,0,8,0" />
@@ -98,7 +105,7 @@
                     <TextBlock Text="Status: " FontWeight="SemiBold" />
                     <TextBlock x:Name="RunStatusText" Text="{Binding Status}" />
                 </StackPanel>
-                <ListBox x:Name="RunEventsList" Grid.Row="5" ItemsSource="{Binding Events}" DisplayMemberPath="Message" />
+                <ListBox x:Name="RunEventsList" Grid.Row="5" ItemsSource="{Binding Events}" DisplayMemberPath="Message" MaxHeight="180" />
                 <StackPanel Grid.Row="6" Margin="0,8,0,0">
                     <TextBlock x:Name="RunSummaryText" Text="{Binding Summary}" TextWrapping="Wrap" />
                     <TextBlock x:Name="RunWarningsText" Text="{Binding Warnings}" TextWrapping="Wrap" Foreground="DarkOrange" />
@@ -117,6 +124,7 @@
                     </ScrollViewer>
                 </StackPanel>
             </Grid>
+            </ScrollViewer>
         </GroupBox>
     </Grid>
 </Window>

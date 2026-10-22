@@ -2,6 +2,8 @@ using ModelContextProtocol.Protocol;
 using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Domain;
 using System.Text.Json;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace PersonalAgent.Mcp;
 
@@ -10,7 +12,9 @@ public sealed class McpAgentTool : IAgentTool
 {
     private readonly McpClientConnection connection;
     private readonly McpDiscoveredTool declaration;
+    private readonly McpToolPermission permission;
     public ToolDescriptor Descriptor { get; }
+    public string BindingId { get; }
 
     public McpAgentTool(McpClientConnection connection, McpDiscoveredTool declaration, McpToolPermission permission)
     {
@@ -21,11 +25,16 @@ public sealed class McpAgentTool : IAgentTool
             || !connection.Configuration.AllowedTools.Contains(declaration.ServerName, StringComparer.Ordinal)
             || !connection.IsToolCurrent(declaration))
             throw new McpConnectionException("McpToolReviewRequired", "The MCP tool is not enabled with a current owner-reviewed classification.");
-        this.connection = connection; this.declaration = declaration;
+        this.connection = connection; this.declaration = declaration; this.permission = permission;
+        BindingId = new Guid(SHA256.HashData(Encoding.UTF8.GetBytes(connection.BindingId + JsonSerializer.Serialize(permission))).AsSpan(0, 16)).ToString("N");
         var readOnly = permission.RiskLevel == ToolRiskLevel.ReadOnly;
         Descriptor = declaration.Descriptor with { RiskLevel = permission.RiskLevel, IsReadOnly = readOnly,
             IndependentOfDesktop = readOnly && permission.IndependentOfDesktop };
     }
+
+    public bool IsCurrent(McpConnectionProfile profile) => profile.SchemaVersion == 1 && connection.IsToolCurrent(declaration)
+        && profile.Permissions.Count(value => value == permission) == 1
+        && JsonElement.DeepEquals(JsonSerializer.SerializeToElement(profile.Configuration), JsonSerializer.SerializeToElement(connection.Configuration));
 
     public async Task<ToolResult> ExecuteAsync(ToolArguments arguments, ToolExecutionContext context, CancellationToken cancellationToken)
     {

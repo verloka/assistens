@@ -2,6 +2,8 @@ using PersonalAgent.Core.Diagnostics;
 using PersonalAgent.Core.Agents;
 using PersonalAgent.Core.Computer;
 using System.Text.Json;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace PersonalAgent.Computer;
 
@@ -18,6 +20,9 @@ public sealed class ComputerToolSession : IAsyncDisposable
     private string? observationId;
     private ScreenshotOptions captureOptions = new();
     private bool evaluated, disposed;
+    private InputApproval? pendingApproval, approvedInput;
+    private sealed record InputApproval(string ToolId, Guid ConversationId, string CallId, string ArgumentsHash,
+        string ImageHash, string Geometry, ScreenshotOptions Options, string OldObservationId);
     public IReadOnlyList<IAgentTool> Tools { get; }
 
     public ComputerToolSession(Guid runId, IDesktopAccessCoordinator access,
@@ -37,6 +42,54 @@ public sealed class ComputerToolSession : IAsyncDisposable
         controller!.ConfirmObservation(frame); evaluated = true;
     }
 
+    // Trusted exact-action authorizer only. The old token is never made generally current again.
+    public async Task<bool> PrepareInputApprovalAsync(ToolDescriptor tool, ToolArguments arguments, ToolExecutionContext context, CancellationToken ct)
+    {
+        await serial.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            if (disposed || context.RunId != runId || frame is null || !evaluated || lease is null || !access.IsCurrent(lease)
+                || tool.IsReadOnly || !Tools.Any(value => value.Descriptor.Id == tool.Id && value.Descriptor.Source == tool.Source && value.Descriptor.RiskLevel == tool.RiskLevel)
+                || arguments.Value.GetProperty("observationId").GetString() != observationId) return false;
+            var proof = new InputApproval(tool.Id, context.ConversationId, context.ToolCallId, ArgumentsHash(arguments),
+                ImageHash(frame), Geometry(frame), captureOptions, observationId!);
+            await ReleaseCoreAsync(ct).ConfigureAwait(false);
+            pendingApproval = proof; return true;
+        }
+        finally { serial.Release(); }
+    }
+
+    public async Task<bool> RevalidateInputApprovalAsync(ToolDescriptor tool, ToolArguments arguments, ToolExecutionContext context, CancellationToken ct)
+    {
+        await serial.WaitAsync(ct).ConfigureAwait(false);
+        var valid = false;
+        try
+        {
+            var proof = pendingApproval; pendingApproval = null;
+            if (disposed || context.RunId != runId || proof is null || proof.ToolId != tool.Id
+                || proof.ConversationId != context.ConversationId || proof.CallId != context.ToolCallId || proof.ArgumentsHash != ArgumentsHash(arguments)) return false;
+            lease = await access.WaitAcquireAsync(runId, ct).ConfigureAwait(false); controller = createController(lease);
+            frame = await controller.ScreenshotAsync(proof.Options, ct).ConfigureAwait(false); frame.Validate();
+            if (!access.IsCurrent(lease) || frame.DesktopGeneration != lease.Generation
+                || ImageHash(frame) != proof.ImageHash || Geometry(frame) != proof.Geometry) return false;
+            // Identical pixels/topology preserve the evaluated target for this one approved call only.
+            observationId = Guid.NewGuid().ToString("N"); captureOptions = proof.Options;
+            controller.ConfirmObservation(frame); evaluated = true; approvedInput = proof; valid = true; return true;
+        }
+        catch (ScreenCaptureException) { return false; }
+        catch (DesktopAccessException) { return false; }
+        finally
+        {
+            try { if (!valid) await ReleaseCoreAsync(CancellationToken.None).ConfigureAwait(false); }
+            finally { serial.Release(); }
+        }
+    }
+
+    private static string ArgumentsHash(ToolArguments arguments) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(arguments.Value.GetRawText())));
+    private static string ImageHash(ScreenCapture capture) => Convert.ToHexString(SHA256.HashData(capture.ImageBytes));
+    private static string Geometry(ScreenCapture capture) => JsonSerializer.Serialize(new
+        { capture.ImageWidth, capture.ImageHeight, capture.SourceBounds, capture.Monitors, capture.ContentType });
+
     private async Task<ToolResult> ExecuteAsync(string operation, ToolArguments arguments, ToolExecutionContext context, CancellationToken ct)
     {
         await serial.WaitAsync(ct).ConfigureAwait(false);
@@ -47,6 +100,7 @@ public sealed class ComputerToolSession : IAsyncDisposable
             var value = arguments.Value;
             if (operation == "screenshot")
             {
+                approvedInput = null; pendingApproval = null;
                 var area = value.TryGetProperty("area", out var areaValue) ? Enum.Parse<ScreenshotArea>(areaValue.GetString()!, true) : ScreenshotArea.PrimaryMonitor;
                 var monitorId = value.TryGetProperty("monitorId", out var monitor) ? monitor.GetString() : null;
                 var options = value.TryGetProperty("area", out _) ? new ScreenshotOptions(area, monitorId) : captureOptions;
@@ -84,7 +138,11 @@ public sealed class ComputerToolSession : IAsyncDisposable
                 };
             }
             if (lease is null || !access.IsCurrent(lease)) return Blocked("StaleDesktopContext");
-            if (frame is null || value.GetProperty("observationId").GetString() != observationId) return Blocked("FreshScreenshotRequired");
+            var approved = approvedInput; approvedInput = null;
+            var exactApproved = approved is not null && approved.ToolId == "computer_" + operation
+                && approved.ConversationId == context.ConversationId && approved.CallId == context.ToolCallId
+                && approved.ArgumentsHash == ArgumentsHash(arguments) && approved.OldObservationId == value.GetProperty("observationId").GetString();
+            if (frame is null || value.GetProperty("observationId").GetString() != observationId && !exactApproved) return Blocked("FreshScreenshotRequired");
             if (!evaluated) return Blocked("ScreenReevaluationRequired");
             if (operation == "click")
                 await controller!.ClickAsync(Point(value), Enum.Parse<MouseButton>(value.GetProperty("button").GetString()!, true), ct).ConfigureAwait(false);
@@ -121,11 +179,16 @@ public sealed class ComputerToolSession : IAsyncDisposable
         await serial.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            frame = null; observationId = null; evaluated = false;
-            if (lease is not null) await access.ReleaseAsync(lease, ct).ConfigureAwait(false);
-            lease = null; controller = null;
+            await ReleaseCoreAsync(ct).ConfigureAwait(false);
         }
         finally { serial.Release(); }
+    }
+
+    private async Task ReleaseCoreAsync(CancellationToken ct)
+    {
+        frame = null; observationId = null; evaluated = false; pendingApproval = null; approvedInput = null;
+        if (lease is not null) await access.ReleaseAsync(lease, ct).ConfigureAwait(false);
+        lease = null; controller = null;
     }
 
     public async ValueTask DisposeAsync()
@@ -133,7 +196,7 @@ public sealed class ComputerToolSession : IAsyncDisposable
         await serial.WaitAsync().ConfigureAwait(false);
         try
         {
-            disposed = true; frame = null; observationId = null;
+            disposed = true; frame = null; observationId = null; pendingApproval = null; approvedInput = null;
             if (lease is not null) await access.ReleaseAsync(lease).ConfigureAwait(false);
         }
         finally { serial.Release(); }

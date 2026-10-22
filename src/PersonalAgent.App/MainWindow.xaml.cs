@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     private RunDiagnosticsWindow? runDiagnostics;
     private SetupWizardWindow? setup;
     private SettingsWindow? settings;
+    private TaskToolsWindow? taskTools;
     private readonly PersonalAgent.App.ViewModels.SettingsViewModel? settingsModel;
     private readonly PersonalAgent.App.ViewModels.SetupWizardViewModel? setupModel;
     private readonly PersonalAgent.App.ViewModels.RunDiagnosticsViewModel? runDiagnosticsModel;
@@ -57,6 +58,14 @@ public partial class MainWindow : Window
     }
 
     private void OpenSetupClicked(object sender, RoutedEventArgs e) => OpenSetup();
+    private void OpenTaskToolsClicked(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PersonalAgent.App.ViewModels.HealthViewModel { Dashboard: { IsActive: false, Tools: { } tools } dashboard }) return;
+        if (taskTools is not null) { taskTools.Activate(); return; }
+        taskTools = new TaskToolsWindow(tools, dashboard) { Owner = this };
+        taskTools.Closed += (_, _) => taskTools = null;
+        taskTools.Show();
+    }
     private void OpenSettingsClicked(object sender, RoutedEventArgs e)
     {
         if (settingsModel is null) return;

@@ -22,12 +22,15 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
     private TaskRun? selectedHistory;
     private readonly System.Windows.Threading.Dispatcher dispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
 
-    public DashboardViewModel(ITaskCommands commands, TaskRunCoordinator state, IHostApplicationLifetime host, ModelProfilesViewModel? profiles = null)
+    public DashboardViewModel(ITaskCommands commands, TaskRunCoordinator state, IHostApplicationLifetime host, ModelProfilesViewModel? profiles = null,
+        TaskToolsViewModel? tools = null)
     {
         this.commands = commands;
         this.state = state;
         state.HistoryContentCleared += OnHistoryContentCleared;
         Profiles = profiles;
+        Tools = tools;
+        if (Profiles is not null) Profiles.PropertyChanged += ProfileChanged;
         lifetime = CancellationTokenSource.CreateLinkedTokenSource(host.ApplicationStopping);
         SubmitCommand = new AsyncCommand(SubmitAsync, () => !active && !disposed && !lifetime.IsCancellationRequested && !string.IsNullOrWhiteSpace(Instructions));
         PauseCommand = new AsyncCommand(() => ControlAsync(run => commands.PauseAsync(new(Guid.NewGuid(), run.Id, run.RunVersion), lifetime.Token)),
@@ -41,6 +44,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public ModelProfilesViewModel? Profiles { get; }
+    public TaskToolsViewModel? Tools { get; }
     public bool ContinueConversation { get; set; }
     public ObservableCollection<RunEvent> Events { get; } = [];
     public ObservableCollection<TaskRun> History { get; } = [];
@@ -50,6 +54,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         set
         {
             if (active || value is null) return;
+            Tools?.Reset();
             selectedHistory = value;
             Changed();
             _ = ObserveHistoryAsync(value.Id);
@@ -93,14 +98,20 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         try
         {
             var profile = Profiles?.Selected?.Profile;
+            var selection = Tools?.Snapshot();
+            if (selection is not null && profile is null) { message = "Select a configured model profile for GUI/MCP tools. Local demo stays tool-free."; return; }
+            Tools?.Reset(); // One deliberate attempt, including a failed/unknown admission, never lends grants to the next task.
             currentRun = await commands.SubmitAsync(new(Guid.NewGuid(), Instructions, new TaskOrigin("desktop"),
                 ConversationId: ContinueConversation ? currentRun?.ConversationId : null,
-                ModelProfileId: profile?.Id ?? "fake", Profile: profile), lifetime.Token);
+                ModelProfileId: profile?.Id ?? "fake", Profile: profile,
+                AllowedToolIds: selection?.Select(rule => rule.ToolId).ToArray(), ToolPermissions: selection), lifetime.Token);
             Refresh();
             await WatchAsync(currentRun.Id);
         }
         catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { message = "Application is stopping."; }
         catch (RunPersistenceException) { message = "Task history could not be saved; task was not started."; }
+        catch (ArgumentException) { message = "Review the tool selection and exact MCP target rules. No task admission was confirmed."; }
+        catch (InvalidOperationException) { message = "Review the tool selection. GUI input requires screenshot; MCP mutations require exact target rules. No task admission was confirmed."; }
         catch (Exception) { message = "Task could not be started or observed. Review the current status."; }
         finally
         {
@@ -169,5 +180,6 @@ public sealed class DashboardViewModel : INotifyPropertyChanged, IDisposable
         if (dispatcher.CheckAccess()) Update(); else dispatcher.BeginInvoke(Update);
     }
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
-    public void Dispose() { if (disposed) return; disposed = true; state.HistoryContentCleared -= OnHistoryContentCleared; lifetime.Cancel(); lifetime.Dispose(); }
+    private void ProfileChanged(object? sender, PropertyChangedEventArgs args) { if (args.PropertyName == nameof(ModelProfilesViewModel.Selected)) Tools?.Reset(); }
+    public void Dispose() { if (disposed) return; disposed = true; state.HistoryContentCleared -= OnHistoryContentCleared; if (Profiles is not null) Profiles.PropertyChanged -= ProfileChanged; lifetime.Cancel(); lifetime.Dispose(); }
 }

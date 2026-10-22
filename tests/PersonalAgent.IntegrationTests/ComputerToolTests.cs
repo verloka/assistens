@@ -36,6 +36,34 @@ public sealed class ComputerToolTests
     }
 
     private static readonly string[] Ids = ["computer_screenshot", "computer_click", "computer_scroll", "computer_type", "computer_press_key"];
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExactInputRevalidationNeverRevivesOldObservationForAnotherCall(bool changedArguments)
+    {
+        var access = new DesktopAccessCoordinator(_ => true); var native = new Native { StableScreen = true }; var runId = Guid.NewGuid();
+        await using var session = new ComputerToolSession(runId, access, lease => new WindowsComputerController(access, lease, native, native, native.GetMonitors, _ => true));
+        var request = Request(runId); var binding = Registry(session).Bind(request);
+        var captured = await binding.InvokeAsync("computer_screenshot", "before-approval", Json(new { }), default);
+        var old = captured.Result.StructuredData!.Value.GetProperty("observationId").GetString()!; session.ConfirmModelObservation();
+        var tool = session.Tools.Single(value => value.Descriptor.Id == "computer_click").Descriptor;
+        var context = new ToolExecutionContext(runId, request.ConversationId, "approved-call");
+        var args = new ToolArguments(Arguments("computer_click", old));
+        Assert.True(await session.PrepareInputApprovalAsync(tool, args, context, default)); Assert.Null(access.Snapshot.OwnerRunId);
+        if (changedArguments)
+        {
+            Assert.False(await session.RevalidateInputApprovalAsync(tool, new(Json(new { observationId = old, imageX = 1, imageY = 0, button = "left" })), context, default));
+            Assert.Equal(1, native.Captures);
+        }
+        else
+        {
+            Assert.True(await session.RevalidateInputApprovalAsync(tool, args, context, default));
+            var foreign = await binding.InvokeAsync("computer_click", "another-call", args.Value, default);
+            Assert.Equal("FreshScreenshotRequired", foreign.Result.ErrorCode); Assert.Equal(2, native.Captures);
+        }
+        Assert.Empty(native.Inputs);
+    }
     private static JsonElement Json(object value) => JsonSerializer.SerializeToElement(value);
     private static AgentRequest Request(Guid runId) => new() { RunId = runId, ConversationId = Guid.NewGuid(), Instructions = "Own synthetic target", ModelProfileId = "local", AllowedToolIds = Ids };
     private static ToolRegistry Registry(ComputerToolSession session, bool authorize = true) => new(session.Tools, (_, _, ct) =>
@@ -286,12 +314,13 @@ public sealed class ComputerToolTests
     {
         public int Captures; public List<NativeInput[]> Inputs = [];
         public int Origin = -4;
+        public bool StableScreen;
         public Action? OnSend;
         public bool IsDesktopAvailable() => true;
         public bool IsKeyDown(ushort key) => false;
         public IReadOnlyList<ScreenMonitor> GetMonitors() => [new("primary", new(Origin, 0, 4, 3), 96, 96, true)];
         public BitmapSource CaptureBitmap(ScreenBounds bounds, IReadOnlyList<ScreenMonitor> monitors)
-        { Captures++; var pixels = Enumerable.Repeat((byte)Captures, 48).ToArray(); return BitmapSource.Create(4, 3, 96, 96, PixelFormats.Bgra32, null, pixels, 16); }
+        { Captures++; var pixels = Enumerable.Repeat(StableScreen ? (byte)1 : (byte)Captures, 48).ToArray(); return BitmapSource.Create(4, 3, 96, 96, PixelFormats.Bgra32, null, pixels, 16); }
         public InputInsertion Send(NativeInput[] inputs) { Inputs.Add(inputs.ToArray()); OnSend?.Invoke(); return new((uint)inputs.Length, 0); }
     }
 }

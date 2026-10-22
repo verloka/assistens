@@ -43,6 +43,8 @@ public sealed record AgentRequest
     public RunLimits Limits { get; init; } = new();
     public AgentContext Context { get; init; } = new();
     public ModelProfile? Profile { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<PersonalAgent.Core.Security.RunToolPermission>? ToolPermissions { get; init; }
 }
 
 public enum AgentResultStatus { Completed, Failed, Cancelled, Blocked }

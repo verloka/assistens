@@ -44,6 +44,11 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             ArgumentException.ThrowIfNullOrWhiteSpace(external.Source);
             ArgumentException.ThrowIfNullOrWhiteSpace(external.Value);
         }
+        command = command with { AllowedToolIds = command.AllowedToolIds?.ToArray(),
+            ToolPermissions = command.ToolPermissions is null ? null : PersonalAgent.Core.Security.ToolPermissionPolicy.SnapshotSelection(command.ToolPermissions) };
+        if (command.ToolPermissions is { } selection && (command.ModelProfileId == "fake"
+            || !(command.AllowedToolIds ?? []).Order(StringComparer.Ordinal).SequenceEqual(selection.Select(rule => rule.ToolId).Order(StringComparer.Ordinal))))
+            throw new ArgumentException("Tool grants must match this task's selected model and tool IDs.");
         var identity = SubmissionIdentity(command);
         await writes.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -71,7 +76,8 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
             {
                 RunId = run.Id, ConversationId = run.ConversationId, Instructions = run.Instructions,
                 ModelProfileId = run.ModelProfileId, Profile = command.Profile,
-                AllowedToolIds = command.AllowedToolIds?.ToArray() ?? [], Limits = command.Limits ?? new(), Context = context
+                AllowedToolIds = command.AllowedToolIds?.ToArray() ?? [], ToolPermissions = command.ToolPermissions,
+                Limits = command.Limits ?? new(), Context = context
             };
             var change = new Change(new Entry(run, request));
             AddEvent(change, RunEventType.RunCreated, "Task created");
@@ -313,7 +319,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
                         _ = desktopAccess?.PauseRunAsync(entry.Run.Id);
                     if (safeQueuedRuns.Contains(entry.Run.Id))
                     {
-                        if (entry.Run.Status != RunStatus.Queued || entry.Request.ModelProfileId != "fake" || entry.Request.AllowedToolIds.Count != 0)
+                        if (entry.Run.Status != RunStatus.Queued || entry.Request.ModelProfileId != "fake" || entry.Request.AllowedToolIds.Count != 0 || entry.Request.ToolPermissions is not null)
                             throw new InvalidOperationException("Recovered work is not a known-safe unstarted local task.");
                         queue.Writer.TryWrite(entry.Run.Id);
                     }
@@ -585,6 +591,7 @@ public sealed class TaskRunCoordinator(IRunRepository? repository = null, IDeskt
         });
         // Preserve the exact legacy hash when no profile snapshot was provided.
         if (command.Profile is not null) intent += "\nProfile:" + JsonSerializer.Serialize(command.Profile);
+        if (command.ToolPermissions is not null) intent += "\nToolPermissions:" + JsonSerializer.Serialize(command.ToolPermissions.OrderBy(rule => rule.ToolId, StringComparer.Ordinal));
         if (command.TaskDefinitionId is { } definitionId) intent += "\nTaskDefinitionId:" + definitionId.ToString("D");
         if (command.SkipReason is not null) intent += "\nSkip:" + command.SkipReason;
         return new RunSubmissionIdentity(command.ExternalKey is null ? "command" : "external/" + command.ExternalKey.Source,

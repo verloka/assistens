@@ -20,6 +20,7 @@ Status: Draft
 5. Report sanitized result to agent; if unavailable, allow model to select another authorized method (possibly GUI).
 
 ## Validations
+- PA-123 ordinary desktop tasks may explicitly select only currently connected declarations intersecting saved enabled/approved owner configuration, pinned classification/version and per-run scope. Recheck current saved grants and the same connection binding at each authorization/dispatch; disconnect/reconnect or revocation cannot lend a new client or permission to an old run. No automatic connection or grant from a model, channel, schedule, history or setting import.
 - Connection trust, user authorization, schema validation, per-tool permission, destination and side-effect controls.
 - The owner connection editor saves configuration separately from explicit connect/test. Credentials use protected-store references; a changed destination cannot silently inherit a credential or reviewed tool grant. New or changed tools require explicit selection and owner classification before version-pinned permission is saved. Loading saved settings performs no network or subprocess launch.
 
@@ -36,6 +37,8 @@ Status: Draft
 - Flow: FDD-005 — tool approval.
 
 ## Scenarios
+
+- S4: Given a saved reviewed connected MCP tool, when the owner selects it for one ordinary desktop task, then bind only that declaration, connection and reviewed permission snapshot. Reconnect, revoked permission or reclassification before queued binding or dispatch cannot adopt the old selection; mutations require exact target constraints and action consent. [test: tests/PersonalAgent.IntegrationTests/ProductionTaskToolsTests.cs] (Actual production runtime/SQLite/loopback MCP with scripted model.)
 - S1: Given an MCP server with a newly added write tool, when tools are discovered, then it is denied by default. [test: tests/PersonalAgent.IntegrationTests/McpDiscoveryTests.cs]
 - S2: Given an allowed read tool, when it is called with valid arguments, then the model receives the result. [test: tests/PersonalAgent.IntegrationTests/McpExecutionTests.cs]
 - S3: Given a tool timeout, when the agent handles failure, then the UI and run state remain consistent. [test: tests/PersonalAgent.IntegrationTests/HybridMcpGuiTests.cs]

@@ -1,6 +1,6 @@
 # Personal Agent Windows preview
 
-Version **1.0.0-preview.1**, Windows x64. Extract the entire ZIP into a stable,
+Version **1.0.0-preview.2**, Windows x64. Extract the entire ZIP into a stable,
 private local folder and run **PersonalAgent.App.exe**. Keep every bundled file
 together. The package includes .NET and Windows Desktop runtime; it needs no
 separate .NET installation or administrator privileges. Other architectures are
@@ -12,6 +12,31 @@ MCP and Telegram need your own keys and explicit tests/permissions. The app
 does not ship credentials or automatically authorize screen/input/tool access.
 History/settings stay under `%LOCALAPPDATA%\PersonalAgent`; credentials are in
 its separate CurrentUser DPAPI-protected secret store. Keep both private.
+
+**One-task GUI/MCP access:** choose a configured model, then **Tools… (off by
+default)** next to Start task. Refresh lists individual Computer tools and MCP
+tools that you already connected and saved/reviewed in MCP settings; refreshing
+does not connect anything. Select screenshot with any GUI input. For MCP
+mutations, supply exact target rules (JSON pointer and allowed literal values);
+empty rules deny mutations. Close the selector and deliberately Start task.
+Selection clears on that attempt, profile/history changes and refresh. A new
+task or conversation continuation needs a fresh selection.
+
+Selecting a tool is scope only: screenshot disclosure and GUI input, as well as
+MCP mutations, still wait for your exact decision in **Approvals**. Review the
+operation, destination and complete arguments. Waiting releases desktop control.
+An approved GUI input rechecks the screen; changed pixels/geometry block it with
+no input or automatic coordinate substitution. Its separately approved next
+capture supplies a fresh observation. Pause/cancel/revoked approval cannot carry
+old input forward. If blocked, use normal controls and review the actual outcome
+before starting anything again. Generic coordinate approval does not establish
+semantic Teams recipient/message consent.
+
+MCP selection is pinned to the current saved classification, declaration and
+connection. Disconnect/reconnect, changed grants or targets invalidate the old
+selection, including a queued task. Channels/schedules never inherit desktop
+tool consent; Telegram still uses its existing local/no-tool default. These
+remote/corporate journeys and live native acceptance remain separate release gates.
 
 **Start with Windows:** open Settings, review the checkbox, then explicitly
 click **Save startup choice**. It is off for a fresh Windows profile. Opening
@@ -68,6 +93,7 @@ Repository tests and redirected runtime roots on a developer PC cannot establish
 this separate clean-OS/sign-in acceptance. No screenshots or keys are needed.
 
 Preview changes: explicit safe settings templates, verified pre-upgrade/private
-SQLite backups, optional per-user login startup and a self-contained x64 ZIP.
+SQLite backups, optional per-user login startup, explicit one-task GUI/MCP
+selection with existing policy/approval/dispatch checks, and a self-contained x64 ZIP.
 The tracker retains outstanding corporate/paid-provider/hardware/fresh-profile
 acceptance. Do not treat these release notes as evidence those gates passed.

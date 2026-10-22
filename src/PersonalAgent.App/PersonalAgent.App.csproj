@@ -8,7 +8,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/agent.ico</ApplicationIcon>
-    <Version>1.0.0-preview.1</Version>
+    <Version>1.0.0-preview.2</Version>
     <PublishRuntimeIdentifier>win-x64</PublishRuntimeIdentifier>
     <PublishSelfContained>true</PublishSelfContained>
     <PublishTrimmed>false</PublishTrimmed>

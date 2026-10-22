@@ -19,7 +19,7 @@ public sealed class RunRecovery(IRunRepository repository, IToolCallRepository? 
             if (previous.ErrorCode == "InputCleanupUncertain") continue; // Retain failed-release evidence and manual block.
             var unstarted = previous.Status is RunStatus.Created or RunStatus.Queued;
             // Current known-safe runtime is local fake with no tools. Unknown models/tools never auto-start.
-            var safe = unstarted && stored.Request.ModelProfileId == "fake" && stored.Request.AllowedToolIds.Count == 0;
+            var safe = unstarted && stored.Request.ModelProfileId == "fake" && stored.Request.AllowedToolIds.Count == 0 && stored.Request.ToolPermissions is null;
             if (safe && previous.Status == RunStatus.Queued) { queued.Add(previous.Id); continue; }
             var status = safe ? RunStatus.Queued : unstarted ? RunStatus.Blocked : RunStatus.Interrupted;
             var unknown = toolCalls is not null && (await toolCalls.ListAsync(previous.Id, cancellationToken))

@@ -10,7 +10,8 @@ public sealed record SubmitTaskCommand(Guid CommandId, string Instructions, Task
     RunTriggerKey? ExternalKey = null, ModelProfile? Profile = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Guid? TaskDefinitionId = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ScheduleSubmissionClaim? ScheduleClaim = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SkipReason = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SkipReason = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<PersonalAgent.Core.Security.RunToolPermission>? ToolPermissions = null);
 public sealed record RunTriggerKey(string Source, string Value);
 public sealed record CancelRunCommand(Guid CommandId, Guid RunId, long ExpectedVersion);
 public sealed record PauseRunCommand(Guid CommandId, Guid RunId, long ExpectedVersion, PauseScope Scope = PauseScope.EntireRun,

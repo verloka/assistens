@@ -43,18 +43,28 @@ not certify a live application journey. The table below records **scope** with
 every result. No previous task acceptance is revoked and no Draft flow is
 promoted. Historical attended evidence is dated; it was not rerun unattended.
 
-Current automated baseline: commit `36cc359`,
+Pre-binding automated baseline: commit `36cc359`,
 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1`:
 locked restore PASS, full solution build **0 warnings / 0 errors**, **137 unit +
 972 integration + 3 local fake E2E = 1112 passed, 0 failed, 0 skipped**.
 The integration run took 2m56s. All suites linked below ran in that baseline.
 The three tests in the E2ETests project are local fake-flow checks, not the ten
-business acceptances in §18. No production changes followed this baseline.
+business acceptances in §18. The owner subsequently authorized explicit per-task
+desktop GUI/MCP selection, defaulting to no tools. That production change and its
+new controlled regressions are described below; live acceptance is still separate.
+
+Post-binding verification on2026-10-22:
+`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1` PASS:
+locked restore, build **0 warnings / 0 errors**, **137 unit + 996 integration +
+3 local fake E2E = 1136 passed, 0 failed, 0 skipped**; integration3m10s.
+The24additional cases cover ordinary production tool composition and private
+one-call screen-proof isolation. EF pending-model check reports no changes;
+no migration or dependency update was needed.
 
 | Scenario | Verified evidence and scope | Complete §18 outcome / remaining gate |
 | --- | --- | --- |
 | E2E-01 Manual Computer Use | **PASS, live read-only slice.** PA-059 owner report on2026-10-19: `titleMatched=True`, `modelCalls=2`, `captures=2`, `generation=1->2`, `hotkeyPause=True`, `freshAfterResume=True`, `durableHistory=True`, `nativeInput=0`. Reopened SQLite run `E7ADDF79-827F-4C2C-8993-DE169FCFA985` was Completed/version19, reported usage4892+26. [LiveOpenAiWindow](../tests/PersonalAgent.WindowsSmoke/LiveOpenAiWindow.cs); [ComputerToolTests](../tests/PersonalAgent.IntegrationTests/ComputerToolTests.cs) and [ProvidersContractTests](../tests/PersonalAgent.IntegrationTests/ProvidersContractTests.cs) cover controlled input/image contracts. | **PARTIAL.** The fixture reads its already-open authorized window. The exact requested “open the test application/read the tab” live-model journey, with actual model-directed app opening/input, has no report. Do not reinterpret read-only PA-059 as autonomous GUI-input acceptance. |
-| E2E-02 Hybrid MCP + GUI | **PASS, controlled composition.** [HybridMcpGuiTests](../tests/PersonalAgent.IntegrationTests/HybridMcpGuiTests.cs) uses actual App/Core/MAF/SQLite and loopback Jira MCP with synthetic Teams/native boundaries; both orders, sources, admission, pause/cancel/timeout and read no-replay are checked. | **BLOCKED — PA-075.** No approved live Jira/ADO endpoint/credentials, authorized ticket/Teams context or organizational/model-data permission is available. Current ordinary task composition keeps tool grants closed; the controlled fixture is not proof of production/live integration. |
+| E2E-02 Hybrid MCP + GUI | **PASS, controlled composition.** [HybridMcpGuiTests](../tests/PersonalAgent.IntegrationTests/HybridMcpGuiTests.cs) uses actual App/Core/MAF/SQLite and loopback Jira MCP with synthetic Teams/native boundaries; both orders, sources, admission, pause/cancel/timeout and read no-replay are checked. | **BLOCKED — PA-075.** No approved live Jira/ADO endpoint/credentials, authorized ticket/Teams context or organizational/model-data permission is available. Ordinary desktop tasks now bind explicit per-task GUI/MCP selections through the production runtime (ProductionTaskToolsTests); these controlled checks do not establish live corporate integration. |
 | E2E-03 User takeover | **PASS, attended native control scope.** PA-115 reports2026-10-22: hotkey clicks/nativeCalls5->5 and Unicode144/2750/nativeCalls9->9; automatic activity clicks4->4 and Unicode80/2750/nativeCalls5->5; modifiers released, Unicode valid, checkpoint/AutoPause confirmed, old/foreign frames denied, fresh captures/clicks with generations1->2 and3->4. Tray pause/capture1->1, Resume stale denial/fresh capture; owner explicitly confirmed free switching/typing in another window. [TakeoverWindow](../tests/PersonalAgent.WindowsSmoke/TakeoverWindow.cs) (`--takeover` / `--activity`), [RegressionWindow](../tests/PersonalAgent.WindowsSmoke/RegressionWindow.cs), [TakeoverStressTests](../tests/PersonalAgent.IntegrationTests/TakeoverStressTests.cs). | **PASS for the local native takeover/resume journey.** Full live-model re-evaluation, mixed-DPI/multiple monitors and deferred power/display environments are separate unaccepted extensions; this row does not close PA-026/030/113. |
 | E2E-04 Activity during scheduled GUI | **PASS, attended native scheduler gate.** PA-1152026-10-22 uses actual StartWhenIdle schedule due in15seconds, physical typing244events/64busy samples, one warning, no owner/capture/input, durable explicit Skip. Owner confirmed focus stayed in the input field. [RegressionWindow](../tests/PersonalAgent.WindowsSmoke/RegressionWindow.cs) and [ScheduledDesktopTests](../tests/PersonalAgent.IntegrationTests/ScheduledDesktopTests.cs) cover warnings/idle/skip/defer/dedup/restart. | **PARTIAL for the literal Teams journey.** Real Teams scheduled task/tool composition is not supplied under PA-075. Native keyboard/focus and scheduler safety are accepted; do not claim the corporate check itself ran. |
 | E2E-05 GUI after MCP | **PASS, attended native admission scope.** PA-1152026-10-22: one actual loopback MCP read while keyboard busy (98typed/87busy), one warning, zero captures/input/owner before explicit admission; afterward Completed/captures1/MCPcalls1/explicitAdmission/noReadReplay. Owner confirmed focus retained. [RegressionWindow](../tests/PersonalAgent.WindowsSmoke/RegressionWindow.cs), [HybridMcpGuiTests](../tests/PersonalAgent.IntegrationTests/HybridMcpGuiTests.cs) and [RegressionStandTests](../tests/PersonalAgent.IntegrationTests/RegressionStandTests.cs). | **PASS for first-GUI admission/no-read-replay.** Model is scripted and the MCP server/data are local synthetic fixtures; no paid/corporate claim. |
@@ -79,26 +89,29 @@ Any owner decision to defer those dependencies must preserve all release gates.
 ### Completing the six open outcomes
 
 Do not start these checks automatically or reuse synthetic transport credentials.
-First review the production entry point: ordinary tasks currently expose no
-Computer/MCP tools, and Telegram follow-ups use local/no-tool defaults. That is a
-real composition/permission gap for the full business journeys, not merely a
-missing key. Tests that install a trusted registry through DI cannot prove that
-the owner can configure and run the same journey from the shipped UI. Establish
-an explicit reviewed per-run/peer tool scope and verify its production binding
-before attempting the corresponding live acceptance; never enable everything as
-a test shortcut. The generic coordinate tools also do not establish semantic
-Teams recipient/message approval binding.
+The ordinary desktop task now binds an explicit one-task selection from the
+shipped **Tools… (off by default)** window through ProfileAgentRuntime and the
+existing registry/approval/dispatch/desktop gates. ProductionTaskToolsTests uses
+that actual composition, scripted models, loopback MCP and controlled native
+boundaries. Selection/reset, saved current MCP grants, connection/review changes,
+exact mutation targets, approvals, fresh-screen revalidation, denial and restart
+are checked. No provider or native desktop acceptance is inferred from these
+tests. Telegram follow-ups retain local/no-tool defaults; channels and schedules
+do not inherit desktop grants. Their reviewed peer/task scopes remain a real
+composition gap. Generic coordinate tools do not establish semantic Teams
+recipient/message approval binding.
 
 1. **E2E-01:** use an authorized harmless local test application with a changing
    tab title. Under an explicitly selected live vision/tool profile and reviewed
-   input scope, actually open it through GUI tools, read the title, observe steps,
+   input scope from **Tools…**, actually open it through GUI tools, read the title, observe steps,
    and reopen SQLite history to confirm the same result. Keep Take Control ready;
    restrict input/capture to the test surface and do not count an already-open
    screenshot-only fixture as this outcome.
 2. **E2E-02:** configure an approved read-only Jira/ADO MCP endpoint and permitted
    ticket plus Teams test context. The organization must allow both access and
    sending that scoped data to the selected model. Verify the production tool
-   binding, GUI admission and real typed source link in the durable result.
+   binding through **Tools…** (only already connected, saved/reviewed current
+   tools are offered), GUI admission and real typed source link in the durable result.
 3. **E2E-04:** after the corporate read-only task is authorized/bound, schedule it
    with StartWhenIdle due in15seconds. Type synthetic text in a harmless window;
    observe retained focus, one warning and deferral/skip without capture/input.
@@ -136,7 +149,7 @@ by this audit; PA-125 requires the original outcomes and every required task don
 | Five own Computer Use tools | ComputerToolTests/ComputerInputSenderTests/InputSafetyTests/capture suites pass; PA-026/030 multi-monitor/mixed-DPI hardware gaps remain. |
 | One real vision/tool-use flow | PA-059 live read-only capture/title/SQLite accepted; E2E-01 app-opening/input extension remains unverified. |
 | OpenAI and Claude profiles | Actual UI and both scripted SDKs pass; live Claude PA-065 blocked. |
-| Configured MCP beside GUI | Local stdio/HTTP/config/registry/hybrid pass; live authorized corporate PA-075 missing, ordinary production task tool gate stays closed. |
+| Configured MCP beside GUI | Local stdio/HTTP/config/registry/hybrid pass; explicit desktop selection is wired and locally verified; live authorized corporate PA-075 remains missing. |
 | Schedules/dedup/idle/countdown | Scheduler/recurrence/misfire/restart suites and PA-115 native busy gate pass; full corporate scheduled journey not accepted. |
 | Take Control via hotkey/tray/UI | PA-115 native evidence plus control/XAML tests; no new automation permission inferred. |
 | Desktop released until Resume | Stable native pause counts/released modifiers and owner-confirmed other-window use; deferred PA-113 sleep/display remains. |
@@ -145,7 +158,7 @@ by this audit; PA-125 requires the original outcomes and every required task don
 | Telegram commands/summaries/approvals | Scripted actual adapter/polling/outbox/owner/callback suites pass; live bot/corporate follow-up PA-107 remains. |
 | SQLite history/crash no dangerous replay | Actual killed child/reopen/dispatch ledger tests, migration/WAL backup and history-preservation tests pass. |
 | Privileged actions use policy/approval | CommonToolPolicy/HumanApproval/ToolDispatch/DataBoundary tests pass; real Teams semantic send/organizational authorization not accepted. |
-| State/takeover/permission/channel/scheduler tests | Full1112-test local baseline passed; this does not certify physical/external environments. |
+| State/takeover/permission/channel/scheduler tests | Full1136-test post-binding local baseline passed; this does not certify physical/external environments. |
 | Setup/credentials/MCP/Telegram/pause instructions | tests/README.md and DISTRIBUTION.md exist; actual fresh Windows-account wizard PA-119 and clean distribution PA-121 remain unaccepted. |
 
 Checking off this file is **not** task completion: authoritative states and evidence live in `progress/state.json`; final gate `PA-125` requires §22 MVP DoD, all ten E2E cases, and release reproducibility.

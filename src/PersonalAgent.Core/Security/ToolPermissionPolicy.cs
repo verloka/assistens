@@ -6,11 +6,30 @@ public enum ToolPermissionEffect { Deny, Allow }
 public enum ToolPermissionDecision { Denied, Allowed, RequiresApproval }
 public sealed record ToolDestinationConstraint(string JsonPointer, IReadOnlyList<string> AllowedValues);
 public sealed record RunToolPermission(string ToolId, ToolSource Source, ToolRiskLevel RiskLevel,
-    ToolPermissionEffect Effect, string? Version = null, IReadOnlyList<ToolDestinationConstraint>? Destinations = null);
+    ToolPermissionEffect Effect, string? Version = null, IReadOnlyList<ToolDestinationConstraint>? Destinations = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? BindingId = null);
 
 // Trusted composition snapshots both scopes. No model argument or server hint creates a grant.
 public sealed class ToolPermissionPolicy
 {
+    // Persisted one-task owner selection; unlike a general policy this contains unique explicit grants only.
+    public static IReadOnlyList<RunToolPermission> SnapshotSelection(IReadOnlyList<RunToolPermission> selection)
+    {
+        if (selection.Count is < 1 or > 128 || selection.Any(rule => rule is null || string.IsNullOrWhiteSpace(rule.ToolId)
+            || rule.ToolId.Length > 256 || rule.Source is null || string.IsNullOrWhiteSpace(rule.Source.Id) || rule.Source.Id.Length > 256
+            || rule.Source.Kind is not (ToolSourceKind.Computer or ToolSourceKind.Mcp) || rule.Effect != ToolPermissionEffect.Allow
+            || !Enum.IsDefined(rule.RiskLevel) || rule.RiskLevel == ToolRiskLevel.Unknown
+            || rule.Destinations is { Count: > 16 }
+            || rule.Source.Kind == ToolSourceKind.Computer && (rule.Version is not null || rule.BindingId is not null)
+            || rule.Source.Kind == ToolSourceKind.Mcp && (rule.Version is not { Length: > 0 and <= 256 }
+                || !Guid.TryParseExact(rule.Source.Id, "N", out _)
+                || !Guid.TryParseExact(rule.BindingId, "N", out _)
+                || rule.RiskLevel != ToolRiskLevel.ReadOnly && rule.Destinations is not { Count: > 0 }))
+            || selection.Select(rule => rule.ToolId).Distinct(StringComparer.Ordinal).Count() != selection.Count)
+            throw new ArgumentException("Invalid per-task tool selection.");
+        return Array.AsReadOnly(selection.Select(rule => rule with
+            { Destinations = rule.Destinations is null ? null : Array.AsReadOnly(rule.Destinations.Select(Snapshot).ToArray()) }).ToArray());
+    }
     private readonly ToolAccessContext access;
     private readonly RunToolPermission[] rules;
     private readonly McpToolPermission[] connections;

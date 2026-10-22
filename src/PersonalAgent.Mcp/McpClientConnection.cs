@@ -10,6 +10,7 @@ public sealed class McpClientConnection(McpConnectionConfig configuration, McpCl
     private int invalidated;
     private IReadOnlyDictionary<string, string> toolVersions = new Dictionary<string, string>();
     public McpConnectionConfig Configuration { get; } = configuration;
+    public string BindingId { get; } = Guid.NewGuid().ToString("N");
     public McpClient Client { get; } = client;
     public bool IsAvailable => Volatile.Read(ref disposed) == 0 && Volatile.Read(ref invalidated) == 0 && !Client.Completion.IsCompleted;
     internal void Invalidate() { Interlocked.Exchange(ref invalidated, 1); UpdateToolVersions([]); }
