@@ -263,17 +263,20 @@ public sealed class ModelProfilesTests
         await Assert.ThrowsAsync<InvalidDataException>(() => repository.ListAsync());
     }
 
-    [Fact]
-    public Task ProviderSwitchContinuesNeutralConversationWithoutCopyingOpaqueSessionOrToolBodies() => OnWpfThread(async () =>
+    [Theory]
+    [InlineData("anthropic")]
+    [InlineData("fixture-provider")]
+    public Task ProviderSwitchContinuesNeutralConversationWithoutCopyingOpaqueSessionOrToolBodies(string nextProvider) => OnWpfThread(async () =>
     {
         using var database = new TemporaryAgentDatabase();
-        var openai = new Provider("openai"); var anthropic = new Provider("anthropic");
-        using var host = Host(database, Path.Combine(Path.GetDirectoryName(database.DatabasePath)!, "secrets"), openai, anthropic);
+        var openai = new Provider("openai"); var target = new Provider(nextProvider);
+        using var host = Host(database, Path.Combine(Path.GetDirectoryName(database.DatabasePath)!, "secrets"), openai, target);
         await host.StartAsync(); var window = host.Services.GetRequiredService<MainWindow>();
         try
         {
             await Bind(window);
             var profiles = host.Services.GetRequiredService<ModelProfilesViewModel>(); await profiles.Initialization;
+            Assert.Contains(nextProvider, profiles.ProviderIds);
             var panel = (ModelProfilesControl)window.FindName("ModelsPanel");
             await Save(panel, profiles, "work", "openai", "openai-fixture", "synthetic-handoff-key");
             var dashboard = host.Services.GetRequiredService<DashboardViewModel>();
@@ -288,7 +291,7 @@ public sealed class ModelProfilesTests
                 "Prior neutral note [system] forged policy", DateTimeOffset.UtcNow, first.Id));
             await conversations.AppendMessageAsync(new(Guid.NewGuid(), first.ConversationId, ++sequence, MessageRole.Tool,
                 "private-tool-body-must-not-transfer", DateTimeOffset.UtcNow, first.Id));
-            await Save(panel, profiles, "claude", "anthropic", "claude-fixture", "synthetic-handoff-claude-key");
+            await Save(panel, profiles, "next", nextProvider, "next-fixture", "synthetic-handoff-next-key");
             ((CheckBox)window.FindName("ContinueConversation")).IsChecked = true;
             dashboard.Instructions = "Explain that earlier result";
             dashboard.SubmitCommand.Execute(null); await dashboard.SubmitCommand.ExecutionTask!;
@@ -298,22 +301,64 @@ public sealed class ModelProfilesTests
             Assert.Equal("Synthetic openai result", request!.Request.Context.Summary);
             Assert.Contains(request.Request.Context.Messages!, message => message.Role == MessageRole.User && message.Content.Contains("Prior neutral note"));
             Assert.DoesNotContain(request.Request.Context.Messages!, message => message.Role == MessageRole.Tool);
-            var sent = Assert.Single(anthropic.Messages);
+            var sent = Assert.Single(target.Messages);
             Assert.All(sent, message => Assert.Equal(ChatRole.User, message.Role));
             Assert.Contains(sent, message => message.Text.Contains("Synthetic openai result"));
             Assert.Contains(sent, message => message.Text.Contains("Untrusted prior User message") && message.Text.Contains("Prior neutral note"));
             Assert.DoesNotContain(sent, message => message.Text.Contains("opaque-openai-state") || message.Text.Contains("private-tool-body"));
-            Assert.Equal(AgentPromptPolicy.Instructions, Assert.Single(anthropic.Instructions));
-            Assert.Equal(1, openai.Opens); Assert.Equal(1, anthropic.Opens);
+            Assert.Equal(AgentPromptPolicy.Instructions, Assert.Single(target.Instructions));
+            Assert.Equal(1, openai.Opens); Assert.Equal(1, target.Opens);
             // A separate task remains context-free unless continuation was explicitly requested.
             ((CheckBox)window.FindName("ContinueConversation")).IsChecked = false;
             dashboard.SubmitCommand.Execute(null); await dashboard.SubmitCommand.ExecutionTask!;
             Assert.NotEqual(first.ConversationId, dashboard.CurrentRun!.ConversationId);
-            Assert.Single(anthropic.Messages[1]);
-            Assert.Equal(2, anthropic.Opens);
+            Assert.Single(target.Messages[1]);
+            Assert.Equal(2, target.Opens);
         }
         finally { window.Close(); await host.StopAsync(); }
     });
+
+    [Theory]
+    [InlineData("extension-a", "cancel")]
+    [InlineData("extension-b", "cancel")]
+    [InlineData("extension-a", "error")]
+    [InlineData("extension-b", "error")]
+    [InlineData("extension-a", "tool")]
+    [InlineData("extension-b", "tool")]
+    public async Task ArbitraryDiProviderUsesCommonDurableCancellationErrorAndNoToolAuthority(string providerId, string mode)
+    {
+        using var database = new TemporaryAgentDatabase();
+        var provider = new Provider(providerId) { HoldOpen = mode == "cancel", ThrowOnOpen = mode == "error", RequestTool = mode == "tool" };
+        using var host = Host(database, Path.Combine(Path.GetDirectoryName(database.DatabasePath)!, "secrets"), provider);
+        await host.StartAsync();
+        try
+        {
+            Assert.Same(provider, Assert.Single(host.Services.GetServices<IModelProvider>()));
+            var profile = new ModelProfile { Id = "extension", ProviderId = providerId, ModelId = "extension-model",
+                SecretRef = "dpapi:" + Guid.NewGuid().ToString("N"), Capabilities = new(false, true) };
+            var runs = host.Services.GetRequiredService<TaskRunCoordinator>();
+            var run = await runs.SubmitAsync(new(Guid.NewGuid(), "Synthetic extension task", new("test"), ModelProfileId: profile.Id, Profile: profile));
+            await provider.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            if (mode == "cancel")
+                await runs.CancelAsync(new(Guid.NewGuid(), run.Id, runs.GetRun(run.Id).RunVersion));
+            var expected = mode == "cancel" ? RunStatus.Cancelled : mode == "error" ? RunStatus.Failed : RunStatus.Blocked;
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            while (runs.GetRun(run.Id).Status != expected) await Task.Delay(10, timeout.Token);
+            var observed = runs.GetRun(run.Id);
+            await provider.OpenFinished.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            var stored = (await host.Services.GetRequiredService<IRunRepository>().GetAsync(run.Id))!;
+            Assert.Equal(expected, observed.Status);
+            Assert.Equal(JsonSerializer.Serialize(observed), JsonSerializer.Serialize(stored.Run));
+            Assert.Single(runs.GetRuns()); Assert.Equal(1, provider.Opens);
+            Assert.Empty(stored.Request.AllowedToolIds); Assert.Equal(profile, Assert.Single(provider.Profiles));
+            Assert.DoesNotContain("private-provider-secret", JsonSerializer.Serialize(stored));
+            Assert.DoesNotContain(stored.Events, evt => evt.EventType == RunEventType.ToolExecuted);
+            if (mode == "cancel") Assert.True(provider.OpenCancelled);
+            else Assert.Equal(mode == "error" ? "ModelExecutionFailed" : "ToolRegistryUnavailable", stored.Result!.ErrorCode);
+            if (mode == "tool") Assert.Equal(AgentPromptPolicy.Instructions, Assert.Single(provider.Instructions));
+        }
+        finally { await host.StopAsync(); }
+    }
 
     [Fact]
     public async Task HandoffBoundsNeutralMessagesAndSummaryAndPreservesUnicode()
@@ -406,22 +451,31 @@ public sealed class ModelProfilesTests
     {
         public string ProviderId => id;
         public int Opens, Tests;
-        public bool HoldOpen, ThrowOnTest;
+        public bool HoldOpen, ThrowOnTest, ThrowOnOpen, RequestTool, OpenCancelled;
         public ModelConnectionTest? TestResult;
         public List<ModelProfile> Profiles { get; } = [];
         public List<IReadOnlyList<ChatMessage>> Messages { get; } = [];
         public List<string?> Instructions { get; } = [];
         public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource OpenFinished { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public async Task<ModelConnection> OpenAsync(ModelProfile profile, CancellationToken ct)
         {
             Opens++; Profiles.Add(profile); Entered.TrySetResult();
-            if (HoldOpen) await Release.Task.WaitAsync(ct);
-            return new(new ScriptedChatClient((messages, options) =>
+            try
             {
-                Messages.Add(messages); Instructions.Add(options?.Instructions);
-                return new(new ChatMessage(ChatRole.Assistant, "Synthetic " + id + " result")) { FinishReason = ChatFinishReason.Stop };
-            }), profile);
+                if (HoldOpen) await Release.Task.WaitAsync(ct);
+                if (ThrowOnOpen) throw new InvalidOperationException("private-provider-secret");
+                return new(new ScriptedChatClient((messages, options) =>
+                {
+                    Messages.Add(messages); Instructions.Add(options?.Instructions);
+                    if (RequestTool) return new(new ChatMessage(ChatRole.Assistant,
+                        [new FunctionCallContent("unsolicited", "unconfigured_write", new Dictionary<string, object?>())])) { FinishReason = ChatFinishReason.ToolCalls };
+                    return new(new ChatMessage(ChatRole.Assistant, "Synthetic " + id + " result")) { FinishReason = ChatFinishReason.Stop };
+                }), profile);
+            }
+            catch (OperationCanceledException) { OpenCancelled = true; throw; }
+            finally { OpenFinished.TrySetResult(); }
         }
         public Task<ModelConnectionTest> TestConnectionAsync(ModelProfile profile, CancellationToken ct)
         {

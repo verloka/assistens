@@ -1595,3 +1595,29 @@ assembly-location checks. This is controlled package evidence on this developer
 machine. Clean Windows without .NET, real sign-out/in autostart and disable
 observations require the separate acceptance checklist in DISTRIBUTION.md;
 do not infer them from successful publishing or synthetic registry keys.
+
+### PA-122 contract regression matrix
+
+Run the existing complete local verification (locked restore, build and all test
+projects) to include every matrix row and its surrounding regressions:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1
+```
+
+| Boundary / implementations | Shared checks and preserved outcomes | Existing executable coverage |
+| --- | --- | --- |
+| Model SDK: OpenAI / Anthropic, scripted HTTP only | Same text/image/tool metadata and usage, fresh image after input, cancellation, token/step limits, malformed argument refusal, sanitized authentication/HTTP errors without retry | [ProvidersContractTests](PersonalAgent.IntegrationTests/ProvidersContractTests.cs), [OpenAiModelProviderTests](PersonalAgent.IntegrationTests/OpenAiModelProviderTests.cs), [AnthropicModelProviderTests](PersonalAgent.IntegrationTests/AnthropicModelProviderTests.cs), [ModelCapabilityTests](PersonalAgent.IntegrationTests/ModelCapabilityTests.cs), [MafAgentRuntimeTests](PersonalAgent.IntegrationTests/MafAgentRuntimeTests.cs) |
+| Provider extension: arbitrary IDs registered through DI | Same actual UI profile selection and neutral continuation, no opaque session/tool-body transfer, current policy retained; two arbitrary IDs share durable cancellation, sanitized one-open failure and unsolicited tool denial | [ModelProfilesTests](PersonalAgent.IntegrationTests/ModelProfilesTests.cs), [ConversationRegressionTests](PersonalAgent.IntegrationTests/ConversationRegressionTests.cs), [ConversationHandoffTests](PersonalAgent.IntegrationTests/ConversationHandoffTests.cs) |
+| Inbound: Telegram and fake second/Discord channel | Same common commands, exact adapter/peer scope, default denial, outer cancellation, durable duplicate acceptance, changed payload conflict; transport cannot grant tools or local conversation identity | [ChannelContractTests](PersonalAgent.IntegrationTests/ChannelContractTests.cs), [ChannelsAcceptanceTests](PersonalAgent.IntegrationTests/ChannelsAcceptanceTests.cs), [TelegramPollingTests](PersonalAgent.IntegrationTests/TelegramPollingTests.cs) |
+| Outbound: scripted Telegram and fake second/Discord channel | Exact allowed destination, capability fallback without token disclosure, same notifications, independent task/delivery states, bounded known-not-accepted retries, uncertain acceptance never resent on restart | [ChannelContractTests](PersonalAgent.IntegrationTests/ChannelContractTests.cs), [ChannelsAcceptanceTests](PersonalAgent.IntegrationTests/ChannelsAcceptanceTests.cs), [NotificationOutboxTests](PersonalAgent.IntegrationTests/NotificationOutboxTests.cs), [TelegramOutboundTests](PersonalAgent.IntegrationTests/TelegramOutboundTests.cs) |
+| Agent tools: local fake, Computer and MCP through one registry | Bounded schema/source/result/image contract, current policy after pause, cancellation and serial dispatch, unknown tool/risk denial, exception sanitization, preserved Failed/Blocked/OutcomeUnknown and call-ID no replay | [ToolRegistryTests](PersonalAgent.IntegrationTests/ToolRegistryTests.cs), [ComputerToolTests](PersonalAgent.IntegrationTests/ComputerToolTests.cs), [AgentContractTests](PersonalAgent.IntegrationTests/AgentContractTests.cs), [McpExecutionTests](PersonalAgent.IntegrationTests/McpExecutionTests.cs) |
+| MCP transports: local stdio child and loopback HTTP | Scoped credentials/destination, explicit owner approval, cancel/timeout cleanup, discovery/version invalidation, bounded errors/malformed responses and no unknown call replay | [McpStdioTests](PersonalAgent.IntegrationTests/McpStdioTests.cs), [McpHttpTests](PersonalAgent.IntegrationTests/McpHttpTests.cs), [McpConnectionConfigTests](PersonalAgent.IntegrationTests/McpConnectionConfigTests.cs), [McpDiscoveryTests](PersonalAgent.IntegrationTests/McpDiscoveryTests.cs), [McpMalformedResponseTests](PersonalAgent.IntegrationTests/McpMalformedResponseTests.cs) |
+| Cross-boundary approval/restart and module extension | Exact action/recipient/owner/expiry, one dispatch, unknown outcomes require review; unchanged module references and Core without infrastructure dependencies | [CommonToolPolicyTests](PersonalAgent.IntegrationTests/CommonToolPolicyTests.cs), [ToolDispatchRecoveryTests](PersonalAgent.IntegrationTests/ToolDispatchRecoveryTests.cs), [ArchitectureTests](PersonalAgent.UnitTests/ArchitectureTests.cs) |
+
+The matrix points to actual suites and common assertions rather than another
+adapter implementation. PA-122 adds only test coverage for arbitrary provider IDs;
+the fake Discord adapter and official SDK/MCP/tool contracts already existed.
+FDD links remain Draft. This local matrix does not establish live Claude/Telegram,
+corporate permissions, physical multi-monitor/sleep/display, clean Windows/sign-in
+or all ten business E2E acceptances. Those tracker gates remain separate.

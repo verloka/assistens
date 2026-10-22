@@ -1347,14 +1347,22 @@
                                        "attempts":  1
                                    },
                         "PA-122":  {
-                                       "status":  "pending",
-                                       "started_at":  null,
-                                       "completed_at":  null,
+                                       "status":  "done",
+                                       "started_at":  "2026-10-22T15:34:41.9903241+00:00",
+                                       "completed_at":  "2026-10-22T15:42:03.5845345+00:00",
                                        "evidence":  [
-
+                                                        "tests/README.md contract matrix maps27existing test references across provider/channel/tool/MCP/approval/architecture boundaries. ModelProfilesTests extends neutral UI handoff to arbitrary DI provider ID and two arbitrary providers share durable cancel/sanitized one-open failure/unsolicited-tool denial. Existing fake Discord DI and common SDK image/tool suites reused. No production src/schema/contract change. Actual-diff FDD scoped PASS; all Draft; owner explicitly deferred121 only, release gate retained.",
+                                                        "Verification: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 PASS:locked restore;fullsolution build0warnings/errors2s;137unit612ms+3localfakeE2E291ms+972integration2m56s=1112passed0failed0skipped. Focused ModelProfilesTests16passed12s(pa122-models-final.trx). All27matrixtestlinks exist;taskctl doctor125valid;git diff --check passed."
                                                     ],
-                                       "note":  null,
-                                       "attempts":  0
+                                       "note":  "Acceptance verified",
+                                       "attempts":  1,
+                                       "deferred_dependencies":  [
+                                                                     {
+                                                                         "id":  "PA-121",
+                                                                         "reason":  "Owner explicitly answered 2026-10-22: defer PA-121 clean Windows and sign-in acceptance; permit PA-122. PA-121 remains blocked and required for release.",
+                                                                         "recorded_at":  "2026-10-22T15:34:41.9713331+00:00"
+                                                                     }
+                                                                 ]
                                    },
                         "PA-123":  {
                                        "status":  "pending",
@@ -1387,6 +1395,6 @@
                                        "attempts":  0
                                    }
                     },
-    "last_task_id":  "PA-121",
-    "updated_at":  "2026-10-22T15:33:33.7724291+00:00"
+    "last_task_id":  "PA-122",
+    "updated_at":  "2026-10-22T15:42:03.5935395+00:00"
 }
